@@ -25,7 +25,6 @@ struct wlr_xdg_output_manager;
 #include <wayland-server.h>
 }
 
-struct desktop_apis_t;
 class decorator_base_t;
 class input_manager;
 class wayfire_config;
@@ -58,8 +57,6 @@ class wayfire_core
         std::vector<wl_resource*> shell_clients;
         wayfire_config *config;
 
-
-        desktop_apis_t *api;
         bool set_decorator(decorator_base_t *decor);
 
         wl_display *display;

@@ -75,7 +75,6 @@ class wayfire_surface_t
         virtual void damage(const wlr_box& box);
         virtual void damage(pixman_region32_t *region);
 
-
     public:
 
         wayfire_surface_t(wayfire_surface_t *parent = nullptr);

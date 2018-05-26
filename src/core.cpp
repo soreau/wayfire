@@ -30,7 +30,7 @@ extern "C"
 #include "workspace-manager.hpp"
 #include "debug.hpp"
 #include "render-manager.hpp"
-#include "desktop-api.hpp"
+#include "view/priv-view.hpp"
 
 #ifdef BUILD_WITH_IMAGEIO
 #include "img.hpp"
@@ -1403,10 +1403,10 @@ void wayfire_core::init(wayfire_config *conf)
 
 bool wayfire_core::set_decorator(decorator_base_t *decor)
 {
-    if (api->decorator)
+    if (wf_decorator)
         return false;
 
-    return (api->decorator = decor);
+    return (wf_decorator = decor);
 }
 
 void refocus_idle_cb(void *data)
@@ -1740,7 +1740,7 @@ void wayfire_core::run(const char *command)
     if (!pid) {
         if (!fork()) {
             setenv("WAYLAND_DISPLAY", wayland_display.c_str(), 1);
-            auto xdisp = ":" + std::to_string(api->xwayland->display);
+            auto xdisp = ":" + xwayland_get_display();
             setenv("DISPLAY", xdisp.c_str(), 1);
 
             exit(execl("/bin/sh", "/bin/bash", "-c", command, NULL));
