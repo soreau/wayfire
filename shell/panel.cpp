@@ -151,7 +151,9 @@ void wayfire_panel::setup_window()
     };
 
     if (!autohide)
-        wayfire_shell_reserve(display.wfshell, output, WAYFIRE_SHELL_PANEL_POSITION_UP, width / display.scale, height / display.scale);
+        wayfire_shell_reserve(display.wfshell, window->surface,
+                              WAYFIRE_SHELL_PANEL_POSITION_TOP,
+                              height / display.scale);
 
     wayfire_shell_configure_panel(display.wfshell, output, window->surface, 0, -height);
 

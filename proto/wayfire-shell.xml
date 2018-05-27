@@ -9,10 +9,10 @@
         </request>
 
         <enum name="panel_position">
-            <entry name="left"  value="1"/>
-            <entry name="right" value="2"/>
-            <entry name="up"    value="3"/>
-            <entry name="down"  value="4"/>
+            <entry name="top" value="0"/>
+            <entry name="bottom" value="1"/>
+            <entry name="left" value="2"/>
+            <entry name="right" value="3"/>
         </enum>
 
         <request name="add_panel">
@@ -37,10 +37,9 @@
         </request>
 
         <request name="reserve">
-            <arg name="output" type="uint"/>
+            <arg name="surface" type="object" interface="wl_surface"/>
             <arg name="side" type="uint"/>
-            <arg name="width" type="uint"/>
-            <arg name="height" type="uint"/>
+            <arg name="size" type="uint"/>
         </request>
 
         <event name="output_created">

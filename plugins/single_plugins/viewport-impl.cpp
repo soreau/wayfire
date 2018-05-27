@@ -61,12 +61,8 @@ class viewport_manager : public workspace_manager
         signal_callback_t adjust_fullscreen_layer, view_detached,
                           view_changed_viewport;
 
-        struct {
-            int top_padding;
-            int bot_padding;
-            int left_padding;
-            int right_padding;
-        } workarea;
+        wf_geometry current_workarea;
+        std::vector<anchored_area*> anchors;
 
         std::vector<std::vector<wf_workspace_implementation*>> implementation;
         wf_default_workspace_implementation default_implementation;
@@ -99,8 +95,11 @@ class viewport_manager : public workspace_manager
         std::tuple<int, int> get_current_workspace();
         std::tuple<int, int> get_workspace_grid_size();
 
-        void reserve_workarea(uint32_t position,
-             uint32_t width, uint32_t height);
+        wf_geometry calculate_anchored_geometry(const anchored_area& area);
+
+        void add_reserved_area(anchored_area *area);
+        void reflow_reserved_areas();
+        void remove_reserved_area(anchored_area *area);
 
         wf_geometry get_workarea();
 };
@@ -344,48 +343,87 @@ viewport_manager::get_views_on_workspace(std::tuple<int, int> vp,
     return views;
 }
 
-void viewport_manager::reserve_workarea(uint32_t position,
-        uint32_t width, uint32_t height)
+wf_geometry viewport_manager::get_workarea()
 {
-    GetTuple(sw, sh, output->get_screen_size());
-    switch(position) {
-        case WAYFIRE_SHELL_PANEL_POSITION_LEFT:
-            workarea.left_padding = width;
-            height = sh;
-            break;
-        case WAYFIRE_SHELL_PANEL_POSITION_RIGHT:
-            workarea.right_padding = width;
-            height = sh;
-            break;
-        case WAYFIRE_SHELL_PANEL_POSITION_UP:
-            workarea.top_padding = height;
-            width = sw;
-            break;
-        case WAYFIRE_SHELL_PANEL_POSITION_DOWN:
-            workarea.bot_padding = height;
-            width = sw;
-            break;
-        default:
-            log_error("bad reserve_workarea!");
+    return current_workarea;
+}
+
+wf_geometry viewport_manager::calculate_anchored_geometry(const anchored_area& area)
+{
+    auto wa = get_workarea();
+    wf_geometry target;
+
+    if (area.edge <= WORKSPACE_ANCHORED_EDGE_BOTTOM)
+    {
+        target.width = wa.width;
+        target.height = area.size;
+    } else
+    {
+        target.height = wa.height;
+        target.width = area.size;
+    }
+
+    target.x = wa.x;
+    target.y = wa.y;
+
+    if (area.edge == WORKSPACE_ANCHORED_EDGE_RIGHT)
+        target.x = wa.x + wa.width - target.width;
+
+    if (area.edge == WORKSPACE_ANCHORED_EDGE_BOTTOM)
+        target.y = wa.y + wa.height - target.height;
+
+    return target;
+}
+
+void viewport_manager::add_reserved_area(anchored_area *area)
+{
+    anchors.push_back(area);
+    reflow_reserved_areas();
+}
+
+void viewport_manager::remove_reserved_area(anchored_area *area)
+{
+    auto it = std::remove(anchors.begin(), anchors.end(), area);
+    anchors.erase(it, anchors.end());
+
+    reflow_reserved_areas();
+}
+
+void viewport_manager::reflow_reserved_areas()
+{
+    auto old_workarea = current_workarea;
+
+    current_workarea = output->get_relative_geometry();
+
+    for (auto a : anchors)
+    {
+        auto anchor_area = calculate_anchored_geometry(*a);
+
+        if (a->reflowed)
+            a->reflowed(anchor_area);
+
+        switch(a->edge)
+        {
+            case WORKSPACE_ANCHORED_EDGE_TOP:
+                current_workarea.y += a->size;
+                break;
+            case WORKSPACE_ANCHORED_EDGE_BOTTOM:
+                current_workarea.height -= a->size;
+                break;
+            case WORKSPACE_ANCHORED_EDGE_LEFT:
+                current_workarea.x += a->size;
+                break;
+            case WORKSPACE_ANCHORED_EDGE_RIGHT:
+                current_workarea.width -= a->size;
+                break;
+        }
     }
 
     reserved_workarea_signal data;
-    data.width = width;
-    data.height = height;
-    data.position = position;
-    output->emit_signal("reserved-workarea", &data);
-}
+    data.old_workarea = old_workarea;
+    data.new_workarea = current_workarea;
 
-wf_geometry viewport_manager::get_workarea()
-{
-    auto g = output->get_full_geometry();
-    return
-    {
-        workarea.left_padding,
-        workarea.top_padding,
-        g.width - workarea.left_padding - workarea.right_padding,
-        g.height - workarea.top_padding - workarea.bot_padding
-    };
+    output->emit_signal("reserved-workarea", &data);
 }
 
 void viewport_manager::check_lower_panel_layer(int base)

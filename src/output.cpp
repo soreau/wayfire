@@ -937,18 +937,58 @@ void shell_return_focus(struct wl_client *client, struct wl_resource *resource,
         wo->focus_view(wo->get_top_view());
 }
 
-void shell_reserve(struct wl_client *client, struct wl_resource *resource,
-        uint32_t output, uint32_t side, uint32_t width, uint32_t height)
+struct wf_shell_reserved_custom_data : public wf_custom_view_data
 {
-    auto wo = wl_output_to_wayfire_output(output);
+    workspace_manager::anchored_area area;
+    static const std::string cname;
+};
 
-    if (!wo) {
-        log_error("shell_reserve called with invalid output");
+const std::string wf_shell_reserved_custom_data::cname = "wf-shell-reserved-area";
+
+bool view_has_anchored_area(wayfire_view view)
+{
+    return view->custom_data.count(wf_shell_reserved_custom_data::cname);
+}
+
+workspace_manager::anchored_area *get_anchored_area_for_view(wayfire_view view)
+{
+    wf_shell_reserved_custom_data *cdata = NULL;
+    const auto cname = wf_shell_reserved_custom_data::cname;
+
+    if (view->custom_data.count(cname))
+    {
+        cdata = dynamic_cast<wf_shell_reserved_custom_data*> (view->custom_data[cname]);
+    } else
+    {
+        cdata = new wf_shell_reserved_custom_data;
+        cdata->area.size = -1;
+        view->custom_data[cname] = cdata;
+    }
+
+    return &cdata->area;
+}
+
+void shell_reserve(struct wl_client *client, struct wl_resource *resource,
+        struct wl_resource *surface, uint32_t side, uint32_t size)
+{
+    auto view = wl_surface_to_wayfire_view(surface);
+
+    if (!view || !view->get_output()) {
+        log_error("shell_reserve called with invalid output/surface");
         return;
     }
 
-    log_debug("wf_shell: reserve width:%d height: %d", width, height);
-    wo->workspace->reserve_workarea((wayfire_shell_panel_position)side, width, height);
+    auto area = get_anchored_area_for_view(view);
+
+    bool is_first_update = (area->size == -1);
+
+    area->size = size;
+    area->edge = (workspace_manager::anchored_edge)side;
+
+    if (is_first_update)
+        view->get_output()->workspace->add_reserved_area(area);
+    else
+        view->get_output()->workspace->reflow_reserved_areas();
 }
 
 void shell_set_color_gamma(wl_client *client, wl_resource *res,
@@ -1130,7 +1170,9 @@ wayfire_output::wayfire_output(wlr_output *handle, wayfire_config *c)
 
     unmap_view_cb = [=] (signal_data *data)
     {
-        if (get_signaled_view(data) == active_view)
+        auto view = get_signaled_view(data);
+
+        if (view == active_view)
         {
             wayfire_view next_focus = nullptr;
             auto views = workspace->get_views_on_workspace(workspace->get_current_workspace(),
@@ -1146,6 +1188,12 @@ wayfire_output::wayfire_output(wlr_output *handle, wayfire_config *c)
             }
 
             set_active_view(next_focus);
+        }
+
+        if (view_has_anchored_area(view))
+        {
+            auto area = get_anchored_area_for_view(view);
+            workspace->remove_reserved_area(area);
         }
     };
 

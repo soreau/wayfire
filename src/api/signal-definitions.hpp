@@ -56,10 +56,8 @@ using change_viewport_notify = change_viewport_signal;
 /* sent when the workspace implementation actually reserves the workarea */
 struct reserved_workarea_signal : public signal_data
 {
-    /* enum from wayfire-shell */
-    uint32_t position;
-    uint32_t width;
-    uint32_t height;
+    wf_geometry old_workarea;
+    wf_geometry new_workarea;
 };
 
 // TODO: this is a private signal, maybe we should hide it? */

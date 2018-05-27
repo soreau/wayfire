@@ -65,9 +65,35 @@ class workspace_manager
         virtual std::tuple<int, int> get_current_workspace() = 0;
         virtual std::tuple<int, int> get_workspace_grid_size() = 0;
 
-        /* position is an enum of wayfire-shell-protocol */
-        virtual void reserve_workarea(uint32_t position,
-                uint32_t width, uint32_t height) = 0;
+        enum anchored_edge
+        {
+            WORKSPACE_ANCHORED_EDGE_TOP = 0,
+            WORKSPACE_ANCHORED_EDGE_BOTTOM = 1,
+            WORKSPACE_ANCHORED_EDGE_LEFT = 2,
+            WORKSPACE_ANCHORED_EDGE_RIGHT = 3
+        };
+
+        struct anchored_area
+        {
+            anchored_edge edge;
+            int size;
+
+            /* called when the anchored area geometry was changed */
+            std::function<void(wf_geometry)> reflowed;
+        };
+
+        virtual wf_geometry calculate_anchored_geometry(const anchored_area& area) = 0;
+
+        /* add the reserved area for keeping track of,
+         * if you change the given anchored area,
+         * call recalculate_reserved_areas() to refresh */
+        virtual void add_reserved_area(anchored_area *area) = 0;
+
+        /* force recalculate reserved area for each added anchored area */
+        virtual void reflow_reserved_areas() = 0;
+
+        /* remove the given area from the list */
+        virtual void remove_reserved_area(anchored_area *area) = 0;
 
         /* returns the available area for views, it is basically
          * the output geometry minus the area reserved for panels */
