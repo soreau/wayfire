@@ -4,7 +4,7 @@
 #include "core.hpp"
 #include "decorator.hpp"
 
-static void handle_new_popup(wl_listener*, void*);
+static void handle_v6_new_popup(wl_listener*, void*);
 static void handle_v6_map(wl_listener*, void *data);
 static void handle_v6_unmap(wl_listener*, void *data);
 static void handle_v6_destroy(wl_listener*, void *data);
@@ -17,7 +17,7 @@ wayfire_xdg6_popup::wayfire_xdg6_popup(wlr_xdg_popup_v6 *popup)
     this->popup = popup;
 
     destroy.notify       = handle_v6_destroy;
-    new_popup.notify     = handle_new_popup;
+    new_popup.notify     = handle_v6_new_popup;
     m_popup_map.notify   = handle_v6_map;
     m_popup_unmap.notify = handle_v6_unmap;
 
@@ -45,7 +45,7 @@ void wayfire_xdg6_popup::get_child_position(int &x, int &y)
 }
 
 
-void handle_new_popup(wl_listener*, void *data)
+void handle_v6_new_popup(wl_listener*, void *data)
 {
     auto popup = static_cast<wlr_xdg_popup_v6*> (data);
     auto parent = wf_surface_from_void(popup->parent->surface->data);
@@ -123,7 +123,7 @@ wayfire_xdg6_view::wayfire_xdg6_view(wlr_xdg_surface_v6 *s)
               nonull(v6_surface->toplevel->app_id));
 
     destroy.notify            = handle_v6_destroy;
-    new_popup.notify          = handle_new_popup;
+    new_popup.notify          = handle_v6_new_popup;
     map_ev.notify             = handle_v6_map;
     unmap.notify              = handle_v6_unmap;
     request_move.notify       = handle_v6_request_move;

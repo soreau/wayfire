@@ -571,4 +571,5 @@ void init_desktop_apis()
 {
     init_xdg_shell_v6();
     init_xwayland();
+    init_layer_shell();
 }

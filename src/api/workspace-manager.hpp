@@ -32,6 +32,8 @@ enum wf_layer
 
 #define WF_ALL_LAYERS   (WF_WM_LAYERS | WF_ABOVE_LAYERS | WF_BELOW_LAYERS)
 
+
+
 /* workspace manager controls various workspace-related functions.
  * Currently it is implemented as a plugin, see workspace_viewport_implementation plugin */
 class workspace_manager

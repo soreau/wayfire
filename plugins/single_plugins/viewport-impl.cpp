@@ -112,6 +112,8 @@ void viewport_manager::init(wayfire_output *o)
     output = o;
     vx = vy = 0;
 
+    current_workarea = output->get_relative_geometry();
+
     vwidth = core->vwidth;
     vheight = core->vheight;
     implementation.resize(vwidth, std::vector<wf_workspace_implementation*>

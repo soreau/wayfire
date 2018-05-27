@@ -5,6 +5,7 @@ wayfire_sources = ['main.cpp',   'core.cpp', 'output.cpp', 'opengl.cpp',
                    'view/view-util.cpp',
                    'view/xdg-shell-v6.cpp',
                    'view/xwayland.cpp',
+                   'view/layer-shell.cpp',
                    'view/view-3d.cpp']
 
 wayfire_dependencies = [wayland_server, wlroots, xkbcommon, libinput,

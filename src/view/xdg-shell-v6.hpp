@@ -4,6 +4,7 @@ extern "C"
 #include <wlr/types/wlr_xdg_shell_v6.h>
 }
 
+static void handle_v6_new_popup(wl_listener*, void*);
 class wayfire_xdg6_popup : public wayfire_surface_t
 {
     protected:
