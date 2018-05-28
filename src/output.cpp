@@ -961,7 +961,8 @@ workspace_manager::anchored_area *get_anchored_area_for_view(wayfire_view view)
     } else
     {
         cdata = new wf_shell_reserved_custom_data;
-        cdata->area.size = -1;
+        cdata->area.reserved_size = -1;
+        cdata->area.real_size = 0;
         view->custom_data[cname] = cdata;
     }
 
@@ -980,9 +981,9 @@ void shell_reserve(struct wl_client *client, struct wl_resource *resource,
 
     auto area = get_anchored_area_for_view(view);
 
-    bool is_first_update = (area->size == -1);
+    bool is_first_update = (area->reserved_size == -1);
 
-    area->size = size;
+    area->reserved_size = size;
     area->edge = (workspace_manager::anchored_edge)side;
 
     if (is_first_update)

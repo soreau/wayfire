@@ -78,7 +78,11 @@ class workspace_manager
         struct anchored_area
         {
             anchored_edge edge;
-            int size;
+            /* amount of space to reserve */
+            int reserved_size;
+
+            /* desired size, to be given later in the reflowed callback */
+            int real_size;
 
             /* called when the anchored area geometry was changed */
             std::function<void(wf_geometry)> reflowed;

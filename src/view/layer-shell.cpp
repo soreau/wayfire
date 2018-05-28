@@ -67,8 +67,11 @@ struct wf_layer_shell_manager
     {
         auto& cont = layers[view->lsurface->layer];
         auto it = std::find(cont.begin(), cont.end(), view);
-        cont.erase(it);
 
+        if (view->anchored_area)
+            view->get_output()->workspace->remove_reserved_area(view->anchored_area.get());
+
+        cont.erase(it);
         arrange_layers(view->get_output());
     }
 
@@ -112,7 +115,9 @@ struct wf_layer_shell_manager
         { v->configure(geometry); };
 
         v->anchored_area->edge = anchor_to_edge(edges);
-        v->anchored_area->size = v->lsurface->current.exclusive_zone;
+        v->anchored_area->reserved_size = v->lsurface->current.exclusive_zone;
+        v->anchored_area->real_size = v->anchored_area->edge <= workspace_manager::WORKSPACE_ANCHORED_EDGE_BOTTOM ?
+            v->lsurface->current.desired_height : v->lsurface->current.desired_width;
 
         v->get_output()->workspace->add_reserved_area(v->anchored_area.get());
     }
@@ -297,7 +302,10 @@ void wayfire_layer_shell_view::commit()
     auto state = &lsurface->current;
 
     if (std::memcmp(state, &prev_state, sizeof(*state)))
+    {
         layer_shell_manager.arrange_layers(output);
+        std::memcpy(&prev_state, state, sizeof(*state));
+    }
 }
 
 void wayfire_layer_shell_view::close()
