@@ -56,11 +56,9 @@ class wayfire_surface_t
     /* TODO: maybe some functions don't need to be virtual? */
     protected:
 
-         wl_listener committed, destroy, new_sub;
-         std::vector<wayfire_surface_t*> surface_children;
-
-         virtual void for_each_surface_recursive(wf_surface_iterator_callback callback,
-                                                 int x, int y, bool reverse = false);
+        wl_listener committed, destroy, new_sub;
+        virtual void for_each_surface_recursive(wf_surface_iterator_callback callback,
+                                                int x, int y, bool reverse = false);
 
         wayfire_surface_t *parent_surface;
 
@@ -76,6 +74,7 @@ class wayfire_surface_t
         virtual void damage(pixman_region32_t *region);
 
     public:
+        std::vector<wayfire_surface_t*> surface_children;
 
         wayfire_surface_t(wayfire_surface_t *parent = nullptr);
         virtual ~wayfire_surface_t();

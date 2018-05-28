@@ -1,3 +1,4 @@
+#include <algorithm>
 extern "C"
 {
 #define static
@@ -36,8 +37,19 @@ void handle_subsurface_created(wl_listener*, void *data)
         return;
     }
 
-    auto surf = new wayfire_surface_t(parent);
-    surf->map(sub->surface);
+    auto it = std::find_if(parent->surface_children.begin(),
+                           parent->surface_children.end(),
+                           [=] (wayfire_surface_t *surface)
+                            { return surface->surface == sub->surface; });
+
+    if (it == parent->surface_children.end())
+    {
+        auto surf = new wayfire_surface_t(parent);
+        surf->map(sub->surface);
+    } else
+    {
+        log_debug("adding same subsurface twice");
+    }
 }
 
 void handle_subsurface_destroyed(wl_listener*, void *data)
@@ -148,6 +160,10 @@ void wayfire_surface_t::map(wlr_surface *surface)
 
     surface->data = this;
     damage();
+
+    wlr_subsurface *sub;
+    wl_list_for_each(sub, &surface->subsurfaces, parent_link)
+        handle_subsurface_created(NULL, sub);
 }
 
 void wayfire_surface_t::unmap()
