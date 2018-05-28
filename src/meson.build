@@ -4,6 +4,7 @@ wayfire_sources = ['main.cpp',   'core.cpp', 'output.cpp', 'opengl.cpp',
                    'view/view.cpp',
                    'view/view-util.cpp',
                    'view/xdg-shell-v6.cpp',
+                   'view/xdg-shell.cpp',
                    'view/xwayland.cpp',
                    'view/layer-shell.cpp',
                    'view/view-3d.cpp']

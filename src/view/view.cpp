@@ -8,6 +8,7 @@
 #include "workspace-manager.hpp"
 #include "render-manager.hpp"
 #include "priv-view.hpp"
+#include "xdg-shell.hpp"
 #include "xdg-shell-v6.hpp"
 
 #include <algorithm>
@@ -526,9 +527,17 @@ void wayfire_view_t::commit()
     /* configure frame_interior */
     if (decoration)
     {
-        auto decor = std::dynamic_pointer_cast<wayfire_xdg6_decoration_view> (decoration);
-        assert(decor);
-        decor->child_configured(geometry);
+        auto xdg_decor = std::dynamic_pointer_cast<wayfire_xdg_decoration_view> (decoration);
+        if (xdg_decor)
+        {
+            xdg_decor->child_configured(geometry);
+        } else
+        {
+            auto xdg6_decor = std::dynamic_pointer_cast<wayfire_xdg6_decoration_view> (decoration);
+            assert(xdg6_decor);
+
+            xdg6_decor->child_configured(geometry);
+        }
     }
 }
 
@@ -537,13 +546,22 @@ void wayfire_view_t::set_decoration(wayfire_view decor,
 {
     if (decor)
     {
-        auto raw_ptr = dynamic_cast<wayfire_xdg6_decoration_view*> (decor.get());
-        assert(raw_ptr);
-
         if (output)
             output->detach_view(self());
 
-        raw_ptr->init(self(), std::move(frame));
+        /* TODO: drop support for xdg-shell-v6 decorations as soon as
+         * xdg-shell stable gets a bit more widely supported */
+        auto xdg_decor = dynamic_cast<wayfire_xdg_decoration_view*> (decor.get());
+        if (xdg_decor)
+        {
+            xdg_decor->init(self(), std::move(frame));
+        } else
+        {
+            auto xdg6_decor = dynamic_cast<wayfire_xdg6_decoration_view*> (decor.get());
+            assert(xdg6_decor);
+
+            xdg6_decor->init(self(), std::move(frame));
+        }
     }
 
     decoration = decor;
@@ -569,7 +587,8 @@ wayfire_view_t::~wayfire_view_t()
 decorator_base_t *wf_decorator;
 void init_desktop_apis()
 {
+    init_xdg_shell();
+    init_layer_shell();
     init_xdg_shell_v6();
     init_xwayland();
-    init_layer_shell();
 }

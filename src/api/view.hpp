@@ -133,7 +133,9 @@ class wayfire_surface_t
 /* Represents a desktop window (not as X11 window, but like a xdg_toplevel surface) */
 class wayfire_view_t : public wayfire_surface_t
 {
+    friend class wayfire_xdg_decoration_view;
     friend class wayfire_xdg6_decoration_view;
+
     friend void surface_destroyed_cb(wl_listener*, void *data);
 
     protected:

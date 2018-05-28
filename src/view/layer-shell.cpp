@@ -387,5 +387,6 @@ void init_layer_shell()
     layer_shell_handle = wlr_layer_shell_create(core->display);
     layer_surface_created.notify = handle_layer_surface_created;
 
-    wl_signal_add(&layer_shell_handle->events.new_surface, &layer_surface_created);
+    if (layer_shell_handle)
+        wl_signal_add(&layer_shell_handle->events.new_surface, &layer_surface_created);
 }

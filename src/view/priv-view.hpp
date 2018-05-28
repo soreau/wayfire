@@ -9,6 +9,7 @@ void emit_view_map(wayfire_view view);
 void emit_view_unmap(wayfire_view view);
 
 void init_xdg_shell_v6();
+void init_xdg_shell();
 void init_xwayland();
 void init_layer_shell();
 

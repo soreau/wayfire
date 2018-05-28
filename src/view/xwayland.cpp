@@ -377,15 +377,18 @@ void init_xwayland()
 {
     xwayland_created.notify = notify_xwayland_created;
     xwayland_handle = wlr_xwayland_create(core->display, core->compositor, false);
-    wl_signal_add(&xwayland_handle->events.new_surface, &xwayland_created);
+
+    if (xwayland_handle)
+        wl_signal_add(&xwayland_handle->events.new_surface, &xwayland_created);
 }
 
 void xwayland_set_seat(wlr_seat *seat)
 {
-    wlr_xwayland_set_seat(xwayland_handle, core->get_current_seat());
+    if (xwayland_handle)
+        wlr_xwayland_set_seat(xwayland_handle, core->get_current_seat());
 }
 
 std::string xwayland_get_display()
 {
-    return std::to_string(xwayland_handle->display);
+    return std::to_string(xwayland_handle ? xwayland_handle->display : -1);
 }
