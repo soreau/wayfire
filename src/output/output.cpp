@@ -168,6 +168,8 @@ wayfire_output::wayfire_output(wlr_output *handle, wayfire_config *c)
     wlr_output_set_transform(handle,
                              get_transform_from_string(section->get_string("transform", "normal")));
 
+    set_initial_mode(c);
+
     auto requested_layout = section->get_string("layout", "");
     auto pos = parse_output_layout(requested_layout);
     if (pos.second)
