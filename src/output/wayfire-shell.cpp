@@ -4,6 +4,9 @@
 #include "workspace-manager.hpp"
 #include "wayfire-shell.hpp"
 
+/* TODO: follow the example of wf-output-config, possibly even let plugins be
+ * loaded globally and then added per-output */
+
 wayfire_output* wl_output_to_wayfire_output(uint32_t output)
 {
     if (output == (uint32_t) -1)
@@ -17,7 +20,6 @@ wayfire_output* wl_output_to_wayfire_output(uint32_t output)
 
     return result;
 }
-
 
 static void shell_add_background(struct wl_client *client, struct wl_resource *resource,
         uint32_t output, struct wl_resource *surface, int32_t x, int32_t y)

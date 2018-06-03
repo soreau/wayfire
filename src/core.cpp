@@ -24,6 +24,7 @@ extern "C"
 }
 
 #include "output/wayfire-shell.hpp"
+#include "output/wf-output-config.hpp"
 #include "core.hpp"
 #include "output.hpp"
 #include "view.hpp"
@@ -1397,6 +1398,7 @@ void wayfire_core::init(wayfire_config *conf)
         log_error("Failed to create wayfire_shell interface");
     }
 
+    wf_output_manager_create();
 }
 
 bool wayfire_core::set_decorator(decorator_base_t *decor)

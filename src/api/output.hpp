@@ -64,6 +64,8 @@ class wayfire_output
        /* return true if mode switch has succeeded */
        bool set_mode(uint32_t width, uint32_t height, uint32_t refresh_mHz);
 
+       void set_scale(double scale);
+
        /* makes sure that the pointer is inside the output's geometry */
        void ensure_pointer();
 
