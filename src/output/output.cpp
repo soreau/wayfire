@@ -89,53 +89,57 @@ std::pair<wf_point, bool> parse_output_layout(std::string layout)
     return {pos, read == 2};
 }
 
-wlr_output_mode *find_matching_mode(wlr_output *output, wlr_output_mode target)
+wlr_output_mode *find_matching_mode(wlr_output *output, int32_t w, int32_t h, int32_t rr)
 {
     wlr_output_mode *mode;
     wl_list_for_each(mode, &output->modes, link)
     {
-        if (mode->width == target.width && mode->height == target.height &&
-            mode->refresh == target.refresh)
+        if (mode->width == w && mode->height == h && mode->refresh == rr)
             return mode;
     }
 
     return NULL;
 }
 
-wayfire_output::wayfire_output(wlr_output *handle, wayfire_config *c)
+bool wayfire_output::set_mode(uint32_t width, uint32_t height, uint32_t refresh_mHz)
 {
-    this->handle = handle;
-    auto section = c->get_section(handle->name);
+    auto built_in = find_matching_mode(handle, width, height, refresh_mHz);
+    if (built_in)
+    {
+        wlr_output_set_mode(handle, built_in);
+        return true;
+    } else
+    {
+        log_info("Couldn't find matching mode %dx%d@%f for output %s."
+                 "Trying to use custom mode (might not work).",
+                 width, height, refresh_mHz / 1000.0,
+                 handle->name);
 
+        return wlr_output_set_custom_mode(handle, width, height, refresh_mHz);
+    }
 
-    bool has_mode_set = false;
+    emit_signal("mode-changed", nullptr);
+}
+
+void wayfire_output::set_initial_mode(wayfire_config *config)
+{
+    auto section = config->get_section(handle->name);
     const auto default_mode = "default";
     auto mode = section->get_string("mode", default_mode);
 
+    bool has_mode_set = false;
     /* check whether we can use the custom mode requested by the user */
     if (mode != default_mode)
     {
         auto target = parse_output_mode(mode);
         if (!target.second)
         {
-            log_error ("Invalid mode string for output %s", handle->name);
+            log_error ("Invalid mode config for output %s", handle->name);
         } else
         {
-            auto built_in = find_matching_mode(handle, target.first);
-            if (built_in)
-            {
-                wlr_output_set_mode(handle, built_in);
-                has_mode_set = true;
-            } else
-            {
-                log_info("Couldn't find matching mode %dx%d@%d for output %s."
-                         "Trying to use custom mode (might not work).",
-                         target.first.width, target.first.height, target.first.refresh / 1000,
-                         handle->name);
-
-                has_mode_set = wlr_output_set_custom_mode(handle, target.first.width, target.first.height,
-                                                          target.first.refresh);
-            }
+            has_mode_set = set_mode(target.first.width,
+                                    target.first.height,
+                                    target.first.refresh);
         }
     }
 
@@ -147,11 +151,17 @@ wayfire_output::wayfire_output(wlr_output *handle, wayfire_config *c)
         wlr_output_set_mode(handle, mode);
 
         has_mode_set = true;
+        emit_signal("mode-changed", nullptr);
     }
 
     if (!has_mode_set)
         log_error ("Couldn't set mode for output %s", handle->name);
+}
 
+wayfire_output::wayfire_output(wlr_output *handle, wayfire_config *c)
+{
+    this->handle = handle;
+    auto section = c->get_section(handle->name);
     render = new render_manager(this);
 
     wlr_output_set_scale(handle, section->get_double("scale", 1));

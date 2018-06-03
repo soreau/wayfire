@@ -39,6 +39,8 @@ class wayfire_output
        wl_listener destroy_listener;
        signal_callback_t unmap_view_cb;
 
+       void set_initial_mode(wayfire_config *config);
+
     public:
        int id;
        wlr_output* handle;
@@ -58,6 +60,9 @@ class wayfire_output
 
        void set_transform(wl_output_transform new_transform);
        wl_output_transform get_transform();
+
+       /* return true if mode switch has succeeded */
+       bool set_mode(uint32_t width, uint32_t height, uint32_t refresh_mHz);
 
        /* makes sure that the pointer is inside the output's geometry */
        void ensure_pointer();
