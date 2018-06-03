@@ -1,4 +1,4 @@
-wayfire_sources = ['main.cpp',   'core.cpp', 'output.cpp', 'opengl.cpp',
+wayfire_sources = ['main.cpp',   'core.cpp', 'opengl.cpp',
                    'plugin.cpp', 'wm.cpp',
                    'view/surface.cpp',
                    'view/view.cpp',
@@ -7,7 +7,11 @@ wayfire_sources = ['main.cpp',   'core.cpp', 'output.cpp', 'opengl.cpp',
                    'view/xdg-shell.cpp',
                    'view/xwayland.cpp',
                    'view/layer-shell.cpp',
-                   'view/view-3d.cpp']
+                   'view/view-3d.cpp',
+                   'output/plugin-loader.cpp',
+                   'output/output.cpp',
+                   'output/render-manager.cpp',
+                   'output/wayfire-shell.cpp']
 
 wayfire_dependencies = [wayland_server, wlroots, xkbcommon, libinput,
                        pixman, egl, libevdev, glesv2, glm, wf_protos,

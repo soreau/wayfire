@@ -106,5 +106,4 @@ class wayfire_output
        int add_gesture(const wayfire_touch_gesture& gesture, touch_gesture_callback* callback);
        void rem_gesture(int id);
 };
-extern const struct wayfire_shell_interface shell_interface_impl;
 #endif /* end of include guard: OUTPUT_HPP */

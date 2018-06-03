@@ -23,6 +23,7 @@ extern "C"
 #include <wlr/types/wlr_seat.h>
 }
 
+#include "output/wayfire-shell.hpp"
 #include "core.hpp"
 #include "output.hpp"
 #include "view.hpp"
@@ -1333,10 +1334,7 @@ void wayfire_core::configure(wayfire_config *config)
     vheight = section->get_int("vheight", 3);
 
     shadersrc   = section->get_string("shadersrc", INSTALL_PREFIX "/share/wayfire/shaders");
-    plugin_path = section->get_string("plugin_path_prefix", INSTALL_PREFIX "/lib/");
-    plugins     = section->get_string("plugins", "viewport_impl move resize animation switcher vswitch cube expo command grid");
     run_panel   = section->get_int("run_panel", 1);
-
 }
 
 void finish_wf_shell_bind_cb(void *data)

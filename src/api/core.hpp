@@ -127,7 +127,7 @@ class wayfire_core
 
         int vwidth, vheight;
 
-        std::string shadersrc, plugin_path, plugins;
+        std::string shadersrc;
         bool run_panel;
 };
 
