@@ -1,0 +1,30 @@
+<protocol name="zwf_output_management">
+    <interface name="zwf_output_v1" version="1">
+
+        <request name="set_position">
+            <arg name="x" type="int"/>
+            <arg name="y" type="int"/>
+        </request>
+
+        <request name="set_mode">
+            <arg name="width" type="int"/>
+            <arg name="height" type="int"/>
+            <arg name="refresh" type="int"/>
+        </request>
+
+        <request name="set_transform">
+            <arg name="transform" type="uint" summary="same as wl_output::transform"/>
+        </request>
+
+        <request name="set_scale">
+            <arg name="scale" type="fixed"/>
+        </request>
+    </interface>
+
+    <interface name="zwf_output_manager_v1" version="1">
+        <request name="get_wf_output">
+            <arg name="id" type="new_id" interface="zwf_output_v1"/>
+            <arg name="output" type="object" interface="wl_output"/>
+        </request>
+    </interface>
+</protocol>
