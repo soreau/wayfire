@@ -51,7 +51,7 @@ static wl_output_transform get_transform_from_string(std::string transform)
     else if (transform == "180")
         return WL_OUTPUT_TRANSFORM_180;
     else if (transform == "270")
-        return WL_OUTPUT_TRANSFORM_180;
+        return WL_OUTPUT_TRANSFORM_270;
     else if (transform == "flipped")
         return WL_OUTPUT_TRANSFORM_FLIPPED;
     else if (transform == "180_flipped")

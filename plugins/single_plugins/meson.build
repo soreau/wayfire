@@ -12,3 +12,4 @@ oswitch       = shared_module('oswitch',       'oswitch.cpp',       include_dire
 rotator       = shared_module('rotator',       'rotator.cpp',       include_directories: [wayfire_api_inc, wayfire_conf_inc], dependencies: [wlroots, pixman, wfconfig], install: true, install_dir: 'lib/wayfire/')
 apps_logger   = shared_module('apps-logger',   'apps-logger.cpp',   include_directories: [wayfire_api_inc, wayfire_conf_inc], dependencies: [wlroots, pixman, wfconfig], install: true, install_dir: 'lib/wayfire/')
 window_rules  = shared_module('window-rules',  'window-rules.cpp',  include_directories: [wayfire_api_inc, wayfire_conf_inc], dependencies: [wlroots, pixman, wfconfig], install: true, install_dir: 'lib/wayfire/')
+center_view  =  shared_module('center-view',   'center-view.cpp',   include_directories: [wayfire_api_inc, wayfire_conf_inc], dependencies: [wlroots, pixman, wfconfig], install: true, install_dir: 'lib/wayfire/')
