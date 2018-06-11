@@ -122,3 +122,14 @@ wlr_box get_scissor_box(wayfire_output *output, wlr_box *box)
     wlr_box_transform(box, transform, ow, oh, &result);
     return result;
 }
+
+wlr_box wlr_box_from_pixman_box(const pixman_box32_t& box)
+{
+    wlr_box d;
+    d.x = box.x1;
+    d.y = box.y1;
+    d.width = box.x2 - box.x1;
+    d.height = box.y2 - box.y1;
+
+    return d;
+}

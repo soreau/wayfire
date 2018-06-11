@@ -16,6 +16,8 @@ extern "C"
 #include <wlr/util/region.h>
 }
 
+#include "view/priv-view.hpp"
+
 struct wf_output_damage
 {
     pixman_region32_t frame_damage;
@@ -644,6 +646,18 @@ void render_manager::workspace_stream_update(wf_workspace_stream *stream,
     std::swap(wayfire_view_transform::global_translate, translate);
     */
 
+    int n_rect;
+    auto rects = pixman_region32_rectangles(&ws_damage, &n_rect);
+    GL_CALL(glClearColor(0, 0, 0, 0));
+    GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, stream->fbuff));
+    for (int i = 0;i < n_rect; i++)
+    {
+        wlr_box damage = wlr_box_from_pixman_box(rects[i]);
+        auto box = get_scissor_box(output, &damage);
+
+        wlr_renderer_scissor(core->renderer, &box);
+        GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    }
 
     auto rev_it = to_render.rbegin();
     while(rev_it != to_render.rend())

@@ -369,12 +369,7 @@ void wayfire_surface_t::render_pixman(int x, int y, pixman_region32_t *damage)
 
     for (int i = 0; i < n_rect; i++)
     {
-        wlr_box d;
-        d.x = rects[i].x1;
-        d.y = rects[i].y1;
-        d.width = rects[i].x2 - rects[i].x1;
-        d.height = rects[i].y2 - rects[i].y1;
-
+        wlr_box d = wlr_box_from_pixman_box(rects[i]);
         render(x, y, &d);
     }
 }
@@ -387,5 +382,4 @@ void wayfire_surface_t::render_fb(int x, int y, pixman_region32_t *damage, int f
     GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fb));
     render_pixman(x, y, damage);
 }
-
 
