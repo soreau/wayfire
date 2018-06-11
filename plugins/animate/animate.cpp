@@ -149,10 +149,6 @@ class wayfire_animation : public wayfire_plugin_t {
         auto view = get_signaled_view(ddata);
         assert(view);
 
-        /* TODO: check if this is really needed */
-        if (view->role == WF_VIEW_ROLE_SHELL_VIEW)
-            return;
-
         if (close_animation->as_string() != "none")
             view->inc_keep_count();
 
@@ -169,9 +165,6 @@ class wayfire_animation : public wayfire_plugin_t {
     void view_unmapped(signal_data *data)
     {
         auto view = get_signaled_view(data);
-
-        if (view->role == WF_VIEW_ROLE_SHELL_VIEW)
-            return;
 
         if (close_animation->as_string() == "fade")
             new animation_hook<fade_animation, true> (view, duration);
