@@ -80,23 +80,26 @@ class wayfire_background
     {
         this->image = image;
         this->output = output;
-
         output->resized_callback = [=] (wayfire_output *output, int w, int h)
         { resize(w, h); };
 
         output->destroyed_callback = [=] (wayfire_output* output)
         { delete this; };
+
+        zwf_output_v1_inhibit_output(output->zwf);
     }
 
     void resize(int w, int h)
     {
-        zwf_output_v1_inhibit_output(output->zwf);
-
         if (!img_surface)
             img_surface = create_cairo_surface_from_file(image, w, h);
 
         if (window)
+        {
+            /* the first inhibit was called in the constructor */
+            zwf_output_v1_inhibit_output(output->zwf);
             delete window;
+        }
 
         window = output->create_window(w, h, [=] () { init_background(w, h); });
     }

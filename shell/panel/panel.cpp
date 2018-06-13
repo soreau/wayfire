@@ -81,14 +81,12 @@ void wayfire_panel::init(int w, int h)
     width = w * output->scale;
     height = 1.3 * widget::font_size;
 
-    std::cout << "configured: " << width << " " << height << std::endl;
-
+    zwf_output_v1_inhibit_output(output->zwf);
     if (window)
         destroy();
 
-    zwf_output_v1_inhibit_output(output->zwf);
     window = output->create_window(width, height, [=] ()
-    {
+                                   {
         configure();
     });
 }
