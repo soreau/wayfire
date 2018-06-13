@@ -100,6 +100,20 @@ wlr_renderer *add_egl_depth_renderer(wlr_egl *egl, EGLenum platform,
     return renderer;
 }
 
+extern "C"
+{
+    void __cyg_profile_func_enter (void *this_fn,
+                               void *call_site)
+    {
+        fprintf(stderr, "profile enter %p", call_site);
+    }
+void __cyg_profile_func_exit  (void *this_fn,
+                               void *call_site)
+{
+        fprintf(stderr, "profile exit %p", call_site);
+}
+}
+
 int main(int argc, char *argv[])
 {
     /*

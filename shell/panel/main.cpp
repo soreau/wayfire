@@ -1,5 +1,4 @@
 #include "panel.hpp"
-#include "gamma.hpp"
 #include "config.hpp"
 #include <vector>
 #include <map>
@@ -8,7 +7,6 @@
 
 struct wayfire_shell_output {
     wayfire_panel* panel;
-    gamma_adjust *gamma;
 };
 
 wayfire_config *config;

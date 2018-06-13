@@ -67,31 +67,46 @@ static cairo_surface_t *create_cairo_surface_from_file(std::string name, int w, 
 
 class wayfire_background
 {
-    uint32_t output;
-    bool sent_fade = false;
     std::string image;
 
     cairo_surface_t *img_surface = NULL;
     cairo_t *cr;
 
-    wayfire_window *window;
+    wayfire_output *output;
+    wayfire_window *window = nullptr;
 
     public:
-    wayfire_background(std::string image, uint32_t output, uint32_t w, uint32_t h)
+    wayfire_background(wayfire_output *output, std::string image)
     {
         this->image = image;
-
-        w *= display.scale;
-        h *= display.scale;
         this->output = output;
 
-        window = create_window(w, h, [=] () { create_background(w, h); });
+        output->resized_callback = [=] (wayfire_output *output, int w, int h)
+        { resize(w, h); };
+
+        output->destroyed_callback = [=] (wayfire_output* output)
+        { delete this; };
     }
 
-    void create_background(uint32_t w, uint32_t h)
+    void resize(int w, int h)
     {
-        window->set_scale(display.scale);
-        wayfire_shell_add_background(display.wfshell, output, window->surface, 0, 0);
+        zwf_output_v1_inhibit_output(output->zwf);
+
+        if (!img_surface)
+            img_surface = create_cairo_surface_from_file(image, w, h);
+
+        if (window)
+            delete window;
+
+        window = output->create_window(w, h, [=] () { init_background(w, h); });
+    }
+
+    void init_background(int width, int height)
+    {
+        std::cout << output->zwf << " " << window->surface << " " << ZWF_OUTPUT_V1_WM_ROLE_BACKGROUND << std::endl;
+        window->zwf = zwf_output_v1_get_wm_surface(output->zwf, window->surface,
+                                                   ZWF_OUTPUT_V1_WM_ROLE_BACKGROUND);
+        zwf_wm_surface_v1_configure(window->zwf, 0, 0);
 
         using namespace std::placeholders;
         window->pointer_enter = std::bind(std::mem_fn(&wayfire_background::on_enter),
@@ -99,49 +114,31 @@ class wayfire_background
 
         cr = cairo_create(window->cairo_surface);
 
-        if (!img_surface)
-            img_surface = create_cairo_surface_from_file(image, w, h);
-
-        set_active_window(window);
-
         double img_w = cairo_image_surface_get_width(img_surface);
         double img_h = cairo_image_surface_get_height(img_surface);
 
-        cairo_rectangle(cr, 0, 0, w, h);
-        cairo_scale(cr, w / img_w, h / img_h);
+        cairo_rectangle(cr, 0, 0, width, height);
+        cairo_scale(cr, width / img_w, height / img_h);
         cairo_set_source_surface(cr, img_surface, 0, 0);
         cairo_fill(cr);
 
-        damage_commit_window(window);
-
-        if (!sent_fade)
-        {
-            wayfire_shell_output_fade_in_start(display.wfshell, output);
-            sent_fade = 1;
-        }
-    }
-
-    void resize(uint32_t w, uint32_t h)
-    {
-        cairo_destroy(cr);
-        delete_window(window);
-
-        w *= display.scale;
-        h *= display.scale;
-
-        window = create_window(w, h, [=] () { create_background(w, h); });
+        window->damage_commit();
+        zwf_output_v1_inhibit_output_done(output->zwf);
     }
 
     void on_enter(wl_pointer *ptr, uint32_t serial, int x, int y)
     {
-        show_default_cursor(serial);
+        output->display->show_default_cursor(serial);
     }
 
     ~wayfire_background()
     {
+        std::cout << "destroy background" << std::endl;
         cairo_destroy(cr);
         cairo_surface_destroy(img_surface);
-        delete_window(window);
+
+        if (window)
+            delete window;
     }
 };
 
@@ -149,46 +146,6 @@ wayfire_config *config;
 std::map<uint32_t, std::unique_ptr<wayfire_background>> outputs;
 
 std::string bg_path;
-
-void output_created_cb(void *data, wayfire_shell *wayfire_shell,
-        uint32_t output, uint32_t width, uint32_t height)
-{
-
-    outputs[output] = std::unique_ptr<wayfire_background> (new wayfire_background(bg_path, output, width, height));
-}
-
-void output_resized_cb(void *data, wayfire_shell *wayfire_shell,
-        uint32_t output, uint32_t width, uint32_t height)
-{
-    auto it = outputs.find(output);
-    if (it == outputs.end() || !it->second)
-        return;
-
-    it->second->resize(width, height);
-}
-
-void output_destroyed_cb(void *data, wayfire_shell *wayfire_shell, uint32_t output)
-{
-    auto it = outputs.find(output);
-
-    if (it == outputs.end())
-        return;
-
-    if (it->second)
-        delete it->second.release();
-    outputs.erase(it);
-}
-
-void output_autohide_panels_cb(void *data, wayfire_shell *wayfire_shell, uint32_t output, uint32_t autohide) { }
-void output_gamma_size_cb(void *data, wayfire_shell *shell, uint32_t output, uint32_t size) { }
-
-static const struct wayfire_shell_listener bg_shell_listener = {
-    .output_created = output_created_cb,
-    .output_resized = output_resized_cb,
-    .output_destroyed = output_destroyed_cb,
-    .output_autohide_panels = output_autohide_panels_cb,
-    .gamma_size = output_gamma_size_cb,
-};
 
 /* TODO: share option parsing between panel and background */
 int main(int argc, char *argv[])
@@ -219,22 +176,17 @@ int main(int argc, char *argv[])
 
     bg_path = section->get_option("background", "none")->as_string();
 
-    if (!setup_wayland_connection())
-        return -1;
-
-    wayfire_shell_add_listener(display.wfshell, &bg_shell_listener, 0);
+    auto display = new wayfire_display([=] (wayfire_output *output)
+    {
+        new wayfire_background(output, bg_path);
+    });
 
     while(true)
     {
-        if (wl_display_dispatch(display.wl_disp) < 0)
+        if (wl_display_dispatch(display->display) < 0)
             break;
     }
 
-    for (auto& x : outputs)
-    {
-        if (x.second)
-            delete x.second.release();
-    }
-
-    finish_wayland_connection();
+    delete display;
+    return 0;
 }

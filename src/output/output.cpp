@@ -270,12 +270,6 @@ void wayfire_output::set_transform(wl_output_transform new_tr)
 {
     wlr_output_set_transform(handle, new_tr);
 
-    render->damage(NULL);
-
-    GetTuple(new_w, new_h, get_screen_size());
-    for (auto resource : core->shell_clients)
-        wayfire_shell_send_output_resized(resource, id, new_w, new_h);
-
     emit_signal("output-resized", nullptr);
     emit_signal("transform-changed", nullptr);
 }

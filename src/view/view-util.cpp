@@ -6,6 +6,10 @@
 extern "C"
 {
 #include <wlr/types/wlr_xdg_shell_v6.h>
+#define namespace namespace_t
+#include <wlr/types/wlr_layer_shell.h>
+#undef namespace
+#include <wlr/types/wlr_xdg_shell.h>
 #define class class_t
 #define static
 #include <wlr/xwayland.h>
@@ -103,6 +107,12 @@ wayfire_view wl_surface_to_wayfire_view(wl_resource *resource)
 
     if (wlr_surface_is_xdg_surface_v6(surface))
         handle = wlr_xdg_surface_v6_from_wlr_surface(surface)->data;
+
+    if (wlr_surface_is_xdg_surface(surface))
+        handle = wlr_xdg_surface_from_wlr_surface(surface)->data;
+
+    if (wlr_surface_is_layer_surface(surface))
+        handle = wlr_layer_surface_from_wlr_surface(surface)->data;
 
     if (wlr_surface_is_xwayland_surface(surface))
         handle = wlr_xwayland_surface_from_wlr_surface(surface)->data;

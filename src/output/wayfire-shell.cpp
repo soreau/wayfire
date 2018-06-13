@@ -3,111 +3,186 @@
 #include "debug.hpp"
 #include "workspace-manager.hpp"
 #include "wayfire-shell.hpp"
+#include "wayfire-shell-protocol.h"
 
-wayfire_output* wl_output_to_wayfire_output(uint32_t output)
+struct wayfire_shell_output
 {
-    if (output == (uint32_t) -1)
-        return core->get_active_output();
+    std::vector<wl_resource*> resources;
+};
 
-    wayfire_output *result = nullptr;
-    core->for_each_output([output, &result] (wayfire_output *wo) {
-        if (wo->id == (int)output)
-            result = wo;
-    });
-
-    return result;
-}
-
-
-static void shell_add_background(struct wl_client *client, struct wl_resource *resource,
-        uint32_t output, struct wl_resource *surface, int32_t x, int32_t y)
+struct wayfire_shell_client
 {
-    auto view = wl_surface_to_wayfire_view(surface);
-    auto wo = wl_output_to_wayfire_output(output);
-    if (!wo) wo = view ? view->get_output() : nullptr;
+    wl_client *client;
+    wl_resource *shell_resource;
 
-    if (!wo || !view)
-    {
-        log_error("shell_add_background called with invalid surface or output %p %p", wo, view.get());
-        return;
-    }
+    std::map<wayfire_output*, wayfire_shell_output> output_resources;
+};
 
-    log_debug("wf_shell: add_background to %s", wo->handle->name);
+static struct wayfire_shell
+{
+    std::map<wl_client*, wayfire_shell_client> clients;
+} shell;
 
-    view->role = WF_VIEW_ROLE_SHELL_VIEW;
-    view->get_output()->detach_view(view);
-    view->set_output(wo);
+
+static void zwf_wm_surface_configure(struct wl_client *client,
+                                     struct wl_resource *resource,
+                                     int32_t x, int32_t y)
+{
+    auto view = (wayfire_view_t*) wl_resource_get_user_data(resource);
     view->move(x, y);
 
-    wo->workspace->add_view_to_layer(view, WF_LAYER_BACKGROUND);
+    log_info("configure surface");
 }
 
-static void shell_add_panel(struct wl_client *client, struct wl_resource *resource,
-        uint32_t output, struct wl_resource *surface)
+static void zwf_wm_surface_set_exclusive_zone(struct wl_client *client,
+                                              struct wl_resource *resource,
+                                              uint32_t anchor_edge, uint32_t size)
 {
-    auto view = wl_surface_to_wayfire_view(surface);
-    auto wo = wl_output_to_wayfire_output(output);
-    if (!wo) wo = view ? view->get_output() : nullptr;
-
-
-    if (!wo || !view) {
-        log_error("shell_add_panel called with invalid surface or output");
-        return;
-    }
-
-    log_debug("wf_shell: add_panel");
-
-    view->role = WF_VIEW_ROLE_SHELL_VIEW;
-    view->get_output()->detach_view(view);
-    view->set_output(wo);
-
-    wo->workspace->add_view_to_layer(view, WF_LAYER_TOP);
+    log_info("set exclusive zone");
 }
 
-static void shell_configure_panel(struct wl_client *client, struct wl_resource *resource,
-        uint32_t output, struct wl_resource *surface, int32_t x, int32_t y)
+static void zwf_wm_surface_request_focus(struct wl_client *client,
+                                         struct wl_resource *resource)
 {
-    auto view = wl_surface_to_wayfire_view(surface);
-    auto wo = wl_output_to_wayfire_output(output);
-    if (!wo) wo = view ? view->get_output() : nullptr;
-
-    if (!wo || !view) {
-        log_error("shell_configure_panel called with invalid surface or output");
-        return;
-    }
-
-    view->move(x, y);
-}
-
-static void shell_focus_panel(struct wl_client *client, struct wl_resource *resource,
-        uint32_t output, struct wl_resource *surface)
-{
-    auto view = wl_surface_to_wayfire_view(surface);
-    auto wo = wl_output_to_wayfire_output(output);
-    if (!wo) wo = view ? view->get_output() : nullptr;
-
-    if (!wo || !view) {
-        log_error("shell_focus_panel called with invalid surface or output");
-        return;
-    }
-
+    log_info("request focus");
+    /*
     if (wo == view->get_output())
         wo->focus_view(view);
+        */
+
 }
 
-static void shell_return_focus(struct wl_client *client, struct wl_resource *resource,
-        uint32_t output)
+static void zwf_wm_surface_return_focus(struct wl_client *client,
+                                         struct wl_resource *resource)
 {
-    auto wo = wl_output_to_wayfire_output(output);
+    /*
+    if (wo == core->get_active_output())
+        wo->focus_view(wo->get_top_view());
+        */
 
-    if (!wo) {
-        log_error("shell_return_focus called with invalid surface or output");
+    log_info("return focus");
+}
+
+const struct zwf_wm_surface_v1_interface zwf_wm_surface_v1_implementation = {
+    zwf_wm_surface_configure,
+    zwf_wm_surface_set_exclusive_zone,
+    zwf_wm_surface_request_focus,
+    zwf_wm_surface_return_focus
+};
+
+static void zwf_output_get_wm_surface(struct wl_client *client,
+                                      struct wl_resource *resource,
+                                      struct wl_resource *surface,
+                                      uint32_t role, uint32_t id)
+{
+    log_info("requested get_wm_surface");
+    auto wo = (wayfire_output*)wl_resource_get_user_data(resource);
+    auto view = wl_surface_to_wayfire_view(surface);
+
+    if (!view)
+    {
+        log_error ("wayfire_shell: get_wm_surface() for invalid surface!");
         return;
     }
 
-    if (wo == core->get_active_output())
-        wo->focus_view(wo->get_top_view());
+    auto wfo = wl_resource_create(client, &zwf_wm_surface_v1_interface, 1, id);
+    wl_resource_set_implementation(wfo, &zwf_wm_surface_v1_implementation, view.get(), NULL);
+
+    view->role = WF_VIEW_ROLE_SHELL_VIEW;
+    view->get_output()->detach_view(view);
+    view->set_output(wo);
+
+    uint32_t layer = 0;
+    switch(role)
+    {
+        case ZWF_OUTPUT_V1_WM_ROLE_BACKGROUND:
+            layer = WF_LAYER_BACKGROUND;
+            break;
+        case ZWF_OUTPUT_V1_WM_ROLE_BOTTOM:
+            layer = WF_LAYER_BOTTOM;
+            break;
+        case ZWF_OUTPUT_V1_WM_ROLE_PANEL:
+            layer = WF_LAYER_TOP;
+            break;
+        case ZWF_OUTPUT_V1_WM_ROLE_OVERLAY:
+            layer = WF_LAYER_LOCK;
+            break;
+
+        default:
+            log_error ("Invalid role for shell view");
+    }
+
+    wo->workspace->add_view_to_layer(view, layer);
 }
+
+static void zwf_output_inhibit_output(struct wl_client *client,
+                                      struct wl_resource *resource)
+{
+    /* TODO: implement */
+}
+
+static void zwf_output_inhibit_output_done(struct wl_client *client,
+                                           struct wl_resource *resource)
+{
+    /* TODO: implement */
+}
+
+const struct zwf_output_v1_interface zwf_output_v1_implementation =
+{
+    zwf_output_get_wm_surface,
+    zwf_output_inhibit_output,
+    zwf_output_inhibit_output_done,
+};
+
+static void destroy_zwf_output(wl_resource *resource)
+{
+    /* TODO: destroy */
+}
+
+void zwf_shell_manager_get_wf_output(struct wl_client *client,
+                                     struct wl_resource *resource,
+                                     struct wl_resource *output,
+                                     uint32_t id)
+{
+    log_info("request get wf output");
+    auto wlr_out = (wlr_output*) wl_resource_get_user_data(output);
+    auto wo = core->get_output(wlr_out);
+
+    log_info("found output %s", wo->handle->name);
+
+    auto wfo = wl_resource_create(client, &zwf_output_v1_interface, 1, id);
+    wl_resource_set_implementation(wfo, &zwf_output_v1_implementation, wo, destroy_zwf_output);
+}
+
+const struct zwf_shell_manager_v1_interface zwf_shell_manager_v1_implementation =
+{
+    zwf_shell_manager_get_wf_output
+};
+
+static void destroy_zwf_shell_manager(wl_resource *resource)
+{
+    //auto client = wl_resource_get_client(resource);
+    /* TODO: destroy from list */
+}
+
+void bind_zwf_shell_manager(wl_client *client, void *data, uint32_t version, uint32_t id)
+{
+    log_info("bind zwf shell manager");
+    auto resource = wl_resource_create(client, &zwf_shell_manager_v1_interface, 1, id);
+    wl_resource_set_implementation(resource, &zwf_shell_manager_v1_implementation, NULL, destroy_zwf_shell_manager);
+}
+
+wayfire_shell* wayfire_shell_create(wl_display *display)
+{
+    if (wl_global_create(display, &zwf_shell_manager_v1_interface,
+                         1, NULL, bind_zwf_shell_manager) == NULL)
+    {
+        log_error("Failed to create wayfire_shell interface");
+    }
+
+    return &shell;
+}
+
 
 struct wf_shell_reserved_custom_data : public wf_custom_view_data
 {
@@ -163,53 +238,6 @@ static void shell_reserve(struct wl_client *client, struct wl_resource *resource
     else
         view->get_output()->workspace->reflow_reserved_areas();
 }
-
-static void shell_set_color_gamma(wl_client *client, wl_resource *res,
-        uint32_t output, wl_array *r, wl_array *g, wl_array *b)
-{
-    /*
-    auto wo = wl_output_to_wayfire_output(output);
-    if (!wo || !wo->handle->set_gamma) {
-        errio << "shell_set_gamma called with invalid/unsupported output" << std::endl;
-        return;
-    }
-
-    size_t size = wo->handle->gamma_size * sizeof(uint16_t);
-    if (r->size != size || b->size != size || g->size != size) {
-        errio << "gamma size is not equal to output's gamma size " << r->size << " " << size << std::endl;
-        return;
-    }
-
-    size /= sizeof(uint16_t);
-#ifndef ushort
-#define ushort unsigned short
-    wo->handle->set_gamma(wo->handle, size, (ushort*)r->data, (ushort*)g->data, (ushort*)b->data);
-#undef ushort
-#endif */
-}
-
-static void shell_output_fade_in_start(wl_client *client, wl_resource *res, uint32_t output)
-{
-    auto wo = wl_output_to_wayfire_output(output);
-    if (!wo)
-    {
-        log_error("output_fade_in_start called for wrong output!");
-        return;
-    }
-
-    wo->emit_signal("output-fade-in-request", nullptr);
-}
-
-const struct wayfire_shell_interface shell_interface_impl = {
-    .add_background = shell_add_background,
-    .add_panel = shell_add_panel,
-    .configure_panel = shell_configure_panel,
-    .focus_panel = shell_focus_panel,
-    .return_focus = shell_return_focus,
-    .reserve = shell_reserve,
-    .set_color_gamma = shell_set_color_gamma,
-    .output_fade_in_start = shell_output_fade_in_start
-};
 
 void wayfire_shell_unmap_view(wayfire_view view)
 {

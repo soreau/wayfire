@@ -1335,39 +1335,6 @@ void wayfire_core::configure(wayfire_config *config)
 
 }
 
-void finish_wf_shell_bind_cb(void *data)
-{
-    auto resource = (wl_resource*) data;
-    core->shell_clients.push_back(resource);
-    core->for_each_output([=] (wayfire_output *out) {
-        GetTuple(sw, sh, out->get_screen_size());
-        wayfire_shell_send_output_created(resource,
-                                          out->id, sw, sh);
-        /*
-        if (out->handle->set_gamma) {
-            wayfire_shell_send_gamma_size(resource,
-                    out->handle->id, out->handle->gamma_size);
-        } */
-    });
-}
-
-void unbind_desktop_shell(wl_resource *resource)
-{
-    auto it = std::find(core->shell_clients.begin(), core->shell_clients.end(),
-                        resource);
-    core->shell_clients.erase(it);
-}
-
-void bind_desktop_shell(wl_client *client, void *data, uint32_t version, uint32_t id)
-{
-    auto resource = wl_resource_create(client, &wayfire_shell_interface, 1, id);
-    wl_resource_set_implementation(resource, &shell_interface_impl,
-            NULL, unbind_desktop_shell);
-
-    auto loop = wl_display_get_event_loop(core->display);
-    wl_event_loop_add_idle(loop, finish_wf_shell_bind_cb, resource);
-}
-
 static void handle_output_layout_changed(wl_listener*, void *)
 {
     core->for_each_output([] (wayfire_output *wo)
@@ -1396,16 +1363,11 @@ void wayfire_core::init(wayfire_config *conf)
     protocols.gamma = wlr_gamma_control_manager_create(display);
     protocols.linux_dmabuf = wlr_linux_dmabuf_create(display, renderer);
     protocols.output_manager = wlr_xdg_output_manager_create(display, output_layout);
+    protocols.wf_shell = wayfire_shell_create(display);
 
 #ifdef BUILD_WITH_IMAGEIO
     image_io::init();
 #endif
-
-    if (wl_global_create(display, &wayfire_shell_interface,
-                         1, NULL, bind_desktop_shell) == NULL) {
-        log_error("Failed to create wayfire_shell interface");
-    }
-
 }
 
 bool wayfire_core::set_decorator(decorator_base_t *decor)
@@ -1516,10 +1478,6 @@ void wayfire_core::add_output(wlr_output *output)
     wl_signal_add(&wo->handle->events.destroy, &wo->destroy_listener);
 
     wo->connect_signal("_surface_unmapped", &input->surface_destroyed);
-
-    for (auto resource : shell_clients)
-        wayfire_shell_send_output_created(resource, wo->id,
-                output->width, output->height);
 }
 
 void wayfire_core::remove_output(wayfire_output *output)
@@ -1531,9 +1489,6 @@ void wayfire_core::remove_output(wayfire_output *output)
     /* we have no outputs, simply quit */
     if (outputs.empty())
         std::exit(0);
-
-    for (auto resource : shell_clients)
-        wayfire_shell_send_output_destroyed(resource, output->id);
 
     if (output == active_output)
         focus_output(outputs.begin()->second);
