@@ -1478,6 +1478,7 @@ void wayfire_core::add_output(wlr_output *output)
     wl_signal_add(&wo->handle->events.destroy, &wo->destroy_listener);
 
     wo->connect_signal("_surface_unmapped", &input->surface_destroyed);
+    wayfire_shell_handle_output_created(wo);
 }
 
 void wayfire_core::remove_output(wayfire_output *output)
@@ -1485,6 +1486,7 @@ void wayfire_core::remove_output(wayfire_output *output)
     log_info("removing output: %s", output->handle->name);
 
     outputs.erase(output->handle);
+    wayfire_shell_handle_output_destroyed(output);
 
     /* we have no outputs, simply quit */
     if (outputs.empty())

@@ -32,10 +32,10 @@
         </request>
 
         <enum name="anchor_edge">
-            <entry name="top" value="1"/>
-            <entry name="bottom" value="2"/>
-            <entry name="left" value="3"/>
-            <entry name="right" value="4"/>
+            <entry name="top" value="0"/>
+            <entry name="bottom" value="1"/>
+            <entry name="left" value="2"/>
+            <entry name="right" value="3"/>
         </enum>
 
         <request name="set_exclusive_zone">

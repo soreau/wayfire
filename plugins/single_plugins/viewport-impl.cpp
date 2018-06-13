@@ -9,12 +9,12 @@
 #include <opengl.hpp>
 #include <list>
 #include <algorithm>
-#include "wayfire-shell-protocol.h"
 
 struct wf_default_workspace_implementation : public wf_workspace_implementation
 {
     bool view_movable (wayfire_view view)  { return true; }
     bool view_resizable(wayfire_view view) { return true; }
+    virtual ~wf_default_workspace_implementation() {}
 };
 
 using wf_layer_container = std::list<wayfire_view>;
@@ -492,10 +492,7 @@ void viewport_manager::check_lower_panel_layer(int base)
         if (!sent_autohide)
         {
             sent_autohide = 1;
-
-			// TODO:
-         //   for (auto res : core->shell_clients)
-          //      wayfire_shell_send_output_autohide_panels(res, output->id, 1);
+            output->emit_signal("autohide-panels", reinterpret_cast<signal_data*> (1));
         }
     } else
     {
@@ -505,8 +502,7 @@ void viewport_manager::check_lower_panel_layer(int base)
         if (sent_autohide)
         {
             sent_autohide = 0;
-           // for (auto res : core->shell_clients)
-            //    wayfire_shell_send_output_autohide_panels(res, output->id, 0);
+            output->emit_signal("autohide-panels", reinterpret_cast<signal_data*> (0));
         }
     }
 }
