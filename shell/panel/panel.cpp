@@ -86,6 +86,7 @@ void wayfire_panel::init(int w, int h)
     if (window)
         destroy();
 
+    zwf_output_v1_inhibit_output(output->zwf);
     window = output->create_window(width, height, [=] ()
     {
         configure();
@@ -128,6 +129,7 @@ void wayfire_panel::configure()
     show(0);
 
     render_frame(true);
+    zwf_output_v1_inhibit_output_done(output->zwf);
 }
 
 void wayfire_panel::init_input()
