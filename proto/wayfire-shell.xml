@@ -32,10 +32,10 @@
         </request>
 
         <enum name="anchor_edge">
-            <entry name="top" value="0"/>
-            <entry name="bottom" value="1"/>
-            <entry name="left" value="2"/>
-            <entry name="right" value="3"/>
+            <entry name="top" value="1"/>
+            <entry name="bottom" value="2"/>
+            <entry name="left" value="3"/>
+            <entry name="right" value="4"/>
         </enum>
 
         <request name="set_exclusive_zone">
@@ -65,10 +65,10 @@
         </description>
 
         <enum name="wm_role">
-            <entry name="background" value="0"/>
-            <entry name="bottom" value="1"/>
-            <entry name="panel" value="2"/>
-            <entry name="overlay" value="3"/>
+            <entry name="background" value="1"/>
+            <entry name="bottom" value="2"/>
+            <entry name="panel" value="3"/>
+            <entry name="overlay" value="4"/>
         </enum>
 
         <request name="get_wm_surface">
