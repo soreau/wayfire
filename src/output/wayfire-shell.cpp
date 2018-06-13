@@ -3,6 +3,7 @@
 #include "core.hpp"
 #include "debug.hpp"
 #include "workspace-manager.hpp"
+#include "render-manager.hpp"
 #include "wayfire-shell.hpp"
 #include "wayfire-shell-protocol.h"
 
@@ -152,13 +153,15 @@ static void zwf_output_get_wm_surface(struct wl_client *client,
 static void zwf_output_inhibit_output(struct wl_client *client,
                                       struct wl_resource *resource)
 {
-    /* TODO: implement */
+    auto wo = (wayfire_output*)wl_resource_get_user_data(resource);
+    wo->render->add_inhibit(true);
 }
 
 static void zwf_output_inhibit_output_done(struct wl_client *client,
                                            struct wl_resource *resource)
 {
-    /* TODO: implement */
+    auto wo = (wayfire_output*)wl_resource_get_user_data(resource);
+    wo->render->add_inhibit(false);
 }
 
 const struct zwf_output_v1_interface zwf_output_v1_implementation =

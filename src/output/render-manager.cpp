@@ -193,6 +193,17 @@ void render_manager::auto_redraw(bool redraw)
     schedule_redraw();
 }
 
+void render_manager::add_inhibit(bool add)
+{
+    output_inhibit += add ? 1 : -1;
+
+    if (output_inhibit == 0)
+    {
+        damage(NULL);
+        output->emit_signal("start-rendering", nullptr);
+    }
+}
+
 void render_manager::schedule_redraw()
 {
     if (idle_redraw_source == NULL)
@@ -330,6 +341,14 @@ void render_manager::paint()
     run_effects(effects[WF_OUTPUT_EFFECT_OVERLAY]);
 
     wlr_renderer_scissor(rr, NULL);
+
+    if (output_inhibit)
+    {
+        GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+        GL_CALL(glClearColor(0, 0, 0, 1));
+        GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+    }
+
     wlr_renderer_end(rr);
 
     if (renderer)

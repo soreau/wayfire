@@ -64,6 +64,7 @@ class render_manager
         effect_container_t effects[WF_OUTPUT_EFFECT_TOTAL];
 
         int constant_redraw = 0;
+        int output_inhibit = 0;
         render_hook_t renderer;
 
         void paint();
@@ -90,6 +91,8 @@ class render_manager
         void auto_redraw(bool redraw);
         void schedule_redraw();
         void set_hide_overlay_panels(bool set);
+
+        void add_inhibit(bool add);
 
         void add_effect(effect_hook_t*, wf_output_effect_type type);
         void rem_effect(const effect_hook_t*, wf_output_effect_type type);
