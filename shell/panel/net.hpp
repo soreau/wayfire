@@ -30,7 +30,7 @@ struct network_widget : public widget
     ~network_widget();
     void create();
     int  get_width() { return width; };
-    bool update(bool reset);
+    bool update();
     bool resized();
     void repaint();
 };

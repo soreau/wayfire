@@ -18,6 +18,7 @@ struct widget
 
     /* those are initialized before calling create() */
     cairo_t *cr;
+
     /* leftmost position in panel, panel height, maximum width */
     int x, panel_h, width = 0;
 
@@ -30,7 +31,7 @@ struct widget
     virtual int get_width() = 0;
 
     /* return true if widget has to be painted on this iter */
-    virtual bool update(bool reset = false) = 0;
+    virtual bool update() = 0;
 
     virtual void repaint() = 0;
 
@@ -46,7 +47,7 @@ struct clock_widget : public widget
 
     void create();
     int get_width() { return width; };
-    bool update(bool reset);
+    bool update();
     bool resized();
     void repaint();
 };
@@ -76,7 +77,7 @@ struct battery_widget : public widget
 
     void create();
     int get_width() { return width; };
-    bool update(bool reset);
+    bool update();
     bool resized();
     void repaint();
 };
@@ -93,7 +94,7 @@ struct launchers_widget : public widget
 
     void create();
     int get_width() { return width; };
-    bool update(bool reset);
+    bool update();
     bool resized();
     void repaint();
 

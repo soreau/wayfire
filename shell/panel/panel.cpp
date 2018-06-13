@@ -32,41 +32,35 @@ static void load_misc_config(wayfire_config *config)
     battery_options::text_scale = double(*section->get_option("battery_text_scale", "0.6"));
 }
 
-wayfire_panel::wayfire_panel(wayfire_config *config, uint32_t output, uint32_t w, uint32_t h)
+void zwf_output_hide_panels(void *data,
+                            struct zwf_output_v1 *zwf_output_v1,
+                            uint32_t autohide)
+{
+    auto panel = (wayfire_panel*) data;
+    panel->set_autohide(autohide);
+}
+
+const struct zwf_output_v1_listener zwf_output_impl =
+{
+    zwf_output_hide_panels
+};
+
+wayfire_panel::wayfire_panel(wayfire_config *config, wayfire_output *output)
 {
     this->config = config;
-    load_misc_config(config);
-
-    display.scale = 1;
-    width = w * display.scale;
-    widget::font_size *= display.scale;
-
-    height = 1.3 * widget::font_size;
-
-    std::cout << "configured: " << width << " " << height << std::endl;
-
     this->output = output;
+    load_misc_config(config);
 
     autohide_opt = (*config)["shell_panel"]->get_option("autohide", "1");
     autohide = (bool)autohide_opt->as_int();
 
-    window = create_window(width, height, [=] () {create_panel();});
-    wayfire_shell_add_panel(display.wfshell, output, window->surface);
-}
+    output->resized_callback = [=] (wayfire_output *output, int w, int h)
+    { init(w, h); };
 
-void wayfire_panel::set_autohide(bool ah)
-{
-    autohide += ah ? 1 : -1;
+    output->destroyed_callback = [=] (wayfire_output *output)
+    { delete this; };
 
-    if (autohide == 0)
-    {
-        show(0);
-        on_enter(0);
-    } else if (!count_input)
-    {
-        hide(0);
-        on_leave();
-    }
+    zwf_output_v1_add_listener(output->zwf, &zwf_output_impl, this);
 }
 
 wayfire_panel::~wayfire_panel()
@@ -78,35 +72,84 @@ wayfire_panel::~wayfire_panel()
         delete w;
     }
 
-    delete_window(window);
+    delete window;
 }
 
-void wayfire_panel::create_panel()
+void wayfire_panel::init(int w, int h)
 {
-    setup_window();
+
+    width = w * output->scale;
+    height = 1.3 * widget::font_size;
+
+    std::cout << "configured: " << width << " " << height << std::endl;
+
+    if (window)
+        destroy();
+
+    window = output->create_window(width, height, [=] ()
+    {
+        configure();
+    });
+}
+
+void wayfire_panel::destroy()
+{
+    for_each_widget(w)
+    {
+        cairo_destroy(w->cr);
+        delete w;
+    }
+
+    for (int i = 0; i < 3; i++)
+        widgets[i].clear();
+}
+
+void wayfire_panel::configure()
+{
+    window->zwf = zwf_output_v1_get_wm_surface(output->zwf, window->surface,
+                                               ZWF_OUTPUT_V1_WM_ROLE_PANEL);
+
+    init_input();
     init_widgets();
+
+    cr = cairo_create(window->cairo_surface);
+
+    if (repaint_callback)
+        wl_callback_destroy(repaint_callback);
+    repaint_callback = nullptr;
+
+    if (!autohide)
+        zwf_wm_surface_v1_set_exclusive_zone(window->zwf, ZWF_WM_SURFACE_V1_ANCHOR_EDGE_TOP, height / output->scale);
+
+    zwf_wm_surface_v1_configure(window->zwf, 0, -height);
+
+    state = HIDDEN;
+    animation.y = -height;
+    show(0);
+
     render_frame(true);
 }
 
-int last_x, last_y;
-void wayfire_panel::setup_window()
+void wayfire_panel::init_input()
 {
-
-    window->set_scale(display.scale);
-    cr = cairo_create(window->cairo_surface);
-
-    repaint_callback = nullptr;
-
     using namespace std::placeholders;
     window->pointer_enter = [=] (wl_pointer*, uint32_t time, int, int)
-                                { show(200);
-                                  on_enter(time);
-                                  ++count_input; };
+    {
+        show(200);
+        on_enter(time);
+        ++count_input;
+    };
 
-    window->pointer_leave = [=] () { --count_input;
-                                     if (!count_input)
-                                     { if (autohide) {hide(300);}
-                                         on_leave(); }};
+    window->pointer_leave = [=] ()
+    {
+        --count_input;
+        if (!count_input)
+        {
+            if (autohide)
+                hide(300);
+            on_leave();
+        }
+    };
 
     window->pointer_move  = std::bind(std::mem_fn(&wayfire_panel::on_motion), this, _1, _2);
     window->pointer_button= std::bind(std::mem_fn(&wayfire_panel::on_button), this, _1, _2, _3, _4);
@@ -125,6 +168,7 @@ void wayfire_panel::setup_window()
             last_y = y;
         }
     };
+
     window->touch_up = [=] (int32_t id)
     {
         --count_input;
@@ -141,6 +185,7 @@ void wayfire_panel::setup_window()
             on_leave();
         }
     };
+
     window->touch_motion = [=] (int32_t id, int x, int y)
     {
         if (id == 0)
@@ -150,43 +195,102 @@ void wayfire_panel::setup_window()
             on_motion(x, y);
         }
     };
-
-    if (!autohide)
-        wayfire_shell_reserve(display.wfshell, window->surface,
-                              WAYFIRE_SHELL_PANEL_POSITION_TOP,
-                              height / display.scale);
-
-    wayfire_shell_configure_panel(display.wfshell, output, window->surface, 0, -height);
-
-    state = HIDDEN;
-    animation.y = -height;
-    show(0);
 }
 
-void wayfire_panel::resize(uint32_t w, uint32_t h)
+void wayfire_panel::position_widgets(position_policy policy)
 {
-    width = w;
+    int widget_spacing = widget::font_size * 0.5;
+    int total_width = widget_spacing;
 
-    for_each_widget(w)
-        cairo_destroy(w->cr);
+    for (size_t i = 0; i < widgets[policy].size(); i++)
+    {
+        widgets[policy][i]->x = total_width;
+        total_width += widgets[policy][i]->get_width();
+        total_width += widget_spacing;
+    }
 
-    cairo_destroy(cr);
+    int delta = 0;
+    if (policy == PART_RIGHT)
+        delta += width - total_width;
+    if (policy == PART_SYMMETRIC)
+        delta += width / 2 - total_width / 2;
 
-    delete_window(window);
-
-    window = create_window(w, h, [=] () {setup_window(); reinit_widgets_context();});
-    wayfire_shell_add_panel(display.wfshell, output, window->surface);
+    for (size_t i = 0; i < widgets[policy].size(); i++)
+        widgets[policy][i]->x += delta;
 }
 
-void wayfire_panel::reinit_widgets_context()
+widget* wayfire_panel::create_widget_from_name(std::string name)
 {
-    for_each_widget(w)
+    widget *w = nullptr;
+    if (name == "clock")
+    {
+        w = new clock_widget();
+    }
+    else if (name == "battery")
+    {
+        w = new battery_widget();
+    }
+    else if (name == "launchers")
+    {
+        auto l = new launchers_widget();
+        l->init_launchers(config);
+        w = l;
+    }
+    else if (name == "network")
+    {
+        w = new network_widget();
+    }
+
+    if (w)
+    {
         w->cr = cairo_create(window->cairo_surface);
+        w->panel_h = height;
+        w->create();
+    }
 
-    for_each_widget(w)
-        w->update(true);
+    return w;
+}
 
-    render_frame(true);
+void wayfire_panel::init_widgets(std::string str, position_policy policy)
+{
+    std::istringstream stream(str);
+    std::string name;
+    while(stream >> name)
+    {
+        auto w = create_widget_from_name(name);
+        if (w) widgets[policy].push_back(w);
+    }
+
+    position_widgets(policy);
+}
+
+void wayfire_panel::init_widgets()
+{
+    cr = cairo_create(window->cairo_surface);
+
+    auto section = config->get_section("shell_panel");
+    std::string left   = *section->get_option("widgets_left", "");
+    std::string center = *section->get_option("widgets_center", "clock");
+    std::string right  = *section->get_option("widgets_right", "");
+
+    init_widgets(left, PART_LEFT);
+    init_widgets(center, PART_SYMMETRIC);
+    init_widgets(right, PART_RIGHT);
+}
+
+void wayfire_panel::set_autohide(bool ah)
+{
+    autohide += ah ? 1 : -1;
+
+    if (autohide == 0)
+    {
+        show(0);
+        on_enter(0);
+    } else if (!count_input)
+    {
+        hide(0);
+        on_leave();
+    }
 }
 
 static inline void set_timer_target(timeval& timer, int delay)
@@ -244,7 +348,7 @@ void wayfire_panel::hide(int delay)
 
 void wayfire_panel::on_enter(uint32_t serial)
 {
-    show_default_cursor(serial);
+    output->display->show_default_cursor(serial);
     add_callback(false);
 }
 
@@ -283,88 +387,9 @@ void wayfire_panel::add_callback(bool swapped)
         wl_surface_commit(window->surface);
 }
 
-void wayfire_panel::position_widgets(position_policy policy)
-{
-    int widget_spacing = widget::font_size * 0.5;
-    int total_width = widget_spacing;
-
-    for (size_t i = 0; i < widgets[policy].size(); i++)
-    {
-        widgets[policy][i]->x = total_width;
-        total_width += widgets[policy][i]->get_width();
-        total_width += widget_spacing;
-    }
-
-    int delta = 0;
-    if (policy == PART_RIGHT)
-        delta += width - total_width;
-    if (policy == PART_SYMMETRIC)
-        delta += width / 2 - total_width / 2;
-
-    for (size_t i = 0; i < widgets[policy].size(); i++)
-        widgets[policy][i]->x += delta;
-}
-
-widget* wayfire_panel::create_widget_from_name(std::string name)
-{
-    widget *w = nullptr;
-    if (name == "clock")
-    {
-        w = new clock_widget();
-    } else if (name == "battery")
-    {
-        w = new battery_widget();
-    } else if (name == "launchers")
-    {
-        auto l = new launchers_widget();
-        l->init_launchers(config);
-        w = l;
-    } else if (name == "network")
-    {
-        w = new network_widget();
-    }
-
-    if (w)
-    {
-        w->cr = cairo_create(window->cairo_surface);
-        w->panel_h = height;
-        w->create();
-    }
-
-    return w;
-}
-
-void wayfire_panel::init_widgets(std::string str, position_policy policy)
-{
-    std::istringstream stream(str);
-    std::string name;
-    while(stream >> name)
-    {
-        auto w = create_widget_from_name(name);
-        if (w) widgets[policy].push_back(w);
-    }
-
-    position_widgets(policy);
-}
-
-void wayfire_panel::init_widgets()
-{
-    cr = cairo_create(window->cairo_surface);
-
-    auto section = config->get_section("shell_panel");
-    std::string left   = *section->get_option("widgets_left", "");
-    std::string center = *section->get_option("widgets_center", "clock");
-    std::string right  = *section->get_option("widgets_right", "");
-
-    init_widgets(left, PART_LEFT);
-    init_widgets(center, PART_SYMMETRIC);
-    init_widgets(right, PART_RIGHT);
-}
 
 void wayfire_panel::render_frame(bool first_call)
 {
-    set_active_window(window);
-
     if (state & WAITING)
     {
         timeval time;
@@ -399,8 +424,7 @@ void wayfire_panel::render_frame(bool first_call)
             }
         }
 
-        wayfire_shell_configure_panel(display.wfshell, output,
-                                      window->surface, 0, animation.y);
+        zwf_wm_surface_v1_configure(window->zwf, 0, animation.y);
     }
 
     bool should_swap = first_call;
@@ -432,7 +456,7 @@ void wayfire_panel::render_frame(bool first_call)
         add_callback(should_swap);
 
     if (should_swap)
-        damage_commit_window(window);
+        window->damage_commit();
 
     /* don't repaint too often if there is no interaction with the panel,
      * otherwise the panel eats up some CPU power */

@@ -8,12 +8,15 @@
 struct widget;
 class wayfire_config;
 
-class wayfire_panel {
-    wl_callback *repaint_callback;
+class wayfire_panel
+{
+    wl_callback *repaint_callback = nullptr;
     cairo_t *cr;
 
-    uint32_t output;
+    wayfire_output *output;
     uint32_t width, height;
+
+    int last_x, last_y;
 
     int hidden_height = 1;
 
@@ -59,28 +62,26 @@ class wayfire_panel {
         PART_RIGHT     = 2  /* widgets are placed on the right */
     };
 
-    /* only reposition widgets, when for ex. output has been resized */
     void position_widgets(position_policy policy);
-
     void init_widgets(std::string str, position_policy policy);
 
+    void init(int32_t width, int32_t height);
     /* load widget list and position them */
     void init_widgets();
-    void reinit_widgets_context();
+    void init_input();
 
-    void setup_window();
+    void configure();
+    void destroy();
 
     wayfire_config *config;
 
     public:
         wayfire_window *window;
-        wayfire_panel(wayfire_config *config, uint32_t output, uint32_t width, uint32_t height);
+        wayfire_panel(wayfire_config *config, wayfire_output *output);
         ~wayfire_panel();
-        void create_panel();
+
         void render_frame(bool first_call = false);
         void set_autohide(bool ah);
-
-        void resize(uint32_t width, uint32_t height);
 };
 
 #endif /* end of include guard: PANEL_HPP */

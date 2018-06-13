@@ -4,15 +4,7 @@ shell_deps = [wf_protos, wfconfig, wf_window_util,
       freetype2, cairo, wayland_client, wayland_cursor]
 
 subdir('background')
-#
-#
-#panel = executable('wayfire-shell-panel',
-#    ['panel.cpp', 'widgets.cpp', 'net.cpp', 'main.cpp'],
-#    dependencies: shell_deps + [gio, threads],
-#    include_directories: wayfire_conf_inc,
-#    install: true,
-#    install_dir: 'lib/wayfire')
-#
+subdir('panel')
 
 ## TODO: do we need vkeyboard anymore?
 ## we should support layer-shell and virtual-keyboard protocols,
