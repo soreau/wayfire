@@ -529,7 +529,7 @@ void wayfire_view_t::map(wlr_surface *surface)
 {
     wayfire_surface_t::map(surface);
 
-    if (role != WF_VIEW_ROLE_TOPLEVEL && !parent && !maximized && !fullscreen)
+    if (role == WF_VIEW_ROLE_TOPLEVEL && !parent && !maximized && !fullscreen)
     {
         auto wm = get_wm_geometry();
         auto workarea = output->workspace->get_workarea();
