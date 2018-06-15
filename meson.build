@@ -34,7 +34,6 @@ xkbcommon      = dependency('xkbcommon')
 wlroots        = dependency('wlroots', fallback: ['wlroots', 'wlroots'])
 wfconfig       = dependency('wf-config', fallback: ['wf-config', 'wfconfig'])
 
-alsa   = dependency('alsa',           required: false)
 gdk    = dependency('gdk-2.0',        required: false)
 jpeg   = dependency('libjpeg',        required: false)
 pixbuf = dependency('gdk-pixbuf-2.0', required: false)
@@ -64,10 +63,6 @@ if gdk.found() and pixbuf.found()
     conf_data.set('BUILD_WITH_PIXBUF', true)
 endif
 
-if alsa.found()
-    conf_data.set('BUILD_WITH_ALSA', true)
-endif
-
 configure_file(input: 'config.h.in',
                output: 'config.h',
                configuration: conf_data)
@@ -92,7 +87,6 @@ summary = [
 	'     imageio: @0@'.format(conf_data.get('BUILD_WITH_IMAGEIO', false)),
 	'      gles32: @0@'.format(conf_data.get('USE_GLES32', false)),
 	'  gdk-pixbuf: @0@'.format(conf_data.get('BUILD_WITH_PIXBUF', false)),
-	'        alsa: @0@'.format(conf_data.get('BUILD_WITH_ALSA', false)),
 	'----------------',
 	''
 ]
