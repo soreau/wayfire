@@ -5,6 +5,7 @@
 
 static void handle_xdg_map(wl_listener*, void *data);
 static void handle_xdg_unmap(wl_listener*, void *data);
+static void handle_xdg_popup_destroy(wl_listener*, void *data);
 static void handle_xdg_destroy(wl_listener*, void *data);
 
 /* TODO: Figure out a way to animate this */
@@ -14,7 +15,7 @@ wayfire_xdg_popup::wayfire_xdg_popup(wlr_xdg_popup *popup)
     assert(parent_surface);
     this->popup = popup;
 
-    destroy.notify       = handle_xdg_destroy;
+    destroy.notify       = handle_xdg_popup_destroy;
     new_popup.notify     = handle_xdg_new_popup;
     m_popup_map.notify   = handle_xdg_map;
     m_popup_unmap.notify = handle_xdg_unmap;
@@ -85,9 +86,18 @@ static void handle_xdg_unmap(wl_listener*, void *data)
 static void handle_xdg_destroy(wl_listener*, void *data)
 {
     auto surface = static_cast<wlr_xdg_surface*> (data);
+    auto view = wf_view_from_void(surface->data);
+
+    assert(view);
+
+    view->destroy();
+}
+
+static void handle_xdg_popup_destroy(wl_listener*, void *data)
+{
+    auto surface = static_cast<wlr_xdg_surface*> (data);
     auto wf_surface = wf_surface_from_void(surface->data);
 
-    assert(wf_surface);
     wf_surface->destroyed = 1;
     wf_surface->dec_keep_count();
 }
@@ -139,10 +149,10 @@ wayfire_xdg_view::wayfire_xdg_view(wlr_xdg_surface *s)
               nonull(xdg_surface->toplevel->title),
               nonull(xdg_surface->toplevel->app_id));
 
-    destroy.notify            = handle_xdg_destroy;
+    destroy_ev.notify         = handle_xdg_destroy;
     new_popup.notify          = handle_xdg_new_popup;
     map_ev.notify             = handle_xdg_map;
-    unmap.notify              = handle_xdg_unmap;
+    unmap_ev.notify           = handle_xdg_unmap;
     set_parent_ev.notify      = handle_xdg_set_parent;
     request_move.notify       = handle_xdg_request_move;
     request_resize.notify     = handle_xdg_request_resize;
@@ -151,10 +161,10 @@ wayfire_xdg_view::wayfire_xdg_view(wlr_xdg_surface *s)
 
     wlr_xdg_surface_ping(s);
 
-    wl_signal_add(&xdg_surface->events.destroy, &destroy);
-    wl_signal_add(&s->events.new_popup,        &new_popup);
+    wl_signal_add(&xdg_surface->events.destroy, &destroy_ev);
+    wl_signal_add(&s->events.new_popup,         &new_popup);
     wl_signal_add(&xdg_surface->events.map,     &map_ev);
-    wl_signal_add(&xdg_surface->events.unmap,   &unmap);
+    wl_signal_add(&xdg_surface->events.unmap,   &unmap_ev);
     wl_signal_add(&xdg_surface->toplevel->events.set_parent,         &set_parent_ev);
     wl_signal_add(&xdg_surface->toplevel->events.request_move,       &request_move);
     wl_signal_add(&xdg_surface->toplevel->events.request_resize,     &request_resize);
@@ -274,19 +284,22 @@ void wayfire_xdg_view::close()
     wlr_xdg_surface_send_close(xdg_surface);
 }
 
-wayfire_xdg_view::~wayfire_xdg_view()
+void wayfire_xdg_view::destroy()
 {
-
-    wl_list_remove(&destroy.link);
+    wl_list_remove(&destroy_ev.link);
     wl_list_remove(&new_popup.link);
     wl_list_remove(&map_ev.link);
-    wl_list_remove(&unmap.link);
+    wl_list_remove(&unmap_ev.link);
     wl_list_remove(&request_move.link);
     wl_list_remove(&request_resize.link);
     wl_list_remove(&request_maximize.link);
     wl_list_remove(&request_fullscreen.link);
     wl_list_remove(&set_parent_ev.link);
+
+    wayfire_view_t::destroy();
 }
+
+wayfire_xdg_view::~wayfire_xdg_view() {}
 
 wayfire_xdg_decoration_view::wayfire_xdg_decoration_view(wlr_xdg_surface *decor) :
     wayfire_xdg_view(decor)
@@ -409,13 +422,14 @@ static void notify_created(wl_listener*, void *data)
             wf_decorator &&
             wf_decorator->is_decoration_window(surf->toplevel->title))
         {
-            auto view = std::make_shared<wayfire_xdg_decoration_view> (surf);
-            core->add_view(view);
+            auto view = std::unique_ptr<wayfire_xdg_decoration_view> (new wayfire_xdg_decoration_view(surf));
+            core->add_view(std::move(view));
 
-            wf_decorator->decoration_ready(view);
+            wf_decorator->decoration_ready(view->self());
         } else
         {
-            core->add_view(std::make_shared<wayfire_xdg_view> (surf));
+            std::unique_ptr<wayfire_xdg_view> ptr(new wayfire_xdg_view(surf));
+            core->add_view(std::move(ptr));
         }
     }
 }

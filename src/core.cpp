@@ -1655,9 +1655,9 @@ uint32_t wayfire_core::get_focused_layer()
     return focused_layer;
 }
 
-void wayfire_core::add_view(wayfire_view view)
+void wayfire_core::add_view(std::unique_ptr<wayfire_view_t> view)
 {
-    views[view.get()] = view;
+    views.push_back(std::move(view));
     assert(active_output);
 }
 
@@ -1667,18 +1667,14 @@ wayfire_view wayfire_core::find_view(wayfire_surface_t *handle)
     if (!view)
         return nullptr;
 
-    auto it = views.find(view);
-    if (it == views.end())
-        return nullptr;
-
-    return it->second;
+    return nonstd::make_observer(view);
 }
 
 wayfire_view wayfire_core::find_view(uint32_t id)
 {
-    for (auto v : views)
-        if (v.second->get_id() == id)
-            return v.second;
+    for (auto& v : views)
+        if (v->get_id() == id)
+            return nonstd::make_observer(v.get());
 
     return nullptr;
 }
@@ -1701,12 +1697,11 @@ void wayfire_core::erase_view(wayfire_view v)
     if (v->get_output())
         v->get_output()->detach_view(v);
 
-    views.erase(v.get());
+    auto it = std::find_if(views.begin(), views.end(),
+                           [&v] (const std::unique_ptr<wayfire_view_t>& k)
+                           { return k.get() == v.get(); });
 
-    /*
-    if (v->handle && destroy_handle)
-        weston_view_destroy(v->handle);
-        */
+    views.erase(it);
 }
 
 void wayfire_core::run(const char *command)

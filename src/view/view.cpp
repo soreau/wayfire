@@ -666,13 +666,13 @@ void wayfire_view_t::commit()
     /* configure frame_interior */
     if (decoration)
     {
-        auto xdg_decor = std::dynamic_pointer_cast<wayfire_xdg_decoration_view> (decoration);
+        auto xdg_decor = dynamic_cast<wayfire_xdg_decoration_view*> (decoration.get());
         if (xdg_decor)
         {
             xdg_decor->child_configured(geometry);
         } else
         {
-            auto xdg6_decor = std::dynamic_pointer_cast<wayfire_xdg6_decoration_view> (decoration);
+            auto xdg6_decor = dynamic_cast<wayfire_xdg6_decoration_view*> (decoration.get());
             assert(xdg6_decor);
 
             xdg6_decor->child_configured(geometry);
@@ -721,6 +721,12 @@ void wayfire_view_t::damage()
 void wayfire_view_t::destruct()
 {
     core->erase_view(self());
+}
+
+void wayfire_view_t::destroy()
+{
+    destroyed = 1;
+    dec_keep_count();
 }
 
 void wayfire_view_t::set_toplevel_parent(wayfire_view parent)

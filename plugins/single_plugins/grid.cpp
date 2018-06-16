@@ -27,7 +27,7 @@ void idle_send_signal(void *data)
 
 class wayfire_grid : public wayfire_plugin_t {
 
-    std::unordered_map<wayfire_view, wf_geometry> saved_view_geometry;
+    std::map<wayfire_view, wf_geometry> saved_view_geometry;
     signal_callback_t output_resized_cb, view_destroyed_cb;
 
     std::vector<std::string> slots = {"unused", "bl", "b", "br", "l", "c", "r", "tl", "t", "tr"};

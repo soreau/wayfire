@@ -1,13 +1,10 @@
 #ifndef WORKSPACE_MANAGER_HPP
 #define WORKSPACE_MANAGER_HPP
 
-#include <memory>
 #include <functional>
 #include <vector>
 #include <view.hpp>
 
-class wayfire_view_t;
-using wayfire_view = std::shared_ptr<wayfire_view_t>;
 using view_callback_proc_t = std::function<void(wayfire_view)>;
 
 struct wf_workspace_implementation

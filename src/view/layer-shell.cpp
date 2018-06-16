@@ -36,7 +36,7 @@ static uint32_t zwlr_layer_to_wf_layer(zwlr_layer_shell_v1_layer layer)
 class wayfire_layer_shell_view : public wayfire_view_t
 {
     bool first_map = true;
-    wl_listener map_ev, unmap_ev, destroy, new_popup;
+    wl_listener map_ev, unmap_ev, destroy_ev, new_popup;
     public:
         wlr_layer_surface *lsurface;
         wlr_layer_surface_state prev_state;
@@ -49,6 +49,7 @@ class wayfire_layer_shell_view : public wayfire_view_t
         void unmap();
         void commit();
         void close();
+        virtual void destroy();
 
         void configure(wf_geometry geometry);
 };
@@ -272,21 +273,31 @@ wayfire_layer_shell_view::wayfire_layer_shell_view(wlr_layer_surface *lsurf)
     role = WF_VIEW_ROLE_SHELL_VIEW;
     lsurface->data = this;
 
-    map_ev.notify    = handle_layer_surface_map;
-    unmap_ev.notify  = handle_layer_surface_unmap;
-    new_popup.notify = handle_xdg_new_popup;
-    destroy.notify   = handle_layer_surface_destroy;
+    map_ev.notify     = handle_layer_surface_map;
+    unmap_ev.notify   = handle_layer_surface_unmap;
+    new_popup.notify  = handle_xdg_new_popup;
+    destroy_ev.notify = handle_layer_surface_destroy;
 
     wl_signal_add(&lsurface->events.map,       &map_ev);
     wl_signal_add(&lsurface->events.unmap,     &unmap_ev);
     wl_signal_add(&lsurface->events.new_popup, &new_popup);
-    wl_signal_add(&lsurface->events.destroy,   &destroy);
+    wl_signal_add(&lsurface->events.destroy,   &destroy_ev);
 
     /* easy reflowing */
     auto old_current = lsurface->current;
     lsurface->current = lsurface->client_pending;
     layer_shell_manager.handle_map(this);
     lsurface->current = old_current;
+}
+
+void wayfire_layer_shell_view::destroy()
+{
+    wl_list_remove(&map_ev.link);
+    wl_list_remove(&unmap_ev.link);
+    wl_list_remove(&destroy_ev.link);
+    wl_list_remove(&new_popup.link);
+
+    wayfire_view_t::destroy();
 }
 
 void wayfire_layer_shell_view::map(wlr_surface *surface)
@@ -401,7 +412,8 @@ static void handle_layer_surface_destroy(wl_listener*, void *data)
 static void handle_layer_surface_created(wl_listener *listener, void *data)
 {
     auto lsurf = static_cast<wlr_layer_surface*> (data);
-    core->add_view(std::make_shared<wayfire_layer_shell_view>(lsurf));
+    core->add_view(std::unique_ptr<wayfire_layer_shell_view>
+                    (new wayfire_layer_shell_view(lsurf)));
 }
 
 static wlr_layer_shell *layer_shell_handle;

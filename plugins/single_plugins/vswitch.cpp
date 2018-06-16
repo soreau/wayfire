@@ -8,6 +8,7 @@
 #include <linux/input.h>
 #include <utility>
 #include <animation.hpp>
+#include <set>
 #include "view-change-viewport-signal.hpp"
 
 
@@ -197,7 +198,8 @@ class vswitch : public wayfire_plugin_t
                 std::make_tuple(vx + dx, vy + dy),
                 WF_WM_LAYERS);
 
-        std::unordered_set<wayfire_view> views_to_move;
+        std::set<wayfire_view> views_to_move;
+
         for (auto view : current_views)
             views_to_move.insert(view);
         for (auto view : next_views)

@@ -84,6 +84,8 @@ struct animation_hook
 
         /* make sure we "unhide" the view */
         view->alpha = 1.0;
+        delete base;
+
         if (close_animation)
             view->dec_keep_count();
 
@@ -91,9 +93,7 @@ struct animation_hook
     }
 
     ~animation_hook()
-    {
-        delete base;
-    }
+    { }
 };
 
 class wayfire_animation : public wayfire_plugin_t {

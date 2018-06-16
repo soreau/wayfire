@@ -33,7 +33,7 @@ plugin_manager::plugin_manager(wayfire_output *o, wayfire_config *config,
     load_dynamic_plugins();
     init_default_plugins();
 
-    for (auto p : plugins)
+    for (auto& p : plugins)
     {
         p->grab_interface = new wayfire_grab_interface_t(o);
         p->output = o;
@@ -44,7 +44,7 @@ plugin_manager::plugin_manager(wayfire_output *o, wayfire_config *config,
 
 plugin_manager::~plugin_manager()
 {
-    for (auto p : plugins)
+    for (auto& p : plugins)
     {
         p->fini();
         delete p->grab_interface;
@@ -101,14 +101,14 @@ void plugin_manager::load_dynamic_plugins()
         {
             auto ptr = load_plugin_from_file(path + "/lib" + plugin + ".so");
             if(ptr)
-                plugins.push_back(ptr);
+                plugins.push_back(std::move(ptr));
         }
     }
 }
 
 template<class T> static wayfire_plugin create_plugin()
 {
-    return std::static_pointer_cast<wayfire_plugin_t>(std::make_shared<T>());
+    return std::unique_ptr<wayfire_plugin_t>(new T);
 }
 
 void plugin_manager::init_default_plugins()

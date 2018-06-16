@@ -29,7 +29,7 @@ class wayfire_xdg6_popup : public wayfire_surface_t
 class wayfire_xdg6_view : public wayfire_view_t
 {
     protected:
-        wl_listener destroy, map_ev, unmap, new_popup,
+        wl_listener destroy_ev, map_ev, unmap_ev, new_popup,
                 request_move, request_resize,
                 request_maximize, request_fullscreen;
     public:
@@ -50,6 +50,7 @@ class wayfire_xdg6_view : public wayfire_view_t
         std::string get_app_id();
         std::string get_title();
         virtual void close();
+        virtual void destroy();
         ~wayfire_xdg6_view();
 };
 

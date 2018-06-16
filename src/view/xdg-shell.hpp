@@ -32,7 +32,7 @@ void handle_xdg_new_popup(wl_listener*, void*);
 class wayfire_xdg_view : public wayfire_view_t
 {
     protected:
-        wl_listener destroy, map_ev, unmap, new_popup,
+        wl_listener destroy_ev, map_ev, unmap_ev, new_popup,
                 request_move, request_resize,
                 request_maximize, request_fullscreen,
                 set_parent_ev;
@@ -53,6 +53,8 @@ class wayfire_xdg_view : public wayfire_view_t
     virtual void set_fullscreen(bool full);
     virtual void move(int w, int h, bool send);
     virtual void resize(int w, int h, bool send);
+
+    virtual void destroy();
 
     std::string get_app_id();
     std::string get_title();

@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <nonstd/observer_ptr.h>
 
 extern "C"
 {
@@ -33,7 +34,7 @@ class wayfire_output;
 class wayfire_view_t;
 class wayfire_surface_t;
 
-using wayfire_view = std::shared_ptr<wayfire_view_t>;
+using wayfire_view = nonstd::observer_ptr<wayfire_view_t>;
 using output_callback_proc = std::function<void(wayfire_output *)>;
 
 class wayfire_core
@@ -48,8 +49,7 @@ class wayfire_core
         std::vector<wlr_output*> pending_outputs;
         std::map<wlr_output*, wayfire_output*> outputs;
 
-        /* TODO: perhaps switch to a std::vector */
-        std::map<wayfire_view_t*, wayfire_view> views;
+        std::vector<std::unique_ptr<wayfire_view_t>> views;
 
         void configure(wayfire_config *config);
 
@@ -102,7 +102,8 @@ class wayfire_core
         wayfire_surface_t *get_cursor_focus();
         wayfire_surface_t *get_touch_focus();
 
-        void add_view(wayfire_view view);
+        void add_view(std::unique_ptr<wayfire_view_t> view);
+
         wayfire_view find_view(wayfire_surface_t *);
         wayfire_view find_view(uint32_t id);
 

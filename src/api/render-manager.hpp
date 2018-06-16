@@ -5,11 +5,7 @@
 #include <vector>
 #include <pixman.h>
 
-
 namespace OpenGL { struct context_t; }
-
-class wayfire_view_t;
-using wayfire_view = std::shared_ptr<wayfire_view_t>;
 
 /* Workspace streams are used if you need to continuously render a workspace
  * to a texture, for example if you call texture_from_viewport at every frame */

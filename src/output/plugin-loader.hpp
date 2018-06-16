@@ -5,6 +5,7 @@
 class wayfire_output;
 class wayfire_config;
 
+using wayfire_plugin = std::unique_ptr<wayfire_plugin_t>;
 struct plugin_manager
 {
     std::vector<wayfire_plugin> plugins;

@@ -73,8 +73,7 @@ static void handle_xwayland_destroy(wl_listener*, void *data)
     auto view = wf_view_from_void(xsurf->data);
 
     log_info("xwayland destroy %p", xsurf);
-    view->destroyed = 1;
-    view->dec_keep_count();
+    view->destroy();
 }
 
 static void handle_xwayland_set_parent(wl_listener*, void *data)
@@ -93,7 +92,7 @@ class wayfire_xwayland_view : public wayfire_view_t
     wlr_xwayland_surface *xw;
 
     /* TODO: very bad names, also in other shells */
-    wl_listener destroy, map_ev, unmap, configure,
+    wl_listener destroy_ev, map_ev, unmap_ev, configure,
                 request_move, request_resize,
                 request_maximize, request_fullscreen,
                 set_parent_ev;
@@ -107,9 +106,9 @@ class wayfire_xwayland_view : public wayfire_view_t
         log_info("new xwayland surface %s class: %s instance: %s",
                  nonull(xw->title), nonull(xw->class_t), nonull(xw->instance));
 
-        destroy.notify            = handle_xwayland_destroy;
+        destroy_ev.notify         = handle_xwayland_destroy;
         map_ev.notify             = handle_xwayland_map;
-        unmap.notify              = handle_xwayland_unmap;
+        unmap_ev.notify           = handle_xwayland_unmap;
         configure.notify          = handle_xwayland_request_configure;
         set_parent_ev.notify      = handle_xwayland_set_parent;
         request_move.notify       = handle_xwayland_request_move;
@@ -117,8 +116,8 @@ class wayfire_xwayland_view : public wayfire_view_t
         request_maximize.notify   = handle_xwayland_request_maximize;
         request_fullscreen.notify = handle_xwayland_request_fullscreen;
 
-        wl_signal_add(&xw->events.destroy,            &destroy);
-        wl_signal_add(&xw->events.unmap,              &unmap);
+        wl_signal_add(&xw->events.destroy,            &destroy_ev);
+        wl_signal_add(&xw->events.unmap,              &unmap_ev);
         wl_signal_add(&xw->events.map,                &map_ev);
         wl_signal_add(&xw->events.set_parent,         &set_parent_ev);
         wl_signal_add(&xw->events.request_move,       &request_move);
@@ -140,12 +139,15 @@ class wayfire_xwayland_view : public wayfire_view_t
     }
 
     ~wayfire_xwayland_view()
+    {}
+
+    virtual void destroy()
     {
         if (output)
             output->disconnect_signal("output-resized", &output_geometry_changed);
 
-        wl_list_remove(&destroy.link);
-        wl_list_remove(&unmap.link);
+        wl_list_remove(&destroy_ev.link);
+        wl_list_remove(&unmap_ev.link);
         wl_list_remove(&map_ev.link);
         wl_list_remove(&set_parent_ev.link);
         wl_list_remove(&request_move.link);
@@ -153,6 +155,8 @@ class wayfire_xwayland_view : public wayfire_view_t
         wl_list_remove(&request_maximize.link);
         wl_list_remove(&request_fullscreen.link);
         wl_list_remove(&configure.link);
+
+        wayfire_view_t::destroy();
     }
 
     void map(wlr_surface *surface)
@@ -264,7 +268,7 @@ class wayfire_xwayland_view : public wayfire_view_t
 class wayfire_unmanaged_xwayland_view : public wayfire_view_t
 {
     wlr_xwayland_surface *xw;
-    wl_listener destroy, unmap_listener, map_ev, configure;
+    wl_listener destroy_ev, unmap_listener, map_ev, configure;
 
     public:
     wayfire_unmanaged_xwayland_view(wlr_xwayland_surface *xww)
@@ -274,11 +278,11 @@ class wayfire_unmanaged_xwayland_view : public wayfire_view_t
                  nonull(xw->title), nonull(xw->class_t), nonull(xw->instance));
 
         map_ev.notify         = handle_xwayland_map;
-        destroy.notify        = handle_xwayland_destroy;
+        destroy_ev.notify     = handle_xwayland_destroy;
         unmap_listener.notify = handle_xwayland_unmap;
         configure.notify      = handle_xwayland_request_configure;
 
-        wl_signal_add(&xw->events.destroy,            &destroy);
+        wl_signal_add(&xw->events.destroy,            &destroy_ev);
         wl_signal_add(&xw->events.unmap,              &unmap_listener);
         wl_signal_add(&xw->events.request_configure,  &configure);
         wl_signal_add(&xw->events.map,                &map_ev);
@@ -452,11 +456,16 @@ class wayfire_unmanaged_xwayland_view : public wayfire_view_t
     }
 
     ~wayfire_unmanaged_xwayland_view()
+    { }
+
+    virtual void destroy()
     {
-        wl_list_remove(&destroy.link);
+        wl_list_remove(&destroy_ev.link);
         wl_list_remove(&unmap_listener.link);
         wl_list_remove(&configure.link);
         wl_list_remove(&map_ev.link);
+
+        wayfire_view_t::destroy();
     }
 
     std::string get_title()  { return nonull(xw->title);   }
@@ -468,17 +477,17 @@ void notify_xwayland_created(wl_listener *, void *data)
 {
     auto xsurf = (wlr_xwayland_surface*) data;
 
-    wayfire_view view = nullptr;
     if (wlr_xwayland_surface_is_unmanaged(xsurf) || xsurf->override_redirect)
     {
-        view = std::make_shared<wayfire_unmanaged_xwayland_view> (xsurf);
+        auto view = std::unique_ptr<wayfire_unmanaged_xwayland_view>
+            (new wayfire_unmanaged_xwayland_view(xsurf));
+        core->add_view(std::move(view));
     } else
     {
-        view = std::make_shared<wayfire_xwayland_view> (xsurf);
+        auto view = std::unique_ptr<wayfire_xwayland_view>
+            (new wayfire_xwayland_view(xsurf));
+        core->add_view(std::move(view));
     }
-
-    core->add_view(view);
-    log_info("xwayland create %p -> %p", xsurf, view.get());
 }
 
 static wlr_xwayland *xwayland_handle;

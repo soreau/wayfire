@@ -18,9 +18,6 @@ struct plugin_manager;
 class workspace_manager;
 class render_manager;
 
-class wayfire_view_t;
-using wayfire_view = std::shared_ptr<wayfire_view_t>;
-
 class wayfire_output
 {
     friend class wayfire_core;

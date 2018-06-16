@@ -10,7 +10,6 @@ extern "C"
 }
 
 #include <functional>
-#include <memory>
 #include "config.hpp"
 
 /* when creating a signal there should be the definition of the derived class */
@@ -140,7 +139,6 @@ class wayfire_plugin_t {
         void *handle;
 };
 
-using wayfire_plugin = std::shared_ptr<wayfire_plugin_t>;
 /* each dynamic plugin should have the symbol get_plugin_instance() which returns
  * an instance of the plugin */
 typedef wayfire_plugin_t *(*get_plugin_instance_t)();

@@ -5,6 +5,7 @@
 #include <map>
 #include <functional>
 #include <pixman.h>
+#include <nonstd/observer_ptr.h>
 
 extern "C"
 {
@@ -40,7 +41,7 @@ struct wf_custom_view_data
 /* General TODO: mark member functions const where appropriate */
 
 class wayfire_view_t;
-using wayfire_view = std::shared_ptr<wayfire_view_t>;
+using wayfire_view = nonstd::observer_ptr<wayfire_view_t>;
 
 /* do not copy the surface, it is not reference counted and you will get crashes */
 class wayfire_surface_t;
@@ -262,7 +263,12 @@ class wayfire_view_t : public wayfire_surface_t
         virtual void commit();
         virtual void map(wlr_surface *surface);
         virtual void unmap();
+
+        /* cleanup of the wf_view part. Not API function */
         virtual void destruct();
+
+        /* cleanup of the wlroots handle. Not API function */
+        virtual void destroy();
 
         virtual void damage();
 
