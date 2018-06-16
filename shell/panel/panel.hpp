@@ -76,7 +76,7 @@ class wayfire_panel
     wayfire_config *config;
 
     public:
-        wayfire_window *window;
+        wayfire_window *window = nullptr;
         wayfire_panel(wayfire_config *config, wayfire_output *output);
         ~wayfire_panel();
 

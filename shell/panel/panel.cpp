@@ -65,23 +65,16 @@ wayfire_panel::wayfire_panel(wayfire_config *config, wayfire_output *output)
 
 wayfire_panel::~wayfire_panel()
 {
-//    cairo_destroy(cr);
-    for_each_widget(w)
-    {
- //       cairo_destroy(w->cr);
-        delete w;
-    }
-
-    delete window;
+    destroy();
 }
 
 void wayfire_panel::init(int w, int h)
 {
-
     width = w * output->scale;
     height = 1.3 * widget::font_size;
 
     zwf_output_v1_inhibit_output(output->zwf);
+
     if (window)
         destroy();
 
@@ -98,6 +91,9 @@ void wayfire_panel::destroy()
         cairo_destroy(w->cr);
         delete w;
     }
+
+    cairo_destroy(cr);
+    delete window;
 
     for (int i = 0; i < 3; i++)
         widgets[i].clear();
