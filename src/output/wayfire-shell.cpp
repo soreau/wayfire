@@ -9,6 +9,7 @@
 
 struct wayfire_shell_output
 {
+    int inhibits = 0;
     std::vector<wl_resource*> resources;
 };
 
@@ -155,6 +156,10 @@ static void zwf_output_inhibit_output(struct wl_client *client,
 {
     auto wo = (wayfire_output*)wl_resource_get_user_data(resource);
     wo->render->add_inhibit(true);
+
+    auto& cl = shell.clients[client];
+    auto& out = cl.output_resources[wo];
+    ++out.inhibits;
 }
 
 static void zwf_output_inhibit_output_done(struct wl_client *client,
@@ -162,6 +167,10 @@ static void zwf_output_inhibit_output_done(struct wl_client *client,
 {
     auto wo = (wayfire_output*)wl_resource_get_user_data(resource);
     wo->render->add_inhibit(false);
+
+    auto& cl = shell.clients[client];
+    auto& out = cl.output_resources[wo];
+    --out.inhibits;
 }
 
 const struct zwf_output_v1_interface zwf_output_v1_implementation =
@@ -185,6 +194,9 @@ static void destroy_zwf_output(wl_resource *resource)
     auto& client_output = shell_client.output_resources[wo];
     auto it = std::find(client_output.resources.begin(), client_output.resources.end(),
                         resource);
+
+    while(client_output.inhibits--)
+        wo->render->add_inhibit(false);
 
     client_output.resources.erase(it);
 }
@@ -217,6 +229,13 @@ const struct zwf_shell_manager_v1_interface zwf_shell_manager_v1_implementation 
 static void destroy_zwf_shell_manager(wl_resource *resource)
 {
     auto client = wl_resource_get_client(resource);
+
+    for (auto& out : shell.clients[client].output_resources)
+    {
+        while(out.second.inhibits--)
+            out.first->render->add_inhibit(false);
+    }
+
     shell.clients.erase(client);
 }
 
