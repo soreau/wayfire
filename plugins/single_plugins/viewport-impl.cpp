@@ -162,9 +162,6 @@ viewport_manager::~viewport_manager()
 
 void viewport_manager::remove_from_layer(wayfire_view view, uint32_t layer)
 {
-    if (layer == 0)
-        return;
-
     auto& layer_container = layers[layer];
 
     auto it = std::remove(layer_container.begin(), layer_container.end(), view);
@@ -198,7 +195,6 @@ void viewport_manager::add_view_to_layer(wayfire_view view, uint32_t layer)
         remove_from_layer(view, layer_index_from_mask(current_layer));
 
     auto& layer_container = layers[layer_index_from_mask(layer)];
-    log_info("add to layer %d", layer_index_from_mask(layer));
     layer_container.push_front(view);
     current_layer = layer;
     view->damage();
