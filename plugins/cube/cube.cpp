@@ -121,7 +121,7 @@ class wayfire_cube : public wayfire_plugin_t {
         angle = 2 * M_PI / float(vw);
         coeff = 0.5 / std::tan(angle / 2);
 
-        renderer = [=] () {render();};
+        renderer = [=] (uint32_t fb) {render(fb);};
     }
 
     void schedule_next_frame()
@@ -258,7 +258,7 @@ class wayfire_cube : public wayfire_plugin_t {
         return duration.running();
     }
 
-    void render()
+    void render(uint32_t target_fb)
     {
         if (program.id == (uint)-1)
             load_program();
@@ -285,6 +285,7 @@ class wayfire_cube : public wayfire_plugin_t {
         GL_CALL(glDepthFunc(GL_LESS));
 
         OpenGL::use_device_viewport();
+        GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target_fb));
         vp = project * view;
         GL_CALL(glUniformMatrix4fv(program.vpID, 1, GL_FALSE, &vp[0][0]));
 
@@ -347,6 +348,7 @@ class wayfire_cube : public wayfire_plugin_t {
         }
         glDisable(GL_DEPTH_TEST);
 
+        GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
         GL_CALL(glDisableVertexAttribArray(program.posID));
         GL_CALL(glDisableVertexAttribArray(program.uvID));
 

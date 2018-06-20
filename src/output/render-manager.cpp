@@ -4,6 +4,7 @@
 #include "workspace-manager.hpp"
 #include "input-manager.hpp"
 #include "opengl.hpp"
+#include "debug.hpp"
 #include <algorithm>
 
 extern "C"
@@ -259,28 +260,15 @@ void render_manager::set_hide_overlay_panels(bool set)
     draw_overlay_panel = !set;
 }
 
-void render_manager::render_panels()
-{
-
-    auto vp = output->workspace->get_current_workspace();
-    auto views = output->workspace->get_views_on_workspace(vp, WF_ABOVE_LAYERS);
-    auto it = views.rbegin();
-    while (it != views.rend())
-    {
-        auto view = *it;
-        if (!view->is_hidden) /* use is_visible() when implemented */
-        {
-            auto og = view->get_output_position();
-            view->render(og.x, og.y, NULL);
-        }
-
-        ++it;
-    }
-}
-
 static inline int64_t timespec_to_msec(const struct timespec *a) {
      return (int64_t)a->tv_sec * 1000 + a->tv_nsec / 1000000;
 }
+
+struct render_manager::wf_post_effect
+{
+    post_hook_t *hook;
+    GLuint target_fbo = 0, target_tex = 0;
+};
 
 void render_manager::paint()
 {
@@ -311,14 +299,13 @@ void render_manager::paint()
 
     if (renderer)
     {
-        renderer();
+        renderer(default_fb);
         pixman_region32_union_rect(&swap_damage, &swap_damage, 0, 0,
                               output->handle->width, output->handle->height);
         /* TODO: let custom renderers specify what they want to repaint... */
     } else
     {
         pixman_region32_intersect_rect(&frame_damage, &frame_damage, 0, 0, w, h);
-
         if (pixman_region32_not_empty(&frame_damage))
         {
             pixman_region32_copy(&swap_damage, &frame_damage);
@@ -341,6 +328,27 @@ void render_manager::paint()
     }
 
     run_effects(effects[WF_OUTPUT_EFFECT_OVERLAY]);
+
+    wlr_renderer_scissor(rr, NULL);
+    if (post_effects.size())
+    {
+        pixman_region32_union_rect(&swap_damage, &swap_damage, 0, 0,
+                                   output->handle->width, output->handle->height);
+
+        GLuint last_fb = default_fb, last_tex = default_tex;
+
+        log_info("start with %u %u", last_fb, last_tex);
+        for (auto post : post_effects)
+        {
+            (*post->hook)(last_fb, last_tex, post->target_fbo);
+
+            log_info("move to %u", post->target_fbo);
+            last_fb = post->target_fbo;
+            last_tex = post->target_tex;
+        }
+
+        assert(last_fb == 0 && last_tex == 0);
+    }
 
     wlr_renderer_scissor(rr, NULL);
 
@@ -429,15 +437,62 @@ void render_manager::add_effect(effect_hook_t* hook, wf_output_effect_type type)
 void render_manager::rem_effect(const effect_hook_t *hook, wf_output_effect_type type)
 {
     auto& container = effects[type];
-    auto it = std::remove_if(container.begin(), container.end(),
-                             [hook] (const effect_hook_t *h)
-                             {
-                                 if (h == hook)
-                                     return true;
-                                 return false;
-                             });
-
+    auto it = std::remove(container.begin(), container.end(), hook);
     container.erase(it, container.end());
+}
+
+void render_manager::add_post(post_hook_t* hook)
+{
+    auto& last_fb = default_fb, &last_tex = default_tex;
+
+    if (!post_effects.empty())
+    {
+        last_fb  = post_effects.back()->target_fbo;
+        last_tex = post_effects.back()->target_tex;
+    }
+
+    last_fb = last_tex = -1;
+    OpenGL::prepare_framebuffer(last_fb, last_tex);
+
+    log_info("################################################# %u %u", last_fb, last_tex);
+    damage(NULL);
+
+    auto new_hook = new wf_post_effect;
+    new_hook->hook = hook;
+
+    post_effects.push_back(new_hook);
+}
+
+void render_manager::rem_post(post_hook_t* hook)
+{
+    auto it = std::remove_if(post_effects.begin(), post_effects.end(),
+                             [hook] (wf_post_effect* effect) { return effect->hook == hook; });
+
+    auto it2 = it;
+    while(it2 != post_effects.end())
+    {
+        if ((*it2)->target_fbo != 0)
+        {
+            GL_CALL(glDeleteFramebuffers(1, &(*it2)->target_fbo));
+            GL_CALL(glDeleteTextures(1, &(*it2)->target_tex));
+        }
+
+        delete *it2;
+    }
+    post_effects.erase(it, post_effects.end());
+
+    auto& last_fb = default_fb, &last_tex = default_tex;
+    if (!post_effects.empty())
+    {
+        last_fb  = post_effects.back()->target_fbo;
+        last_tex = post_effects.back()->target_tex;
+    }
+
+    if (last_fb != 0)
+    {
+        GL_CALL(glDeleteFramebuffers(1, &last_fb));
+        GL_CALL(glDeleteTextures(1, &last_tex));
+    }
 }
 
 void render_manager::workspace_stream_start(wf_workspace_stream *stream)
@@ -449,10 +504,6 @@ void render_manager::workspace_stream_start(wf_workspace_stream *stream)
 
     if (stream->fbuff == (uint)-1 || stream->tex == (uint)-1)
         OpenGL::prepare_framebuffer(stream->fbuff, stream->tex);
-
-    GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, stream->fbuff));
-    GL_CALL(glClearColor(0, 0, 0, 1));
-    GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 
     GetTuple(vx, vy, stream->ws);
     GetTuple(cx, cy, output->workspace->get_current_workspace());
@@ -669,8 +720,10 @@ void render_manager::workspace_stream_update(wf_workspace_stream *stream,
 
     int n_rect;
     auto rects = pixman_region32_rectangles(&ws_damage, &n_rect);
-    GL_CALL(glClearColor(0, 0, 0, 0));
-    GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, stream->fbuff));
+    GL_CALL(glClearColor(0, 0, 0, 1));
+
+    uint32_t target_buffer = (stream->fbuff == 0 ? default_fb : stream->fbuff);
+    GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target_buffer));
     for (int i = 0;i < n_rect; i++)
     {
         wlr_box damage = wlr_box_from_pixman_box(rects[i]);
@@ -684,7 +737,7 @@ void render_manager::workspace_stream_update(wf_workspace_stream *stream,
     while(rev_it != to_render.rend())
     {
         auto ds = std::move(*rev_it);
-        ds->surface->render_fb(ds->x, ds->y, &ds->damage, stream->fbuff);
+        ds->surface->render_fb(ds->x, ds->y, &ds->damage, target_buffer);
 
         ++rev_it;
     }
