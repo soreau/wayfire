@@ -71,6 +71,7 @@ class wayfire_invert_screen : public wayfire_plugin_t
 
         void render(uint32_t fb, uint32_t tex, uint32_t target)
         {
+            log_info("invert gets %u %u", fb, target);
             GL_CALL(glUseProgram(program));
             GL_CALL(glBindTexture(GL_TEXTURE_2D, tex));
             GL_CALL(glActiveTexture(GL_TEXTURE0));

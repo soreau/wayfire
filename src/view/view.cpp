@@ -478,7 +478,7 @@ void wayfire_view_t::render_fb(int x, int y, pixman_region32_t* damage, int fb)
             auto box = wlr_box{rects[i].x1, rects[i].y1,
                 rects[i].x2 - rects[i].x1, rects[i].y2 - rects[i].y1};
 
-            auto sbox = get_scissor_box(output, &box);
+            auto sbox = get_scissor_box(output, box);
             transform->render_with_damage(offscreen_buffer.tex, fb, obox, center, output_matrix, sbox);
         }
 

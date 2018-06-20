@@ -19,6 +19,7 @@ using signal_callback_t = std::function<void(signal_data*)>;
 struct wayfire_touch_gesture;
 using key_callback = std::function<void(uint32_t)>;
 using button_callback = std::function<void(uint32_t, int32_t, int32_t)>; // button, x, y
+using axis_callback = std::function<void(wlr_event_pointer_axis*)>;
 using touch_callback = std::function<void(int32_t, int32_t)>; // x, y
 using touch_gesture_callback = std::function<void(wayfire_touch_gesture*)>;
 
