@@ -26,6 +26,19 @@ enum wf_output_effect_type
     WF_OUTPUT_EFFECT_TOTAL = 3
 };
 
+/* effect hooks are called after main rendering */
+using effect_hook_t = std::function<void()>;
+
+/* post hooks are used for postprocessing. the first two params
+ * are the source framebuffer and the source texture, and the third
+ * is the target fbo which you should write to */
+using post_hook_t = std::function<void(uint32_t, uint32_t, uint32_t)>;
+
+/* render hooks are used when a plugin requests to draw the whole desktop on their own
+ * example plugin is cube. The parameter they take is the target framebuffer */
+using render_hook_t = std::function<void(uint32_t)>;
+
+
 struct wf_output_damage;
 class render_manager
 {
@@ -59,6 +72,13 @@ class render_manager
         using effect_container_t = std::vector<effect_hook_t*>;
         effect_container_t effects[WF_OUTPUT_EFFECT_TOTAL];
 
+        struct wf_post_effect;
+        /* TODO: use unique_ptr */
+        using post_container_t = std::vector<wf_post_effect*>;
+        post_container_t post_effects;
+
+        uint32_t default_fb = 0, default_tex = 0;
+
         int constant_redraw = 0;
         int output_inhibit = 0;
         render_hook_t renderer;
@@ -66,10 +86,10 @@ class render_manager
         void paint();
         void post_paint();
 
-
         void run_effects(effect_container_t&);
 
-        void render_panels();
+        void _rem_post(wf_post_effect *hook);
+        void cleanup_post_hooks();
 
         void init_default_streams();
 
@@ -92,6 +112,9 @@ class render_manager
 
         void add_effect(effect_hook_t*, wf_output_effect_type type);
         void rem_effect(const effect_hook_t*, wf_output_effect_type type);
+
+        void add_post(post_hook_t*);
+        void rem_post(post_hook_t*);
 
         void damage(const wlr_box& box);
         void damage(pixman_region32_t *region);

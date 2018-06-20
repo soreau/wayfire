@@ -125,8 +125,7 @@ class wayfire_expo : public wayfire_plugin_t
             handle_input_move(sx, sy);
         };
 
-        renderer = std::bind(std::mem_fn(&wayfire_expo::render), this);
-
+        renderer = [=] (uint32_t fb) { render(fb); };
         resized_cb = [=] (signal_data*) {
             for (int i = 0; i < vw; i++) {
                 for (int j = 0; j < vh; j++) {
@@ -330,7 +329,7 @@ class wayfire_expo : public wayfire_plugin_t
               delimiter_offset;
     } render_params;
 
-    void render()
+    void render(uint32_t target_fb)
     {
         GetTuple(vw, vh, output->workspace->get_workspace_grid_size());
         GetTuple(vx, vy, output->workspace->get_current_workspace());
@@ -365,6 +364,7 @@ class wayfire_expo : public wayfire_plugin_t
 
         OpenGL::use_device_viewport();
         auto vp = OpenGL::get_device_viewport();
+        GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target_fb));
         GL_CALL(glScissor(vp.x, vp.y, vp.width, vp.height));
 
         auto clear_color = background_color->as_cached_color();
@@ -399,6 +399,7 @@ class wayfire_expo : public wayfire_plugin_t
                 texg.y2 = streams[i][j]->scale_y;
 
                 GL_CALL(glEnable(GL_SCISSOR_TEST));
+                GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target_fb));
 
                 GL_CALL(glScissor(vp_geometry.x, vp_geometry.y,
                                   vp_geometry.width, vp_geometry.height));
@@ -407,6 +408,7 @@ class wayfire_expo : public wayfire_plugin_t
                         glm::vec4(1), TEXTURE_TRANSFORM_USE_DEVCOORD |
                         TEXTURE_USE_TEX_GEOMETRY | TEXTURE_TRANSFORM_INVERT_Y);
 
+                GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
                 GL_CALL(glDisable(GL_SCISSOR_TEST));
             }
         }

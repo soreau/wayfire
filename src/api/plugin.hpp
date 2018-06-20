@@ -16,9 +16,6 @@ extern "C"
 struct signal_data { };
 using signal_callback_t = std::function<void(signal_data*)>;
 
-/* effect hooks are called after main rendering */
-using effect_hook_t = std::function<void()>;
-
 struct wayfire_touch_gesture;
 using key_callback = std::function<void(uint32_t)>;
 using button_callback = std::function<void(uint32_t, int32_t, int32_t)>; // button, x, y
@@ -142,12 +139,6 @@ class wayfire_plugin_t {
 /* each dynamic plugin should have the symbol get_plugin_instance() which returns
  * an instance of the plugin */
 typedef wayfire_plugin_t *(*get_plugin_instance_t)();
-
-/* TODO: move elsewhere */
-/* render hooks are used when a plugin requests to draw the whole desktop on their own
- * example plugin is cube */
-using render_hook_t = std::function<void()>;
-
 #define GetTuple(x,y,t) auto x = std::get<0>(t); \
                         auto y = std::get<1>(t)
 #endif
