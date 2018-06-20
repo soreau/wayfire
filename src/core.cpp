@@ -459,6 +459,12 @@ struct key_callback_data : wf_callback
     wf_option key;
 };
 
+struct axis_callback_data : wf_callback
+{
+    axis_callback *call;
+    wf_option modifier;
+};
+
 struct button_callback_data : wf_callback
 {
     button_callback *call;
@@ -809,6 +815,25 @@ void input_manager::handle_pointer_motion_absolute(wlr_event_pointer_motion_abso
 
 void input_manager::handle_pointer_axis(wlr_event_pointer_axis *ev)
 {
+    std::vector<axis_callback*> callbacks;
+
+    auto mod_state = get_modifiers();
+
+    for (auto& pair : axis_bindings)
+    {
+        auto& binding = pair.second;
+        const auto mod = binding->modifier->as_cached_key().mod;
+
+        if (binding->output == core->get_active_output() &&
+            mod_state == mod)
+            callbacks.push_back(binding->call);
+    }
+
+    for (auto call : callbacks)
+        (*call) (ev);
+
+    /* reset modifier bindings */
+    in_mod_binding = false;
     if (active_grab)
     {
         if (active_grab->callbacks.pointer.axis)
@@ -816,6 +841,7 @@ void input_manager::handle_pointer_axis(wlr_event_pointer_axis *ev)
 
         return;
     }
+
 
     wlr_seat_pointer_notify_axis(seat, ev->time_msec, ev->orientation,
                                  ev->delta, ev->delta_discrete, ev->source);
@@ -1152,6 +1178,34 @@ void input_manager::toggle_session()
 }
 static int _last_id = 0;
 
+#define id_deleter(type) \
+\
+void input_manager::rem_ ##type (int id) \
+{ \
+    auto it = type ## _bindings.find(id); \
+    if (it != type ## _bindings.end()) \
+    { \
+        delete it->second; \
+        type ## _bindings.erase(it); \
+    } \
+}
+
+#define callback_deleter(type) \
+void input_manager::rem_ ##type (type ## _callback *cb) \
+{ \
+    auto it = type ## _bindings.begin(); \
+\
+    while(it != type ## _bindings.end()) \
+    { \
+        if (it->second->call == cb) \
+        { \
+            delete it->second; \
+            it = type ## _bindings.erase(it); \
+        } else \
+            ++it; \
+    } \
+}
+
 int input_manager::add_key(wf_option option, key_callback *call, wayfire_output *output)
 {
     auto kcd = new key_callback_data;
@@ -1164,30 +1218,23 @@ int input_manager::add_key(wf_option option, key_callback *call, wayfire_output 
     return _last_id;
 }
 
-void input_manager::rem_key(int id)
+id_deleter(key);
+callback_deleter(key);
+
+int input_manager::add_axis(wf_option option, axis_callback *call, wayfire_output *output)
 {
-    auto it = key_bindings.find(id);
-    if (it != key_bindings.end())
-    {
-        delete it->second;
-        key_bindings.erase(it);
-    }
+    auto acd = new axis_callback_data;
+    acd->call = call;
+    acd->output = output;
+    acd->modifier = option;
+    acd->id = ++_last_id;
+
+    axis_bindings[_last_id] = acd;
+    return _last_id;
 }
 
-void input_manager::rem_key(key_callback *cb)
-{
-    auto it = key_bindings.begin();
-
-    while(it != key_bindings.end())
-    {
-        if (it->second->call == cb)
-        {
-            delete it->second;
-            it = key_bindings.erase(it);
-        } else
-            ++it;
-    }
-}
+id_deleter(axis);
+callback_deleter(axis);
 
 int input_manager::add_button(wf_option option, button_callback *call, wayfire_output *output)
 {
@@ -1201,30 +1248,10 @@ int input_manager::add_button(wf_option option, button_callback *call, wayfire_o
     return _last_id;
 }
 
-void input_manager::rem_button(int id)
-{
-    auto it = button_bindings.find(id);
-    if (it != button_bindings.end())
-    {
-        delete it->second;
-        button_bindings.erase(it);
-    }
-}
+id_deleter(button);
+callback_deleter(button);
 
-void input_manager::rem_button(button_callback *cb)
-{
-    auto it = button_bindings.begin();
-
-    while(it != button_bindings.end())
-    {
-        if (it->second->call == cb)
-        {
-            delete it->second;
-            it = button_bindings.erase(it);
-        } else
-            ++it;
-    }
-}
+/* */
 
 int input_manager::add_touch(uint32_t mods, touch_callback* call, wayfire_output *output)
 {

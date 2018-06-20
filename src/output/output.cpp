@@ -610,6 +610,7 @@ wayfire_grab_interface wayfire_output::get_input_grab_interface()
 }
 
 /* simple wrappers for core->input, as it isn't exposed to plugins */
+
 int wayfire_output::add_key(wf_option key, key_callback* callback)
 {
     return core->input->add_key(key, callback, this);
@@ -623,6 +624,21 @@ void wayfire_output::rem_key(key_callback* callback)
 void wayfire_output::rem_key(int callback)
 {
     core->input->rem_key(callback);
+}
+
+int wayfire_output::add_axis(wf_option mod, axis_callback* callback)
+{
+    return core->input->add_axis(mod, callback, this);
+}
+
+void wayfire_output::rem_axis(axis_callback* callback)
+{
+    core->input->rem_axis(callback);
+}
+
+void wayfire_output::rem_axis(int callback)
+{
+    core->input->rem_axis(callback);
 }
 
 int wayfire_output::add_button(wf_option button, button_callback* callback)

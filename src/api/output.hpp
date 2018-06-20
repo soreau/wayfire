@@ -117,11 +117,15 @@ class wayfire_output
         * and which isn't skip_view */
        void refocus(wayfire_view skip_view, uint32_t layers);
 
-       int add_key(wf_option key, key_callback *);
+       int  add_key(wf_option key, key_callback *);
        void rem_key(key_callback *);
        void rem_key(int);
 
-       int add_button(wf_option button, button_callback *);
+       int  add_axis(wf_option mod, axis_callback *);
+       void rem_axis(axis_callback *);
+       void rem_axis(int);
+
+       int  add_button(wf_option button, button_callback *);
        void rem_button(button_callback*);
        void rem_button(int);
 

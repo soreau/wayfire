@@ -7,7 +7,6 @@
 
 wayfire_surface_t* wf_surface_from_void(void *handle);
 wayfire_view_t* wf_view_from_void(void *handle);
-wlr_box get_scissor_box(wayfire_output *output, wlr_box *box);
 wlr_box wlr_box_from_pixman_box(const pixman_box32_t& box);
 
 void emit_view_map(wayfire_view view);

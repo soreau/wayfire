@@ -20,6 +20,7 @@ struct wlr_drag_icon;
 
 struct wf_gesture_recognizer;
 struct key_callback_data;
+struct axis_callback_data;
 struct button_callback_data;
 struct wlr_seat;
 struct wf_touch;
@@ -76,6 +77,7 @@ class input_manager
         std::map<int, wf_gesture_listener> gesture_listeners;
         std::map<int, touch_listener> touch_listeners;
         std::map<int, key_callback_data*> key_bindings;
+        std::map<int, axis_callback_data*> axis_bindings;
         std::map<int, button_callback_data*> button_bindings;
 
         bool is_touch_enabled();
@@ -145,6 +147,10 @@ class input_manager
         int  add_key(wf_option, key_callback *, wayfire_output *output);
         void rem_key(int);
         void rem_key(key_callback *callback);
+
+        int  add_axis(wf_option, axis_callback *, wayfire_output *output);
+        void rem_axis(int);
+        void rem_axis(axis_callback * callback);
 
         int  add_button(wf_option, button_callback *, wayfire_output *output);
         void rem_button(int);

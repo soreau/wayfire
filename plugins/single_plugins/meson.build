@@ -15,3 +15,4 @@ window_rules  = shared_module('window-rules',  'window-rules.cpp',  include_dire
 center_view   = shared_module('center-view',   'center-view.cpp',   include_directories: [wayfire_api_inc, wayfire_conf_inc], dependencies: [wlroots, pixman, wfconfig], install: true, install_dir: 'lib/wayfire/')
 place         = shared_module('place',         'place.cpp',         include_directories: [wayfire_api_inc, wayfire_conf_inc], dependencies: [wlroots, pixman, wfconfig], install: true, install_dir: 'lib/wayfire/')
 invert        = shared_module('invert',        'invert.cpp',        include_directories: [wayfire_api_inc, wayfire_conf_inc], dependencies: [wlroots, pixman, wfconfig], install: true, install_dir: 'lib/wayfire/')
+zoom          = shared_module('zoom',          'zoom.cpp',          include_directories: [wayfire_api_inc, wayfire_conf_inc], dependencies: [wlroots, pixman, wfconfig], install: true, install_dir: 'lib/wayfire/')

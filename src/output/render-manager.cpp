@@ -339,13 +339,10 @@ void render_manager::paint()
                                    output->handle->width, output->handle->height);
 
         GLuint last_fb = default_fb, last_tex = default_tex;
-
-        log_info("start with %u %u", last_fb, last_tex);
         for (auto post : post_effects)
         {
             (*post->hook)(last_fb, last_tex, post->target_fbo);
 
-            log_info("move to %u", post->target_fbo);
             last_fb = post->target_fbo;
             last_tex = post->target_tex;
         }
@@ -447,18 +444,16 @@ void render_manager::rem_effect(const effect_hook_t *hook, wf_output_effect_type
 
 void render_manager::add_post(post_hook_t* hook)
 {
-    auto& last_fb = default_fb, &last_tex = default_tex;
+    auto last_fb = &default_fb, last_tex = &default_tex;
 
     if (!post_effects.empty())
     {
-        last_fb  = post_effects.back()->target_fbo;
-        last_tex = post_effects.back()->target_tex;
+        last_fb  = &post_effects.back()->target_fbo;
+        last_tex = &post_effects.back()->target_tex;
     }
 
-    last_fb = last_tex = -1;
-    OpenGL::prepare_framebuffer(last_fb, last_tex);
-
-    log_info("################################################# %u %u", last_fb, last_tex);
+    *last_fb = *last_tex = -1;
+    OpenGL::prepare_framebuffer(*last_fb, *last_tex);
     damage(NULL);
 
     auto new_hook = new wf_post_effect;
@@ -481,21 +476,26 @@ void render_manager::_rem_post(wf_post_effect *post)
         }
 
         delete *it2;
+        ++it2;
     }
     post_effects.erase(it, post_effects.end());
 
-    auto& last_fb = default_fb, &last_tex = default_tex;
+    auto last_fb = &default_fb, last_tex = &default_tex;
     if (!post_effects.empty())
     {
-        last_fb  = post_effects.back()->target_fbo;
-        last_tex = post_effects.back()->target_tex;
+        last_fb  = &post_effects.back()->target_fbo;
+        last_tex = &post_effects.back()->target_tex;
     }
 
     if (last_fb != 0)
     {
-        GL_CALL(glDeleteFramebuffers(1, &last_fb));
-        GL_CALL(glDeleteTextures(1, &last_tex));
+        GL_CALL(glDeleteFramebuffers(1, last_fb));
+        GL_CALL(glDeleteTextures(1, last_tex));
+
+        *last_fb = *last_tex = 0;
     }
+
+    damage(NULL);
 }
 
 void render_manager::cleanup_post_hooks()
@@ -754,7 +754,7 @@ void render_manager::workspace_stream_update(wf_workspace_stream *stream,
     for (int i = 0;i < n_rect; i++)
     {
         wlr_box damage = wlr_box_from_pixman_box(rects[i]);
-        auto box = get_scissor_box(output, &damage);
+        auto box = get_scissor_box(output, damage);
 
         wlr_renderer_scissor(core->renderer, &box);
         GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
