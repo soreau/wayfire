@@ -267,6 +267,7 @@ static inline int64_t timespec_to_msec(const struct timespec *a) {
 struct render_manager::wf_post_effect
 {
     post_hook_t *hook;
+    bool to_remove = false;
     GLuint target_fbo = 0, target_tex = 0;
 };
 
@@ -330,6 +331,8 @@ void render_manager::paint()
     run_effects(effects[WF_OUTPUT_EFFECT_OVERLAY]);
 
     wlr_renderer_scissor(rr, NULL);
+    cleanup_post_hooks();
+
     if (post_effects.size())
     {
         pixman_region32_union_rect(&swap_damage, &swap_damage, 0, 0,
@@ -344,6 +347,7 @@ void render_manager::paint()
             last_tex = post->target_tex;
         }
 
+        cleanup_post_hooks();
         assert(last_fb == 0 && last_tex == 0);
     }
 
@@ -458,10 +462,9 @@ void render_manager::add_post(post_hook_t* hook)
     post_effects.push_back(new_hook);
 }
 
-void render_manager::rem_post(post_hook_t* hook)
+void render_manager::_rem_post(wf_post_effect *post)
 {
-    auto it = std::remove_if(post_effects.begin(), post_effects.end(),
-                             [hook] (wf_post_effect* effect) { return effect->hook == hook; });
+    auto it = std::remove(post_effects.begin(), post_effects.end(), post);
 
     auto it2 = it;
     while(it2 != post_effects.end())
@@ -490,6 +493,30 @@ void render_manager::rem_post(post_hook_t* hook)
         GL_CALL(glDeleteTextures(1, last_tex));
 
         *last_fb = *last_tex = 0;
+    }
+
+    damage(NULL);
+}
+
+void render_manager::cleanup_post_hooks()
+{
+    std::vector<wf_post_effect*> to_remove;
+    for (auto& h : post_effects)
+    {
+        if (h->to_remove)
+            to_remove.push_back(h);
+    }
+
+    for (auto post : to_remove)
+        _rem_post(post);
+}
+
+void render_manager::rem_post(post_hook_t *hook)
+{
+    for (auto& h : post_effects)
+    {
+        if (h->hook == hook)
+            h->to_remove = 1;
     }
 
     damage(NULL);

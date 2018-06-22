@@ -73,6 +73,7 @@ class render_manager
         effect_container_t effects[WF_OUTPUT_EFFECT_TOTAL];
 
         struct wf_post_effect;
+        /* TODO: use unique_ptr */
         using post_container_t = std::vector<wf_post_effect*>;
         post_container_t post_effects;
 
@@ -86,6 +87,10 @@ class render_manager
         void post_paint();
 
         void run_effects(effect_container_t&);
+
+        void _rem_post(wf_post_effect *hook);
+        void cleanup_post_hooks();
+
         void init_default_streams();
 
     public:
