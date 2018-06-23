@@ -52,16 +52,17 @@ class wayfire_zoom_screen : public wayfire_plugin_t
             target_zoom = std::max(target_zoom, 1.0f);
             target_zoom = std::min(target_zoom, 50.0f);
 
-            if (!hook_set)
-            {
-                hook_set = true;
-                output->render->add_post(&hook);
-            }
 
             if (last_target != target_zoom)
             {
                 auto current = duration.progress();
                 duration.start(current, target_zoom);
+
+                if (!hook_set)
+                {
+                    hook_set = true;
+                    output->render->add_post(&hook);
+                }
             }
         }
 
