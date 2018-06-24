@@ -81,7 +81,7 @@ class wayfire_fisheye : public wayfire_plugin_t
     wf_duration duration;
     float target_zoom;
     bool active, hook_set;
-    wf_option radius, zoom_opt;
+    wf_option radius, zoom;
 
     GLuint program, posID, mouseID, resID, radiusID, zoomID;
 
@@ -91,12 +91,12 @@ class wayfire_fisheye : public wayfire_plugin_t
             auto section = config->get_section("fisheye");
             auto toggle_key = section->get_option("toggle", "<super> KEY_F");
             radius = section->get_option("radius", "300");
-            zoom_opt = section->get_option("zoom", "7");
+            zoom = section->get_option("zoom", "7");
 
             if (!toggle_key->as_key().valid())
                 return;
 
-            target_zoom = zoom_opt->as_double();
+            target_zoom = zoom->as_double();
 
             hook = [=] (uint32_t fb, uint32_t tex, uint32_t target)
             {
@@ -157,7 +157,7 @@ class wayfire_fisheye : public wayfire_plugin_t
             };
 
             auto current_zoom = duration.progress();
-            target_zoom = zoom_opt->as_double();
+            target_zoom = zoom->as_double();
 
             glUniform2f(mouseID, x, y);
             glUniform2f(resID, output->handle->width, output->handle->height);
