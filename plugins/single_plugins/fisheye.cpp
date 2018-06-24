@@ -79,9 +79,9 @@ class wayfire_fisheye : public wayfire_plugin_t
     post_hook_t hook;
     key_callback toggle_cb;
     wf_duration duration;
-    float radius, target_zoom, current_zoom;
+    float target_zoom;
     bool active, hook_set;
-    wf_option radius_opt, zoom_opt;
+    wf_option radius, zoom_opt;
 
     GLuint program, posID, mouseID, resID, radiusID, zoomID;
 
@@ -90,13 +90,12 @@ class wayfire_fisheye : public wayfire_plugin_t
         {
             auto section = config->get_section("fisheye");
             auto toggle_key = section->get_option("toggle", "<super> KEY_F");
-            radius_opt = section->get_option("radius", "300");
+            radius = section->get_option("radius", "300");
             zoom_opt = section->get_option("zoom", "7");
 
             if (!toggle_key->as_key().valid())
                 return;
 
-            radius = radius_opt->as_double();
             target_zoom = zoom_opt->as_double();
 
             hook = [=] (uint32_t fb, uint32_t tex, uint32_t target)
@@ -107,13 +106,11 @@ class wayfire_fisheye : public wayfire_plugin_t
             toggle_cb = [=] (uint32_t key) {
                     if (active) {
                         active = false;
-                        current_zoom = 0.0;
 
                         auto current = duration.progress();
                         duration.start(current, 0);
                     } else {
                         active = true;
-                        current_zoom = target_zoom;
 
                         auto current = duration.progress();
                         duration.start(current, target_zoom);
@@ -160,14 +157,12 @@ class wayfire_fisheye : public wayfire_plugin_t
                 -1.0f,  1.0f
             };
 
-            radius = radius_opt->as_double();
+            auto current_zoom = duration.progress();
             target_zoom = zoom_opt->as_double();
-
-            current_zoom = duration.progress();
 
             glUniform2f(mouseID, x, y);
             glUniform2f(resID, output->handle->width, output->handle->height);
-            glUniform1f(radiusID, radius);
+            glUniform1f(radiusID, radius->as_double());
             glUniform1f(zoomID, current_zoom);
 
             GL_CALL(glVertexAttribPointer(posID, 2, GL_FLOAT, GL_FALSE, 0, vertexData));
