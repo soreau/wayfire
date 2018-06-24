@@ -172,14 +172,14 @@ class wayfire_fisheye : public wayfire_plugin_t
             GL_CALL(glDisableVertexAttribArray(posID));
             GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
 
-            if (!duration.running())
+            if (active)
+            {
+                duration.start(current_zoom, target_zoom);
+            } else if (!duration.running())
             {
                 output->render->rem_post(&hook);
                 hook_set = false;
             }
-
-            if (active)
-                duration.start(current_zoom, target_zoom);
         }
 };
 
