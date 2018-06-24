@@ -106,14 +106,10 @@ class wayfire_fisheye : public wayfire_plugin_t
             toggle_cb = [=] (uint32_t key) {
                     if (active) {
                         active = false;
-
-                        auto current = duration.progress();
-                        duration.start(current, 0);
+                        duration.start(duration.progress(), 0);
                     } else {
                         active = true;
-
-                        auto current = duration.progress();
-                        duration.start(current, target_zoom);
+                        duration.start(duration.progress(), target_zoom);
 
                         if (!hook_set)
                         {
