@@ -137,7 +137,7 @@ class wayfire_fisheye : public wayfire_plugin_t
             zoomID  = GL_CALL(glGetUniformLocation(program, "u_zoom"));
 
             duration = wf_duration(new_static_option("700"));
-            duration.start(1, 1); // so that the first value we get is correct
+            duration.start(0, 0); // so that the first value we get is correct
 
             output->add_key(toggle_key, &toggle_cb);
         }
