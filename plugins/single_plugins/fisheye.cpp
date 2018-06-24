@@ -177,6 +177,8 @@ class wayfire_fisheye : public wayfire_plugin_t
 
             if (active)
             {
+                /* Reset animation in case target_zoom
+                 * was changed via config */
                 duration.start(current_zoom, target_zoom);
             } else if (!duration.running())
             {
