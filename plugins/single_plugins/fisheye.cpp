@@ -103,11 +103,14 @@ class wayfire_fisheye : public wayfire_plugin_t
                 render(fb, tex, target);
             };
 
-            toggle_cb = [=] (uint32_t key) {
-                    if (active) {
+            toggle_cb = [=] (uint32_t key)
+            {
+                    if (active)
+                    {
                         active = false;
                         duration.start(duration.progress(), 0);
-                    } else {
+                    } else
+                    {
                         active = true;
                         duration.start(duration.progress(), target_zoom);
 
