@@ -73,7 +73,7 @@ void main()
 }
 )";
 
-class wayfire_invert_screen : public wayfire_plugin_t
+class wayfire_fisheye : public wayfire_plugin_t
 {
 
     post_hook_t hook;
@@ -196,6 +196,6 @@ extern "C"
 {
     wayfire_plugin_t *newInstance()
     {
-        return new wayfire_invert_screen();
+        return new wayfire_fisheye();
     }
 }
