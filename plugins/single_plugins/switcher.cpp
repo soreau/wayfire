@@ -12,7 +12,6 @@
 #include <linux/input-event-codes.h>
 #include <algorithm>
 
-/* TODO: possibly decouple fast-switch and regular switching, they don't have much in common these days */
 enum paint_attribs
 {
     UPDATE_SCALE = 1,
@@ -48,10 +47,7 @@ float get_scale_factor(float w, float h, float sw, float sh, float c)
 }
 
 /* This plugin rovides abilities to switch between views.
- * There are two modes : "fast" switching and regular switching.
- * Fast switching works similarly to the alt-esc binding in Windows or GNOME
- * Regular switching provides the same, but with more "effects". Namely, it
- * runs in several stages:
+ * Namely, it runs in several stages:
  * 1. "Fold" - views are moved to the center of the screen(they might overlap)
  *    and all except the focused one are made smaller
  * 2. "Unfold" - views are moved to the left/right and rotated
@@ -62,9 +58,9 @@ float get_scale_factor(float w, float h, float sw, float sh, float c)
 
 class view_switcher : public wayfire_plugin_t
 {
-    key_callback init_binding, fast_switch_binding;
+    key_callback init_binding;
     wf_option next_view, prev_view, terminate;
-    wf_option activate_key, fast_switch_key;
+    wf_option activate_key;
 
     signal_callback_t destroyed;
 
@@ -84,12 +80,10 @@ class view_switcher : public wayfire_plugin_t
 
         bool reversed_folds = false;
 
-        /* the following are needed for fast switching, for ex.
-         * if the user presses alt-tab(assuming this is our binding)
+        /* if the user presses alt-tab(assuming this is our binding)
          * and then presses tab several times, holding alt, we assume
          * he/she wants to switch between windows, so we track if this is the case */
         bool in_continuous_switch = false;
-        bool in_fast_switch = false;
     } state;
 
     size_t current_view_index;
@@ -117,17 +111,6 @@ class view_switcher : public wayfire_plugin_t
 
         auto section = config->get_section("switcher");
 
-        fast_switch_key = section->get_option("fast_switch", "<alt> KEY_ESC");
-        fast_switch_binding = [=] (uint32_t key)
-        {
-            if (state.active && !state.in_fast_switch)
-                return;
-
-            fast_switch();
-        };
-
-        output->add_key(fast_switch_key, &fast_switch_binding);
-
         regular_animation = section->get_option("duration", "250");
         initial_animation = section->get_option("initial_animation", "150");
 
@@ -137,9 +120,6 @@ class view_switcher : public wayfire_plugin_t
 
         init_binding = [=] (uint32_t)
         {
-            if (state.in_fast_switch)
-                return;
-
             if (!state.active)
             {
                 activate();
@@ -257,69 +237,46 @@ class view_switcher : public wayfire_plugin_t
 
     void stop_continuous_switch()
     {
-
         state.in_continuous_switch = false;
-        if (state.in_fast_switch)
-        {
-            fast_switch_terminate();
-        } else
-        {
-            push_exit();
-        }
+        push_exit();
     }
 
     void handle_mod(uint32_t mod, uint32_t st)
     {
         bool mod_released = (mod == activate_key->as_cached_key().mod && st == WLR_KEY_RELEASED);
-        bool fast_mod_released = (mod == fast_switch_key->as_cached_key().mod && st == WLR_KEY_RELEASED);
 
-        if ((mod_released && state.in_continuous_switch) ||
-            (fast_mod_released && state.in_fast_switch))
+        if (mod_released)
         {
-            stop_continuous_switch();
-        } else if (mod_released)
-        {
-            state.mod_released = true;
+            if (state.in_continuous_switch)
+                stop_continuous_switch();
+            else
+                state.mod_released = true;
         }
     }
 
     void handle_key(uint32_t key, uint32_t kstate)
     {
-        log_info("handle key %u %u %u %u", key, KEY_ENTER, kstate, WLR_KEY_PRESSED);
         if (kstate != WLR_KEY_PRESSED)
             return;
 
-        log_info("good state");
-
-#define fast_switch_on (state.in_fast_switch && key == fast_switch_key->as_cached_key().keyval)
-
-        if (!state.mod_released && (key == activate_key->as_cached_key().keyval || fast_switch_on))
+        if (!state.mod_released && (key == activate_key->as_cached_key().keyval))
         {
-            log_info("continuous");
             state.in_continuous_switch = true;
         }
 
-        if (key == activate_key->as_cached_key().keyval && state.in_continuous_switch && !state.in_fast_switch)
+        if (key == activate_key->as_cached_key().keyval && state.in_continuous_switch)
         {
-            log_info("nowadays");
             push_next_view(1);
             return;
         }
 
-        if (fast_switch_on && state.in_continuous_switch)
-        {
-            fast_switch_next();
-            return;
-        }
-
         if (state.active &&
-            (key == terminate->as_cached_key().keyval || key == activate_key->as_cached_key().keyval)
-            && !state.in_fast_switch)
+            (key == terminate->as_cached_key().keyval || key == activate_key->as_cached_key().keyval))
         {
             push_exit();
         }
 
-        if ((key == prev_view->as_cached_key().keyval || key == next_view->as_cached_key().keyval) && !state.in_fast_switch)
+        if ((key == prev_view->as_cached_key().keyval || key == next_view->as_cached_key().keyval))
         {
             int dx = (key == prev_view->as_cached_key().keyval ? -1 : 1);
             push_next_view(dx);
@@ -695,95 +652,11 @@ class view_switcher : public wayfire_plugin_t
         output->disconnect_signal("detach-view", &destroyed);
     }
 
-    void fast_switch()
-    {
-        if (!state.active)
-        {
-            if (!output->activate_plugin(grab_interface))
-                return;
-
-            update_views();
-
-            if (views.size() < 1)
-            {
-                output->deactivate_plugin(grab_interface);
-                return;
-            }
-
-            current_view_index = 0;
-
-            state.in_fast_switch = true;
-            state.in_continuous_switch = true;
-            state.active = true;
-            state.mod_released = false;
-
-            for (auto view : views) {
-                if (view) {
-                    view->alpha = 0.7;
-                    view->damage();
-                }
-            }
-
-            grab_interface->grab();
-            fast_switch_next();
-
-            output->connect_signal("unmap-view", &destroyed);
-            output->connect_signal("detach-view", &destroyed);
-        }
-    }
-
-    void fast_switch_terminate()
-    {
-        for (auto view : views)
-        {
-            view->pop_transformer("switcher");
-            if (view)
-            {
-                view->alpha = 1.0;
-                view->damage();
-            }
-        }
-        view_chosen(current_view_index);
-
-        grab_interface->ungrab();
-        output->deactivate_plugin(grab_interface);
-        state.active = false;
-        state.in_fast_switch = false;
-
-        output->disconnect_signal("unmap-view", &destroyed);
-        output->disconnect_signal("detach-view", &destroyed);
-    }
-
-    void fast_switch_next()
-    {
-#define index current_view_index
-        if (views[index]) {
-            views[index]->alpha = 0.7;
-            views[index]->damage();
-        }
-
-        index = (index + 1) % views.size();
-
-        if (views[index]) {
-            views[index]->alpha = 1.0;
-            views[index]->damage();
-        }
-
-        output->bring_to_front(views[index]);
-#undef index
-    }
-
     void fini()
     {
-        if (state.in_fast_switch)
-        {
-            fast_switch_terminate();
-        } else if (state.active)
-        {
+        if (state.active)
             deactivate();
-        }
 
-        output->rem_key(&fast_switch_binding);
         output->rem_key(&init_binding);
     }
 };
