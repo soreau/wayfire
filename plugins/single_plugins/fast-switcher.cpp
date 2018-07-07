@@ -23,10 +23,10 @@ class wayfire_fast_switcher : public wayfire_plugin_t
     public:
     void init(wayfire_config *config)
     {
-        grab_interface->name = "fast_switcher";
+        grab_interface->name = "fast-switcher";
         grab_interface->abilities_mask = WF_ABILITY_CONTROL_WM;
 
-        auto section = config->get_section("fast_switcher");
+        auto section = config->get_section("fast-switcher");
 
         activate_key = section->get_option("activate", "<alt> KEY_TAB");
         init_binding = [=] (uint32_t key)
