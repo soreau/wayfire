@@ -13,16 +13,14 @@ class wayfire_fast_switcher : public wayfire_plugin_t
     key_callback init_binding;
     wf_option activate_key;
 
-    bool active;
-
     signal_callback_t destroyed;
 
     size_t current_view_index;
-
     std::vector<wayfire_view> views; // all views on current viewport
 
-    public:
+    bool active;
 
+    public:
     void init(wayfire_config *config)
     {
         grab_interface->name = "fast_switcher";
@@ -59,11 +57,10 @@ class wayfire_fast_switcher : public wayfire_plugin_t
         {
             switch_terminate();
 
-            for (auto view : views) {
-                if (view) {
-                    view->alpha = 1.0;
-                    view->damage();
-                }
+            for (auto view : views)
+            {
+                view->alpha = 1.0;
+                view->damage();
             }
         }
     }
@@ -120,14 +117,12 @@ class wayfire_fast_switcher : public wayfire_plugin_t
         }
 
         current_view_index = 0;
-
         active = true;
 
-        for (auto view : views) {
-            if (view) {
-                view->alpha = 0.7;
-                view->damage();
-            }
+        for (auto view : views)
+        {
+            view->alpha = 0.7;
+            view->damage();
         }
 
         grab_interface->grab();
@@ -169,7 +164,8 @@ class wayfire_fast_switcher : public wayfire_plugin_t
 
     void fini()
     {
-        switch_terminate();
+        if (active)
+            switch_terminate();
 
         output->rem_key(&init_binding);
     }
