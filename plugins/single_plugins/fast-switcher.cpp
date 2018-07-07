@@ -1,6 +1,3 @@
-#include <output.hpp>
-#include <debug.hpp>
-#include <opengl.hpp>
 #include <signal-definitions.hpp>
 #include <view.hpp>
 #include <workspace-manager.hpp>
