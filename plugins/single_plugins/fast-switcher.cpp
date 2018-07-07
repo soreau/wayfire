@@ -11,27 +11,14 @@
  * It works similarly to the alt-esc binding in Windows or GNOME
  */
 
-class fast_switcher : public wayfire_plugin_t
+class wayfire_fast_switcher : public wayfire_plugin_t
 {
     key_callback init_binding;
     wf_option activate_key;
 
+    bool active;
+
     signal_callback_t destroyed;
-
-    struct
-    {
-        bool active = false;
-
-        bool mod_released = false;
-        bool in_fold = false;
-        bool in_unfold = false;
-        bool in_rotate = false;
-
-        bool reversed_folds = false;
-
-        bool in_continuous_switch = false;
-        bool in_switch = false;
-    } state;
 
     size_t current_view_index;
 
@@ -55,26 +42,33 @@ class fast_switcher : public wayfire_plugin_t
         output->add_key(activate_key, &init_binding);
 
         using namespace std::placeholders;
-        grab_interface->callbacks.keyboard.key = std::bind(std::mem_fn(&fast_switcher::handle_key),
+        grab_interface->callbacks.keyboard.key = std::bind(std::mem_fn(&wayfire_fast_switcher::handle_key),
                 this, _1, _2);
 
-        grab_interface->callbacks.keyboard.mod = std::bind(std::mem_fn(&fast_switcher::handle_mod),
+        grab_interface->callbacks.keyboard.mod = std::bind(std::mem_fn(&wayfire_fast_switcher::handle_mod),
                 this, _1, _2);
-    }
 
-    void stop_continuous_switch()
-    {
-        state.in_continuous_switch = false;
-        if (state.in_switch)
-            switch_terminate();
+        destroyed = [=] (signal_data *data)
+        {
+            cleanup_view(get_signaled_view(data));
+        };
     }
 
     void handle_mod(uint32_t mod, uint32_t st)
     {
         bool mod_released = (mod == activate_key->as_cached_key().mod && st == WLR_KEY_RELEASED);
 
-        if (mod_released && state.in_switch)
-            stop_continuous_switch();
+        if (mod_released)
+        {
+            switch_terminate();
+
+            for (auto view : views) {
+                if (view) {
+                    view->alpha = 1.0;
+                    view->damage();
+                }
+            }
+        }
     }
 
     void handle_key(uint32_t key, uint32_t kstate)
@@ -82,16 +76,7 @@ class fast_switcher : public wayfire_plugin_t
         if (kstate != WLR_KEY_PRESSED)
             return;
 
-#define switch_on (state.in_switch && key == activate_key->as_cached_key().keyval)
-
-        if (!state.mod_released && (key == activate_key->as_cached_key().keyval || switch_on))
-            state.in_continuous_switch = true;
-
-        if (switch_on && state.in_continuous_switch)
-        {
-            switch_next();
-            return;
-        }
+        switch_next();
     }
 
     void update_views()
@@ -108,49 +93,58 @@ class fast_switcher : public wayfire_plugin_t
         output->focus_view(views[i]);
     }
 
+    void cleanup_view(wayfire_view view)
+    {
+        size_t i = 0;
+        for (; i < views.size() && views[i] != view; i++);
+        if (i == views.size())
+            return;
+
+        views.erase(views.begin() + i);
+
+        if (i <= current_view_index)
+            current_view_index = (current_view_index + views.size() - 1) % views.size();
+    }
+
     void fast_switch()
     {
-        if (!state.active)
+        if (active)
+            return;
+
+        if (!output->activate_plugin(grab_interface))
+            return;
+
+        update_views();
+
+        if (views.size() < 1)
         {
-            if (!output->activate_plugin(grab_interface))
-                return;
-
-            update_views();
-
-            if (views.size() < 1)
-            {
-                output->deactivate_plugin(grab_interface);
-                return;
-            }
-
-            current_view_index = 0;
-
-            state.in_switch = true;
-            state.in_continuous_switch = true;
-            state.active = true;
-            state.mod_released = false;
-
-            for (auto view : views) {
-                if (view) {
-                    view->alpha = 0.7;
-                    view->damage();
-                }
-            }
-
-            grab_interface->grab();
-            switch_next();
-
-            output->connect_signal("unmap-view", &destroyed);
-            output->connect_signal("detach-view", &destroyed);
+            output->deactivate_plugin(grab_interface);
+            return;
         }
+
+        current_view_index = 0;
+
+        active = true;
+
+        for (auto view : views) {
+            if (view) {
+                view->alpha = 0.7;
+                view->damage();
+            }
+        }
+
+        grab_interface->grab();
+        switch_next();
+
+        output->connect_signal("unmap-view", &destroyed);
+        output->connect_signal("detach-view", &destroyed);
     }
 
     void switch_terminate()
     {
         grab_interface->ungrab();
         output->deactivate_plugin(grab_interface);
-        state.active = false;
-        state.in_switch = false;
+        active = false;
 
         output->disconnect_signal("unmap-view", &destroyed);
         output->disconnect_signal("detach-view", &destroyed);
@@ -178,8 +172,7 @@ class fast_switcher : public wayfire_plugin_t
 
     void fini()
     {
-        if (state.in_switch)
-            switch_terminate();
+        switch_terminate();
 
         output->rem_key(&init_binding);
     }
@@ -189,6 +182,6 @@ extern "C"
 {
     wayfire_plugin_t* newInstance()
     {
-        return new fast_switcher();
+        return new wayfire_fast_switcher();
     }
 }

@@ -1,5 +1,3 @@
-#include <output.hpp>
-#include <debug.hpp>
 #include <opengl.hpp>
 #include <signal-definitions.hpp>
 #include <view.hpp>
@@ -56,7 +54,7 @@ float get_scale_factor(float w, float h, float sw, float sh, float c)
  * 5. "Reverse fold"
  * */
 
-class view_switcher : public wayfire_plugin_t
+class wayfire_view_switcher : public wayfire_plugin_t
 {
     key_callback init_binding;
     wf_option next_view, prev_view, terminate;
@@ -132,10 +130,10 @@ class view_switcher : public wayfire_plugin_t
         output->add_key(activate_key, &init_binding);
 
         using namespace std::placeholders;
-        grab_interface->callbacks.keyboard.key = std::bind(std::mem_fn(&view_switcher::handle_key),
+        grab_interface->callbacks.keyboard.key = std::bind(std::mem_fn(&wayfire_view_switcher::handle_key),
                 this, _1, _2);
 
-        grab_interface->callbacks.keyboard.mod = std::bind(std::mem_fn(&view_switcher::handle_mod),
+        grab_interface->callbacks.keyboard.mod = std::bind(std::mem_fn(&wayfire_view_switcher::handle_mod),
                 this, _1, _2);
 
         next_view = section->get_option("next", "KEY_RIGHT");
@@ -665,6 +663,6 @@ extern "C"
 {
     wayfire_plugin_t* newInstance()
     {
-        return new view_switcher();
+        return new wayfire_view_switcher();
     }
 }
