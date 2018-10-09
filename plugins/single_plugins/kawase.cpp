@@ -63,6 +63,24 @@ class wf_kawase_blur : public wf_view_transformer_t
                                         wlr_box scissor_box,
                                         const wf_framebuffer& target_fb)
         {
+
+            // we are ready to draw to target_fb
+            target_fb.bind();
+
+            // setup scissor
+            target_fb.scissor(scissor_box);
+
+            // transform, relative to the target_fb.geometry
+            auto ortho = glm::ortho(1.0f * target_fb.geometry.x, 1.0f * target_fb.geometry.x + 1.0f * target_fb.geometry.width,
+                1.0f * target_fb.geometry.y + 1.0f * target_fb.geometry.height, 1.0f * target_fb.geometry.y);
+
+            OpenGL::use_default_program();
+
+            float x = src_box.x, y = src_box.y, w = src_box.width, h = src_box.height;
+            gl_geometry src_geometry = {x, y, x + w, y + h};
+
+            OpenGL::render_transformed_texture(src_tex, src_geometry, {},
+                target_fb.transform * ortho);
         }
 
         virtual ~wf_kawase_blur() {}
