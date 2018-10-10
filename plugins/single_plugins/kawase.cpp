@@ -108,6 +108,8 @@ class wayfire_kawase : public wayfire_plugin_t
 
             auto view = core->find_view(focus->get_main_surface());
             view->add_transformer(nonstd::make_unique<wf_kawase_blur> ());
+
+            output->render->add_post(&passthrough);
         };
 
         output->add_button(new_static_option("<super> <alt> BTN_LEFT"), &btn);
