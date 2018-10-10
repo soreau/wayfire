@@ -29,6 +29,8 @@ class wf_kawase_blur : public wf_view_transformer_t
             return region;
         }
 
+        uint32_t get_z_order() { return 1e9; }
+
         /* src_tex        the internal FBO texture,
          *
          * src_box        box of the view that has to be repainted, contains other transforms

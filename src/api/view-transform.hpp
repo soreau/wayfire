@@ -9,9 +9,20 @@
 #include "opengl.hpp"
 #include "debug.hpp"
 
+enum wf_transformer_z_order
+{
+    WF_TRANSFORMER_2D = 1,
+    WF_TRANSFORMER_3D = 2,
+    WF_TRANSFORMER_HIGHLEVEL = 500,
+};
+
 class wf_view_transformer_t
 {
     public:
+        /* return how this transform should be placed with respect to other transforms
+         * Higher numbers indicate that this transform should come after other transforms */
+        virtual uint32_t get_z_order() = 0;
+
         virtual wf_point local_to_transformed_point(wf_geometry view, wf_point point) = 0;
         virtual wf_point transformed_to_local_point(wf_geometry view, wf_point point) = 0;
 
@@ -56,6 +67,8 @@ class wf_2D_view : public wf_view_transformer_t
     public:
         wf_2D_view(wayfire_view view);
 
+        virtual uint32_t get_z_order() { return WF_TRANSFORMER_2D; }
+
         virtual wf_point local_to_transformed_point(wf_geometry view, wf_point point);
         virtual wf_point transformed_to_local_point(wf_geometry view, wf_point point);
 
@@ -79,6 +92,8 @@ class wf_3D_view : public wf_view_transformer_t
 
     public:
         wf_3D_view(wayfire_view view);
+
+        virtual uint32_t get_z_order() { return WF_TRANSFORMER_3D; }
 
         virtual wf_point local_to_transformed_point(wf_geometry view, wf_point point);
         virtual wf_point transformed_to_local_point(wf_geometry view, wf_point point);

@@ -594,7 +594,18 @@ void wayfire_view_t::add_transformer(std::unique_ptr<wf_view_transformer_t> tran
     auto tr = nonstd::make_unique<transform_t> ();
     tr->transform = std::move(transformer);
     tr->plugin_name = name;
-    transforms.push_back(std::move(tr));
+
+    auto it = transforms.begin();
+    while (it != transforms.end())
+    {
+        if ((*it)->transform->get_z_order() >= tr->transform->get_z_order()) {
+            break;
+        } else {
+            ++it;
+        }
+    }
+
+    transforms.insert(it, std::move(tr));
     damage();
 }
 

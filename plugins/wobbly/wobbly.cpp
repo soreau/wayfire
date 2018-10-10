@@ -214,6 +214,8 @@ class wf_wobbly : public wf_view_transformer_t
         view->get_output()->activate_plugin(iface);
     }
 
+    uint32_t get_z_order() { return WF_TRANSFORMER_HIGHLEVEL; }
+
     virtual wlr_box get_bounding_box(wf_geometry, wf_geometry)
     {
         auto box = wobbly_boundingbox(model.get());

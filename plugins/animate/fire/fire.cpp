@@ -51,6 +51,8 @@ class FireTransformer : public wf_view_transformer_t
     static constexpr int top_border = 100;
     static constexpr int bottom_border = 50;
 
+    uint32_t get_z_order() { return WF_TRANSFORMER_HIGHLEVEL + 1; }
+
     virtual wlr_box get_bounding_box(wf_geometry view, wlr_box region)
     {
         last_boundingbox = view;
