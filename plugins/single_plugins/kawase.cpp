@@ -15,7 +15,7 @@ attribute mediump vec2 position;
 
 void main() {
 
-    gl_Position = vec4(position.xy, 0.0, 1.0);
+   gl_Position = vec4(position.xy, 0.0, 1.0);
 }
 )";
 
@@ -31,18 +31,18 @@ uniform sampler2D texture;
 
 void main()
 {
-    vec2 uv = vec2(gl_FragCoord.xy / size);
+   vec2 uv = vec2(gl_FragCoord.xy / size);
 
-    vec4 sum = texture2D(texture, uv + vec2(-halfpixel.x * 2.0, 0.0) * offset);
-    sum += texture2D(texture, uv + vec2(-halfpixel.x, halfpixel.y) * offset) * 2.0;
-    sum += texture2D(texture, uv + vec2(0.0, halfpixel.y * 2.0) * offset);
-    sum += texture2D(texture, uv + vec2(halfpixel.x, halfpixel.y) * offset) * 2.0;
-    sum += texture2D(texture, uv + vec2(halfpixel.x * 2.0, 0.0) * offset);
-    sum += texture2D(texture, uv + vec2(halfpixel.x, -halfpixel.y) * offset) * 2.0;
-    sum += texture2D(texture, uv + vec2(0.0, -halfpixel.y * 2.0) * offset);
-    sum += texture2D(texture, uv + vec2(-halfpixel.x, -halfpixel.y) * offset) * 2.0;
+   vec4 sum = texture2D(texture, uv + vec2(-halfpixel.x * 2.0, 0.0) * offset);
+   sum += texture2D(texture, uv + vec2(-halfpixel.x, halfpixel.y) * offset) * 2.0;
+   sum += texture2D(texture, uv + vec2(0.0, halfpixel.y * 2.0) * offset);
+   sum += texture2D(texture, uv + vec2(halfpixel.x, halfpixel.y) * offset) * 2.0;
+   sum += texture2D(texture, uv + vec2(halfpixel.x * 2.0, 0.0) * offset);
+   sum += texture2D(texture, uv + vec2(halfpixel.x, -halfpixel.y) * offset) * 2.0;
+   sum += texture2D(texture, uv + vec2(0.0, -halfpixel.y * 2.0) * offset);
+   sum += texture2D(texture, uv + vec2(-halfpixel.x, -halfpixel.y) * offset) * 2.0;
 
-    gl_FragColor = sum / 12.0;
+   gl_FragColor = sum / 12.0;
 }
 )";
 
@@ -58,15 +58,15 @@ uniform sampler2D texture;
 
 void main()
 {
-    vec2 uv = vec2(gl_FragCoord.xy / size);
+   vec2 uv = vec2(gl_FragCoord.xy / size);
 
-    vec4 sum = texture2D(texture, uv) * 4.0;
-    sum += texture2D(texture, uv - halfpixel.xy * offset);
-    sum += texture2D(texture, uv + halfpixel.xy * offset);
-    sum += texture2D(texture, uv + vec2(halfpixel.x, -halfpixel.y) * offset);
-    sum += texture2D(texture, uv - vec2(halfpixel.x, -halfpixel.y) * offset);
+   vec4 sum = texture2D(texture, uv) * 4.0;
+   sum += texture2D(texture, uv - halfpixel.xy * offset);
+   sum += texture2D(texture, uv + halfpixel.xy * offset);
+   sum += texture2D(texture, uv + vec2(halfpixel.x, -halfpixel.y) * offset);
+   sum += texture2D(texture, uv - vec2(halfpixel.x, -halfpixel.y) * offset);
 
-    gl_FragColor = sum / 8.0;
+   gl_FragColor = sum / 8.0;
 }
 )";
 
@@ -82,11 +82,11 @@ uniform sampler2D unblurred_texture;
 
 void main()
 {
-    vec4 wp = texture2D(window_texture, vec2(gl_FragCoord.xy / size));
-    vec4 bp = texture2D(blurred_texture, vec2(gl_FragCoord.xy / size));
-    vec4 up = texture2D(unblurred_texture, vec2(gl_FragCoord.xy / size));
-    vec4 c = clamp(4.0 * wp.a, 0.0, 1.0) * bp + (1.0 - clamp(4.0 * wp.a, 0.0, 1.0)) * up;
-    gl_FragColor = wp + (1.0 - wp.a) * c;
+   vec4 wp = texture2D(window_texture, vec2(gl_FragCoord.xy / size));
+   vec4 bp = texture2D(blurred_texture, vec2(gl_FragCoord.xy / size));
+   vec4 up = texture2D(unblurred_texture, vec2(gl_FragCoord.xy / size));
+   vec4 c = clamp(4.0 * wp.a, 0.0, 1.0) * bp + (1.0 - clamp(4.0 * wp.a, 0.0, 1.0)) * up;
+   gl_FragColor = wp + (1.0 - wp.a) * c;
 }
 )";
 
@@ -95,17 +95,17 @@ GLuint up_prog, down_prog, blend_prog, posID, texID, sizeID, offsetID, halfpixel
 static void
 render_to_fbo(GLuint in_tex_id, GLuint out_tex_id, GLuint fbo, int width, int height)
 {
-	GL_CALL(glBindTexture(GL_TEXTURE_2D, out_tex_id));
-	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
-	GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, out_tex_id, 0));
-	GL_CALL(glActiveTexture(GL_TEXTURE0));
-	GL_CALL(glBindTexture(GL_TEXTURE_2D, in_tex_id));
-	GL_CALL(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
+    GL_CALL(glBindTexture(GL_TEXTURE_2D, out_tex_id));
+    GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0));
+    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
+    GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, out_tex_id, 0));
+    GL_CALL(glActiveTexture(GL_TEXTURE0));
+    GL_CALL(glBindTexture(GL_TEXTURE_2D, in_tex_id));
+    GL_CALL(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
 }
 
 class wf_kawase_blur : public wf_view_transformer_t
@@ -166,11 +166,11 @@ class wf_kawase_blur : public wf_view_transformer_t
                                         wlr_box scissor_box,
                                         const wf_framebuffer& target_fb)
         {
-	    GLuint fbo[100], tex[100];
-	    int i, iterations = 3;
-	    float offset = 4;
-	    int width = target_fb.viewport_width;
-	    int height = target_fb.viewport_height;
+        GLuint fbo[100], tex[100];
+        int i, iterations = 5;
+        float offset = 3;
+        int width = target_fb.viewport_width;
+        int height = target_fb.viewport_height;
 
             float x = src_box.x, y = src_box.y, w = src_box.width, h = src_box.height;
             gl_geometry src_geometry = {x, y, x + w, y + h};
@@ -185,90 +185,83 @@ class wf_kawase_blur : public wf_view_transformer_t
             GL_CALL(glVertexAttribPointer(posID, 2, GL_FLOAT, GL_FALSE, 0, vertexData));
             GL_CALL(glEnableVertexAttribArray(posID));
 
-	    for (i = 0; i < iterations; i++) {
-	    	GL_CALL(glGenTextures(1, &tex[i]));
-	    	GL_CALL(glGenFramebuffers(1, &fbo[i]));
-	    }
-            GL_CALL(glUseProgram(down_prog));
-	    posID = GL_CALL(glGetAttribLocation(down_prog, "position"));
-	    sizeID  = GL_CALL(glGetUniformLocation(down_prog, "size"));
-	    offsetID  = GL_CALL(glGetUniformLocation(down_prog, "offset"));
-	    halfpixelID  = GL_CALL(glGetUniformLocation(down_prog, "halfpixel"));
-            glUniform2f(sizeID, w, h);
-            glUniform2f(offsetID, offset, offset);
-            glUniform2f(halfpixelID, 0.5f / w, 0.5f / h);
+        for (i = 0; i < iterations; i++) {
+            GL_CALL(glGenTextures(1, &tex[i]));
+            GL_CALL(glGenFramebuffers(1, &fbo[i]));
+        }
 
-	GL_CALL(glBindTexture(GL_TEXTURE_2D, tex[0]));
-	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, 0));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, fbo[0]));
-	GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex[0], 0));
+    GL_CALL(glBindTexture(GL_TEXTURE_2D, tex[0]));
+    GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, 0));
+    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, fbo[0]));
+    GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex[0], 0));
 
-	GL_CALL(glBindFramebuffer(GL_READ_FRAMEBUFFER, target_fb.fb));
+    GL_CALL(glBindFramebuffer(GL_READ_FRAMEBUFFER, target_fb.fb));
         GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo[0]));
 
         GL_CALL(glBlitFramebuffer(x, height - y - h, x + w, height - y, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_LINEAR));
 
-	for (i = 1; i < iterations; i++)
-		render_to_fbo(tex[i - 1], tex[i], fbo[i], w, h);
+            GL_CALL(glUseProgram(down_prog));
+        posID = GL_CALL(glGetAttribLocation(down_prog, "position"));
+        sizeID  = GL_CALL(glGetUniformLocation(down_prog, "size"));
+        offsetID  = GL_CALL(glGetUniformLocation(down_prog, "offset"));
+        halfpixelID  = GL_CALL(glGetUniformLocation(down_prog, "halfpixel"));
+            glUniform2f(sizeID, w * 0.5f, h * 0.5f);
+            glUniform2f(offsetID, offset, offset);
+            glUniform2f(halfpixelID, 0.5f / (w * 0.5f), 0.5f / (h * 0.5f));
+
+    for (i = 1; i < iterations; i++)
+        render_to_fbo(tex[i - 1], tex[i], fbo[i], w * 0.5f, h * 0.5f);
 
             GL_CALL(glUseProgram(up_prog));
-	    posID = GL_CALL(glGetAttribLocation(up_prog, "position"));
-	    sizeID  = GL_CALL(glGetUniformLocation(up_prog, "size"));
-	    offsetID  = GL_CALL(glGetUniformLocation(up_prog, "offset"));
-	    halfpixelID  = GL_CALL(glGetUniformLocation(up_prog, "halfpixel"));
-            glUniform2f(sizeID, w, h);
+        posID = GL_CALL(glGetAttribLocation(up_prog, "position"));
+        sizeID  = GL_CALL(glGetUniformLocation(up_prog, "size"));
+        offsetID  = GL_CALL(glGetUniformLocation(up_prog, "offset"));
+        halfpixelID  = GL_CALL(glGetUniformLocation(up_prog, "halfpixel"));
+            glUniform2f(sizeID, w * 0.5f, h * 0.5f);
             glUniform2f(offsetID, offset, offset);
+            glUniform2f(halfpixelID, 0.5f / (w * 0.5f), 0.5f / (h * 0.5f));
+
+    for (i = iterations - 1; i > 1; i--) {
+        if (i == 2) {
+            glUniform2f(sizeID, w, h);
             glUniform2f(halfpixelID, 0.5f / w, 0.5f / h);
-
-	for (i = iterations - 1; i > 0; i--)
-		render_to_fbo(tex[i], tex[i - 1], fbo[i], w, h);
-
-	GL_CALL(glBindTexture(GL_TEXTURE_2D, tex[3]));
-	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, 0));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, fbo[3]));
-	GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex[3], 0));
-
-	GL_CALL(glBindFramebuffer(GL_READ_FRAMEBUFFER, target_fb.fb));
-        GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo[3]));
-
-        GL_CALL(glBlitFramebuffer(x, height - y - h, x + w, height - y, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_LINEAR));
+            render_to_fbo(tex[i], tex[i - 1], fbo[i], w, h);
+        } else
+            render_to_fbo(tex[i], tex[i - 1], fbo[i], w * 0.5f, h * 0.5f);
+    }
 
             GL_CALL(glUseProgram(blend_prog));
 
-	GL_CALL(glBindTexture(GL_TEXTURE_2D, tex[1]));
-	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, fbo[1]));
-	GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex[1], 0));
-	texID = GL_CALL(glGetUniformLocation(blend_prog, "window_texture"));
-	glUniform1i(texID, 0);
-	texID = GL_CALL(glGetUniformLocation(blend_prog, "blurred_texture"));
-	glUniform1i(texID, 1);
-	texID = GL_CALL(glGetUniformLocation(blend_prog, "unblurred_texture"));
-	glUniform1i(texID, 2);
-	sizeID  = GL_CALL(glGetUniformLocation(blend_prog, "size"));
-	glUniform2f(sizeID, w, h);
+    GL_CALL(glBindTexture(GL_TEXTURE_2D, tex[1]));
+    GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0));
+    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, fbo[1]));
+    GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex[1], 0));
+    texID = GL_CALL(glGetUniformLocation(blend_prog, "window_texture"));
+    glUniform1i(texID, 0);
+    texID = GL_CALL(glGetUniformLocation(blend_prog, "blurred_texture"));
+    glUniform1i(texID, 1);
+    texID = GL_CALL(glGetUniformLocation(blend_prog, "unblurred_texture"));
+    glUniform1i(texID, 2);
+    sizeID  = GL_CALL(glGetUniformLocation(blend_prog, "size"));
+    glUniform2f(sizeID, w, h);
             GL_CALL(glActiveTexture(GL_TEXTURE0 + 0));
             GL_CALL(glBindTexture(GL_TEXTURE_2D, src_tex));
             GL_CALL(glActiveTexture(GL_TEXTURE0 + 1));
             GL_CALL(glBindTexture(GL_TEXTURE_2D, tex[2]));
             GL_CALL(glActiveTexture(GL_TEXTURE0 + 2));
-            GL_CALL(glBindTexture(GL_TEXTURE_2D, tex[3]));
+            GL_CALL(glBindTexture(GL_TEXTURE_2D, tex[0]));
             GL_CALL(glEnable(GL_BLEND));
             GL_CALL(glClearColor(0.0, 0.0, 0.0, 0.0));
             GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-	GL_CALL(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
+    GL_CALL(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
             GL_CALL(glActiveTexture(GL_TEXTURE0 + 0));
             // we are ready to draw to target_fb
             target_fb.bind();
@@ -288,10 +281,10 @@ class wf_kawase_blur : public wf_view_transformer_t
             GL_CALL(glDisableVertexAttribArray(posID));
             GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
 
-	    for (i = 0; i < iterations; i++) {
-	    	GL_CALL(glDeleteTextures(1, &tex[i]));
-	    	GL_CALL(glDeleteFramebuffers(1, &fbo[i]));
-	    }
+        for (i = 0; i < iterations; i++) {
+            GL_CALL(glDeleteTextures(1, &tex[i]));
+            GL_CALL(glDeleteFramebuffers(1, &fbo[i]));
+        }
         }
 
         virtual ~wf_kawase_blur() {}
