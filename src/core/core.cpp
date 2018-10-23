@@ -20,6 +20,7 @@ extern "C"
 
 #include "output.hpp"
 #include "core.hpp"
+#include "signal-definitions.hpp"
 #include "workspace-manager.hpp"
 #include "seat/input-manager.hpp"
 #include "seat/input-inhibit.hpp"
@@ -269,7 +270,9 @@ void wayfire_core::add_output(wlr_output *output)
     wo->connect_signal("_surface_mapped", &input->surface_map_state_changed);
     wo->connect_signal("_surface_unmapped", &input->surface_map_state_changed);
 
-    wayfire_shell_handle_output_created(wo);
+    output_added_signal data;
+    data.output = wo;
+    emit_signal("output-added", &data);
 
     if (input->exclusive_client)
         inhibit_output(wo);
@@ -281,7 +284,10 @@ void wayfire_core::remove_output(wayfire_output *output)
 
     output->destroyed = true;
     outputs.erase(output->handle);
-    wayfire_shell_handle_output_destroyed(output);
+
+    output_removed_signal data;
+    data.output = output;
+    emit_signal("output-removed", &data);
 
     /* we have no outputs, simply quit */
     if (outputs.empty())

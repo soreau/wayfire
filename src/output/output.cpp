@@ -278,8 +278,6 @@ wayfire_output::wayfire_output(wlr_output *handle, wayfire_config *c)
 
         if (view == active_view)
             refocus(active_view, workspace->get_view_layer(view));
-
-        wayfire_shell_unmap_view(view);
     };
 
     connect_signal("unmap-view", &unmap_view_cb);

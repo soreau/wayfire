@@ -7,6 +7,7 @@
 #include "render-manager.hpp"
 #include "wayfire-shell.hpp"
 #include "wayfire-shell-protocol.h"
+#include "signal-definitions.hpp"
 
 struct wayfire_shell_output
 {
@@ -19,11 +20,26 @@ struct wayfire_shell_client
     std::map<wayfire_output*, wayfire_shell_output> output_resources;
 };
 
-static struct wayfire_shell
+struct wayfire_shell
 {
     std::map<wl_client*, wayfire_shell_client> clients;
     std::map<wayfire_output*, signal_callback_t> output_autohide_callback;
-} shell;
+
+    signal_callback_t output_added, output_removed;
+    signal_callback_t view_unmapped;
+
+    static wayfire_shell& get_instance()
+    {
+        static wayfire_shell shell;
+        return shell;
+    }
+
+    wayfire_shell(const wayfire_shell& other) = delete;
+    void operator = (const wayfire_shell& other) = delete;
+
+    private:
+    wayfire_shell() {}
+};
 
 
 static void zwf_wm_surface_configure(struct wl_client *client,
@@ -143,7 +159,7 @@ static void zwf_output_inhibit_output(struct wl_client *client,
     auto wo = (wayfire_output*)wl_resource_get_user_data(resource);
     wo->render->add_inhibit(true);
 
-    auto& cl = shell.clients[client];
+    auto& cl = wayfire_shell::get_instance().clients[client];
     auto& out = cl.output_resources[wo];
     ++out.inhibits;
 }
@@ -154,7 +170,7 @@ static void zwf_output_inhibit_output_done(struct wl_client *client,
     auto wo = (wayfire_output*)wl_resource_get_user_data(resource);
     wo->render->add_inhibit(false);
 
-    auto& cl = shell.clients[client];
+    auto& cl = wayfire_shell::get_instance().clients[client];
     auto& out = cl.output_resources[wo];
     --out.inhibits;
 }
@@ -170,10 +186,10 @@ static void destroy_zwf_output(wl_resource *resource)
 {
     auto client = wl_resource_get_client(resource);
     auto wo = (wayfire_output*) wl_resource_get_user_data(resource);
-    if (shell.clients.count(client) == 0)
+    if (wayfire_shell::get_instance().clients.count(client) == 0)
         return;
 
-    auto& shell_client = shell.clients[client];
+    auto& shell_client = wayfire_shell::get_instance().clients[client];
     if (shell_client.output_resources.count(wo) == 0)
         return;
 
@@ -192,16 +208,13 @@ void zwf_shell_manager_get_wf_output(struct wl_client *client,
                                      struct wl_resource *output,
                                      uint32_t id)
 {
-    log_info("request get wf output");
     auto wlr_out = (wlr_output*) wl_resource_get_user_data(output);
     auto wo = core->get_output(wlr_out);
-
-    log_info("found output %s", wo->handle->name);
 
     auto wfo = wl_resource_create(client, &zwf_output_v1_interface, 1, id);
     wl_resource_set_implementation(wfo, &zwf_output_v1_implementation, wo, destroy_zwf_output);
 
-    auto& shell_client = shell.clients[client];
+    auto& shell_client = wayfire_shell::get_instance().clients[client];
     auto& client_output = shell_client.output_resources[wo];
 
     client_output.resources.push_back(wfo);
@@ -216,32 +229,21 @@ static void destroy_zwf_shell_manager(wl_resource *resource)
 {
     auto client = wl_resource_get_client(resource);
 
-    for (auto& out : shell.clients[client].output_resources)
+    for (auto& out : wayfire_shell::get_instance().clients[client].output_resources)
     {
         while(out.second.inhibits--)
             out.first->render->add_inhibit(false);
     }
 
-    shell.clients.erase(client);
+    wayfire_shell::get_instance().clients.erase(client);
 }
 
 void bind_zwf_shell_manager(wl_client *client, void *data, uint32_t version, uint32_t id)
 {
-    log_info("bind zwf shell manager");
     auto resource = wl_resource_create(client, &zwf_shell_manager_v1_interface, 1, id);
     wl_resource_set_implementation(resource, &zwf_shell_manager_v1_implementation, NULL, destroy_zwf_shell_manager);
 }
 
-wayfire_shell* wayfire_shell_create(wl_display *display)
-{
-    if (wl_global_create(display, &zwf_shell_manager_v1_interface,
-                         1, NULL, bind_zwf_shell_manager) == NULL)
-    {
-        log_error("Failed to create wayfire_shell interface");
-    }
-
-    return &shell;
-}
 
 void zwf_output_send_autohide(wayfire_shell *shell, wayfire_output *output, int value)
 {
@@ -255,28 +257,54 @@ void zwf_output_send_autohide(wayfire_shell *shell, wayfire_output *output, int 
     }
 }
 
-/* TODO: make core, output and views each have signal abilities,
- * then these should come as events from core */
-void wayfire_shell_handle_output_created(wayfire_output *output)
+static void wayfire_shell_handle_output_created(wayfire_output *output)
 {
+    auto& shell = wayfire_shell::get_instance();
     shell.output_autohide_callback[output] = [=] (signal_data *flag)
     {
-        zwf_output_send_autohide(&shell, output, bool(flag));
+        zwf_output_send_autohide(&wayfire_shell::get_instance(), output, bool(flag));
     };
 
     /* FIXME: traditionally std::map won't move memory around ... */
     output->connect_signal("autohide-panels", &shell.output_autohide_callback[output]);
+    output->connect_signal("unmap-view", &shell.view_unmapped);
 }
 
-void wayfire_shell_handle_output_destroyed(wayfire_output *output)
+static void wayfire_shell_handle_output_destroyed(wayfire_output *output)
 {
 }
 
-void wayfire_shell_unmap_view(wayfire_view view)
+static void wayfire_shell_unmap_view(wayfire_view view)
 {
     if (view->has_data<wf_shell_reserved_custom_data>())
     {
         auto area = get_anchored_area_for_view(view);
         view->get_output()->workspace->remove_reserved_area(area);
     }
+}
+
+wayfire_shell* wayfire_shell_create(wl_display *display)
+{
+    if (wl_global_create(display, &zwf_shell_manager_v1_interface,
+                         1, NULL, bind_zwf_shell_manager) == NULL)
+    {
+        log_error("Failed to create wayfire_shell interface");
+    }
+
+    auto& shell = wayfire_shell::get_instance();
+    shell.output_added = [=] (signal_data *data) {
+        wayfire_shell_handle_output_created(get_signaled_output(data));
+    };
+    shell.output_removed = [=] (signal_data *data) {
+        wayfire_shell_handle_output_destroyed( get_signaled_output(data));
+    };
+
+    core->connect_signal("output-added", &shell.output_added);
+    core->connect_signal("output-removed", &shell.output_removed);
+
+    shell.view_unmapped = [=] (signal_data *data) {
+        wayfire_shell_unmap_view(get_signaled_view(data));
+    };
+
+    return &shell;
 }

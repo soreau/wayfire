@@ -68,3 +68,10 @@ bool get_signaled_state(signal_data *data)
 
     return conv->state;
 }
+
+wayfire_output *get_signaled_output(signal_data *data)
+{
+    auto result = static_cast<_output_signal*> (data);
+    return result ? result->output : nullptr;
+}
+
