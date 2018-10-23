@@ -24,31 +24,6 @@ extern "C"
 #include <cstring>
 #include <config.hpp>
 
-void wayfire_output::connect_signal(std::string name, signal_callback_t* callback)
-{
-    signals[name].push_back(callback);
-}
-
-void wayfire_output::disconnect_signal(std::string name, signal_callback_t* callback)
-{
-    auto it = std::remove_if(signals[name].begin(), signals[name].end(),
-    [=] (const signal_callback_t *call) {
-        return call == callback;
-    });
-
-    signals[name].erase(it, signals[name].end());
-}
-
-void wayfire_output::emit_signal(std::string name, signal_data *data)
-{
-    std::vector<signal_callback_t> callbacks;
-    for (auto x : signals[name])
-        callbacks.push_back(*x);
-
-    for (auto x : callbacks)
-        x(data);
-}
-
 static wl_output_transform get_transform_from_string(std::string transform)
 {
     if (transform == "normal")
@@ -308,6 +283,11 @@ wayfire_output::wayfire_output(wlr_output *handle, wayfire_config *c)
     };
 
     connect_signal("unmap-view", &unmap_view_cb);
+}
+
+std::string wayfire_output::to_string() const
+{
+    return handle->name;
 }
 
 void wayfire_output::refocus(wayfire_view skip_view, uint32_t layers)

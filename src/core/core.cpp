@@ -44,7 +44,6 @@ void wayfire_core::configure(wayfire_config *config)
 
     shadersrc   = section->get_option("shadersrc", INSTALL_PREFIX "/share/wayfire/shaders")->as_string();
     run_panel   = section->get_option("run_panel", "1")->as_int();
-
 }
 
 static void handle_output_layout_changed(wl_listener*, void *)

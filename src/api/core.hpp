@@ -1,5 +1,7 @@
-#ifndef FIRE_H
-#define FIRE_H
+#ifndef CORE_HPP
+#define CORE_HPP
+
+#include "object.hpp"
 
 #include <functional>
 #include <memory>
@@ -46,7 +48,7 @@ using output_callback_proc = std::function<void(wayfire_output *)>;
 
 struct wf_server_decoration;
 
-class wayfire_core
+class wayfire_core : public wf_object_base
 {
         friend struct plugin_manager;
         friend class wayfire_output;
@@ -100,6 +102,8 @@ class wayfire_core
         std::string wayland_display, xwayland_display;
 
         input_manager *input;
+
+        std::string to_string() const { return "wayfire-core"; }
 
         void init(wayfire_config *config);
         void wake();
@@ -163,4 +167,4 @@ class wayfire_core
 };
 
 extern wayfire_core *core;
-#endif
+#endif // CORE_HPP

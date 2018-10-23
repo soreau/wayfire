@@ -2,10 +2,12 @@
 #define OUTPUT_HPP
 
 #include "plugin.hpp"
+#include "object.hpp"
+#include "view.hpp"
+
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <view.hpp>
 
 extern "C"
 {
@@ -18,7 +20,7 @@ struct plugin_manager;
 class workspace_manager;
 class render_manager;
 
-class wayfire_output
+class wayfire_output : public wf_object_base
 {
     friend class wayfire_core;
 
@@ -60,6 +62,8 @@ class wayfire_output
        wayfire_output(wlr_output*, wayfire_config *config);
        ~wayfire_output();
 
+       std::string to_string() const;
+
        /* output-local geometry of the output */
        wf_geometry get_relative_geometry();
 
@@ -86,10 +90,6 @@ class wayfire_output
        bool activate_plugin  (wayfire_grab_interface owner, bool lower_fs = true);
        bool deactivate_plugin(wayfire_grab_interface owner);
        bool is_plugin_active (owner_t owner_name);
-
-       void connect_signal(std::string name, signal_callback_t* callback);
-       void disconnect_signal(std::string name, signal_callback_t* callback);
-       void emit_signal(std::string name, signal_data *data);
 
        void activate();
        void deactivate();

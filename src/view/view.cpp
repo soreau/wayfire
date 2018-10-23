@@ -30,12 +30,16 @@ extern "C"
 /* TODO: consistently use wf_geometry/wlr_box, don't simply mix them
  * There must be a distinction(i.e what is a box, what is geometry) */
 
-uint32_t _last_view_id = 0;
 wayfire_view_t::wayfire_view_t()
-    : wayfire_surface_t (NULL), id(_last_view_id++)
+    : wayfire_surface_t (NULL)
 {
     set_output(core->get_active_output());
     pixman_region32_init(&offscreen_buffer.cached_damage);
+}
+
+std::string wayfire_view_t::to_string() const
+{
+    return "view-" + wf_object_base::to_string();
 }
 
 void wayfire_view_t::set_output(wayfire_output *wo)

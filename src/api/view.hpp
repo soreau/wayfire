@@ -1,12 +1,14 @@
 #ifndef VIEW_HPP
 #define VIEW_HPP
-#include <plugin.hpp>
-#include <opengl.hpp>
 #include <vector>
 #include <map>
 #include <functional>
 #include <pixman.h>
 #include <nonstd/observer_ptr.h>
+
+#include "plugin.hpp"
+#include "opengl.hpp"
+#include "object.hpp"
 
 extern "C"
 {
@@ -44,13 +46,7 @@ wlr_box output_transform_box(wayfire_output *output, const wlr_box& box);
 bool point_inside(wf_point point, wf_geometry rect);
 bool rect_intersect(wf_geometry screen, wf_geometry win);
 
-struct wf_custom_view_data
-{
-    virtual ~wf_custom_view_data() {}
-};
-
 /* General TODO: mark member functions const where appropriate */
-
 class wayfire_view_t;
 using wayfire_view = nonstd::observer_ptr<wayfire_view_t>;
 
@@ -174,7 +170,7 @@ enum wf_view_role
 };
 
 /* Represents a desktop window (not as X11 window, but like a xdg_toplevel surface) */
-class wayfire_view_t : public wayfire_surface_t
+class wayfire_view_t : public wayfire_surface_t, public wf_object_base
 {
     friend void surface_destroyed_cb(wl_listener*, void *data);
 
@@ -239,12 +235,10 @@ class wayfire_view_t : public wayfire_surface_t
 
         wf_view_role role = WF_VIEW_ROLE_TOPLEVEL;
 
-        /* plugins can subclass wf_custom_view_data and use it to store view-specific information */
-        std::map<std::string, std::unique_ptr<wf_custom_view_data>> custom_data;
-
         wayfire_view_t();
         virtual ~wayfire_view_t();
-        uint32_t get_id() { return id; }
+        std::string to_string() const;
+
         wayfire_view self();
 
         virtual void move(int x, int y, bool send_signal = true);

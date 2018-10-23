@@ -23,33 +23,16 @@ using wf_layer_container = std::list<wayfire_view>;
 class viewport_manager : public workspace_manager
 {
     static const int TOTAL_WF_LAYERS = 6;
-    struct custom_layer_data_t : public wf_custom_view_data
+
+    struct custom_viewport_layer_data_t : public wf_custom_data_t
     {
-        static const std::string name;
         uint32_t layer = 0;
     };
 
     uint32_t& _get_view_layer(wayfire_view view)
     {
-        auto it = view->custom_data.find(custom_layer_data_t::name);
-        custom_layer_data_t *layer_data = nullptr;
-
-        if (it == view->custom_data.end())
-        {
-            auto data = nonstd::make_unique<custom_layer_data_t>();
-
-            layer_data = data.get();
-            view->custom_data[custom_layer_data_t::name] = std::move(data);
-        } else
-        {
-            layer_data = dynamic_cast<custom_layer_data_t*> (it->second.get());
-        }
-
-        assert(layer_data);
-
-        return layer_data->layer;
+        return view->get_data_safe<custom_viewport_layer_data_t>()->layer;
     }
-
 
     private:
         int vwidth, vheight, vx, vy;
@@ -108,8 +91,6 @@ class viewport_manager : public workspace_manager
 
         wf_geometry get_workarea();
 };
-
-const std::string viewport_manager::custom_layer_data_t::name = "__layer_data";
 
 /* Start viewport_manager */
 void viewport_manager::init(wayfire_output *o)

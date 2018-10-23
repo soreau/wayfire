@@ -1,6 +1,5 @@
 #include <output.hpp>
 #include <core.hpp>
-#include <debug.hpp>
 #include <view.hpp>
 #include <workspace-manager.hpp>
 #include <render-manager.hpp>
@@ -14,7 +13,8 @@
 #include "../wobbly/wobbly-signal.hpp"
 
 const std::string grid_view_id = "grid-view";
-class wayfire_grid_view : public wf_custom_view_data
+
+class wayfire_grid_view_cdata : public wf_custom_data_t
 {
     wf_duration duration;
     bool is_active = true;
@@ -31,159 +31,130 @@ class wayfire_grid_view : public wf_custom_view_data
 
     public:
 
-    wayfire_grid_view(wayfire_view view, wayfire_grab_interface iface,
+    wayfire_grid_view_cdata(wayfire_view view, wayfire_grab_interface iface,
                       wf_option animation_type, wf_option animation_duration)
+    {
+        this->view = view;
+        this->output = view->get_output();
+        this->iface = iface;
+        this->animation_type = animation_type;
+        duration = wf_duration(animation_duration);
+
+        if (!view->get_output()->activate_plugin(iface))
         {
-            this->view = view;
-            this->output = view->get_output();
-            this->iface = iface;
-            this->animation_type = animation_type;
-            duration = wf_duration(animation_duration);
-
-            if (!view->get_output()->activate_plugin(iface))
-            {
-                is_active = false;
-                return;
-            }
-
-            pre_hook = [=] () {
-                adjust_geometry();
-            };
-            output->render->add_effect(&pre_hook, WF_OUTPUT_EFFECT_PRE);
-
-            unmapped = [=] (signal_data *data)
-            {
-                if (get_signaled_view(data) == view)
-                    view->custom_data.erase(grid_view_id);
-            };
-
-            output->render->auto_redraw(true);
-            output->connect_signal("unmap-view", &unmapped);
-            output->connect_signal("detach-view", &unmapped);
+            is_active = false;
+            return;
         }
 
-        void destroy()
+        pre_hook = [=] () {
+            adjust_geometry();
+        };
+        output->render->add_effect(&pre_hook, WF_OUTPUT_EFFECT_PRE);
+
+        unmapped = [=] (signal_data *data)
         {
-            view->custom_data.erase(grid_view_id);
+            if (get_signaled_view(data) == view)
+                destroy();
+        };
+
+        output->render->auto_redraw(true);
+        output->connect_signal("unmap-view", &unmapped);
+        output->connect_signal("detach-view", &unmapped);
+    }
+
+    void destroy()
+    {
+        view->erase_data<wayfire_grid_view_cdata>();
+    }
+
+    void adjust_target_geometry(wf_geometry geometry, bool tiled)
+    {
+        target = geometry;
+        initial = view->get_wm_geometry();
+        this->tiled = tiled;
+
+        auto type = animation_type->as_string();
+        if (output->is_plugin_active("wobbly") || !is_active)
+            type = "wobbly";
+
+        if (type == "none")
+        {
+            view->set_maximized(tiled);
+            view->set_geometry(geometry);
+
+            return destroy();
         }
 
-        void adjust_target_geometry(wf_geometry geometry, bool tiled)
+        if (type == "wobbly")
         {
-            target = geometry;
-            initial = view->get_wm_geometry();
-            this->tiled = tiled;
+            snap_wobbly(view, geometry);
+            view->set_maximized(tiled);
+            view->set_geometry(geometry);
 
-            log_info("adjust geometry");
+            if (!tiled) // release snap, so subsequent size changes don't bother us
+                snap_wobbly(view, geometry, false);
 
-            auto type = animation_type->as_string();
-            if (output->is_plugin_active("wobbly") || !is_active)
-                type = "wobbly";
-
-            if (type == "none")
-            {
-                view->set_maximized(tiled);
-                view->set_geometry(geometry);
-
-                return destroy();
-            }
-
-            if (type == "wobbly")
-            {
-                snap_wobbly(view, geometry);
-                view->set_maximized(tiled);
-                view->set_geometry(geometry);
-
-                if (!tiled) // release snap, so subsequent size changes don't bother us
-                    snap_wobbly(view, geometry, false);
-
-                return destroy();
-            }
-
-            view->set_maximized(1);
-            view->set_moving(1);
-            view->set_resizing(1);
-            duration.start();
+            return destroy();
         }
 
-        void adjust_geometry()
+        view->set_maximized(1);
+        view->set_moving(1);
+        view->set_resizing(1);
+        duration.start();
+    }
+
+    void adjust_geometry()
+    {
+        if (!duration.running())
         {
-            log_info("adjust");
-            if (!duration.running())
-            {
-                log_info("direct end %d", tiled);
-                view->set_geometry(target);
-                view->set_maximized(tiled);
-                view->set_moving(0);
-                view->set_resizing(0);
+            view->set_geometry(target);
+            view->set_maximized(tiled);
+            view->set_moving(0);
+            view->set_resizing(0);
 
-                return destroy();
-            }
-
-            int cx = duration.progress(initial.x, target.x);
-            int cy = duration.progress(initial.y, target.y);
-            int cw = duration.progress(initial.width, target.width);
-            int ch = duration.progress(initial.height, target.height);
-
-            log_info("step %d@%d %dx%d", cx, cy, cw, ch);
-
-            view->set_geometry({cx, cy, cw, ch});
+            return destroy();
         }
 
-        ~wayfire_grid_view()
-        {
-            if (!is_active)
-                return;
+        int cx = duration.progress(initial.x, target.x);
+        int cy = duration.progress(initial.y, target.y);
+        int cw = duration.progress(initial.width, target.width);
+        int ch = duration.progress(initial.height, target.height);
 
-            output->render->rem_effect(&pre_hook, WF_OUTPUT_EFFECT_PRE);
-            output->deactivate_plugin(iface);
-            output->render->auto_redraw(false);
-            output->disconnect_signal("unmap-view", &unmapped);
-            output->disconnect_signal("detach-view", &unmapped);
-        }
+        view->set_geometry({cx, cy, cw, ch});
+    }
+
+    ~wayfire_grid_view_cdata()
+    {
+        if (!is_active)
+            return;
+
+        output->render->rem_effect(&pre_hook, WF_OUTPUT_EFFECT_PRE);
+        output->deactivate_plugin(iface);
+        output->render->auto_redraw(false);
+        output->disconnect_signal("unmap-view", &unmapped);
+        output->disconnect_signal("detach-view", &unmapped);
+    }
 };
 
-wayfire_grid_view *ensure_grid_view(wayfire_view view, wayfire_grab_interface iface,
-                      wf_option animation_type, wf_option animation_duration)
+nonstd::observer_ptr<wayfire_grid_view_cdata> ensure_grid_view(wayfire_view view,
+        wayfire_grab_interface iface, wf_option animation_type,
+        wf_option animation_duration)
 {
-    if (view->custom_data.count(grid_view_id))
-        return static_cast<wayfire_grid_view*> (view->custom_data[grid_view_id].get());
+    if (!view->has_data<wayfire_grid_view_cdata>())
+    {
+        view->store_data(nonstd::make_unique<wayfire_grid_view_cdata>
+            (view, iface, animation_type, animation_duration));
+    }
 
-    auto saved = nonstd::make_unique<wayfire_grid_view> (view, iface, animation_type, animation_duration);
-    auto ret = saved.get();
-    view->custom_data[grid_view_id] = std::move(saved);
-
-    return ret;
+    return view->get_data<wayfire_grid_view_cdata> ();
 }
 
-const std::string grid_saved_pos_id = "grid-saved-pos";
-class saved_view_geometry : public wf_custom_view_data
+class wf_grid_saved_view_geometry : public wf_custom_data_t
 {
     public:
     wf_geometry geometry;
     bool was_maximized; // used by fullscreen-request
 };
-
-bool has_saved_position(wayfire_view view, std::string suffix = "")
-{
-    return view->custom_data.count(grid_saved_pos_id + suffix);
-}
-
-saved_view_geometry *ensure_saved_geometry(wayfire_view view, std::string suffix = "")
-{
-    if (has_saved_position(view, suffix))
-        return static_cast<saved_view_geometry*> (view->custom_data[grid_saved_pos_id + suffix].get());
-
-    auto saved = nonstd::make_unique<saved_view_geometry> ();
-    auto ret = saved.get();
-    view->custom_data[grid_saved_pos_id + suffix] = std::move(saved);
-
-    return ret;
-}
-
-void erase_saved(wayfire_view view, std::string suffix = "")
-{
-    view->custom_data.erase(grid_saved_pos_id + suffix);
-}
 
 class wayfire_grid : public wayfire_plugin_t
 {
@@ -254,15 +225,19 @@ class wayfire_grid : public wayfire_plugin_t
         {
             return;
         }
-        else if (!has_saved_position(view) && slot)
+        else if (!view->has_data<wf_grid_saved_view_geometry>() && slot)
         {
-            ensure_saved_geometry(view)->geometry = view->get_wm_geometry();
-        } else if (has_saved_position(view) && slot == 0)
+            view->get_data_safe<wf_grid_saved_view_geometry>()
+                ->geometry = view->get_wm_geometry();
+        }
+        else if (view->has_data<wf_grid_saved_view_geometry>() && slot == 0)
         {
             tiled = false;
-            target = calculate_restored_geometry(ensure_saved_geometry(view)->geometry);
-            erase_saved(view);
-        } else if (!has_saved_position(view))
+            target = calculate_restored_geometry(
+                view->get_data_safe<wf_grid_saved_view_geometry>()->geometry);
+            view->erase_data<wf_grid_saved_view_geometry>();
+        }
+        else if (!view->has_data<wf_grid_saved_view_geometry>())
         {
             return;
         }
@@ -270,6 +245,7 @@ class wayfire_grid : public wayfire_plugin_t
         auto gv = ensure_grid_view(view, grab_interface, animation_type, animation_duration);
         gv->adjust_target_geometry(target, tiled);
     }
+
 
     /* calculates the target geometry so that it is centered around the pointer */
     wf_geometry calculate_restored_geometry(wf_geometry base_restored)
@@ -334,12 +310,15 @@ class wayfire_grid : public wayfire_plugin_t
     void fullscreen_signal_cb(signal_data *ddata)
     {
         auto data = static_cast<view_fullscreen_signal*> (ddata);
+        static const std::string fs_data_name = "grid-saved-fs";
 
         if (data->state)
         {
-            if (!has_saved_position(data->view, "-fs"))
+            if (!data->view->has_data(fs_data_name))
             {
-                auto sg = ensure_saved_geometry(data->view, "-fs");
+                auto sg = data->view->get_data_safe<wf_grid_saved_view_geometry>
+                    (fs_data_name);
+
                 sg->geometry = data->view->get_wm_geometry();
                 sg->was_maximized = data->view->maximized;
             }
@@ -350,12 +329,14 @@ class wayfire_grid : public wayfire_plugin_t
             data->view->set_fullscreen(true);
         } else
         {
-            if (has_saved_position(data->view, "-fs"))
+            if (data->view->has_data(fs_data_name))
             {
-                auto sg = ensure_saved_geometry(data->view, "-fs");
+                auto sg = data->view->get_data_safe<wf_grid_saved_view_geometry>
+                    (fs_data_name);
+
                 auto target_geometry = sg->geometry;
                 auto maximized = sg->was_maximized;
-                erase_saved(data->view, "-fs");
+                data->view->erase_data(fs_data_name);
 
                 auto gv = ensure_grid_view(data->view, grab_interface, animation_type, animation_duration);
                 gv->adjust_target_geometry(target_geometry, maximized);
@@ -379,7 +360,8 @@ class wayfire_grid : public wayfire_plugin_t
     }
 };
 
-extern "C" {
+extern "C"
+{
     wayfire_plugin_t *newInstance()
     {
         return new wayfire_grid;

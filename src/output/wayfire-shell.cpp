@@ -34,38 +34,20 @@ static void zwf_wm_surface_configure(struct wl_client *client,
     view->move(x, y);
 }
 
-struct wf_shell_reserved_custom_data : public wf_custom_view_data
+struct wf_shell_reserved_custom_data : public wf_custom_data_t
 {
     workspace_manager::anchored_area area;
-    static const std::string cname;
+
+    wf_shell_reserved_custom_data() {
+        area.reserved_size = -1;
+        area.real_size = 0;
+    }
 };
 
-const std::string wf_shell_reserved_custom_data::cname = "wf-shell-reserved-area";
-
-bool view_has_anchored_area(wayfire_view view)
+static workspace_manager::anchored_area *
+get_anchored_area_for_view(wayfire_view view)
 {
-    return view->custom_data.count(wf_shell_reserved_custom_data::cname);
-}
-
-static workspace_manager::anchored_area *get_anchored_area_for_view(wayfire_view view)
-{
-    wf_shell_reserved_custom_data *cdata = NULL;
-    const auto cname = wf_shell_reserved_custom_data::cname;
-
-    if (view->custom_data.count(cname))
-    {
-        cdata = dynamic_cast<wf_shell_reserved_custom_data*> (view->custom_data[cname].get());
-    } else
-    {
-        auto data = nonstd::make_unique<wf_shell_reserved_custom_data>();
-        data->area.reserved_size = -1;
-        data->area.real_size = 0;
-
-        cdata = data.get();
-        view->custom_data[cname] = std::move(data);
-    }
-
-    return &cdata->area;
+    return &view->get_data_safe<wf_shell_reserved_custom_data>()->area;
 }
 
 static void zwf_wm_surface_set_exclusive_zone(struct wl_client *client,
@@ -292,7 +274,7 @@ void wayfire_shell_handle_output_destroyed(wayfire_output *output)
 
 void wayfire_shell_unmap_view(wayfire_view view)
 {
-    if (view_has_anchored_area(view))
+    if (view->has_data<wf_shell_reserved_custom_data>())
     {
         auto area = get_anchored_area_for_view(view);
         view->get_output()->workspace->remove_reserved_area(area);
