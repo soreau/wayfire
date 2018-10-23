@@ -199,7 +199,7 @@ bool input_manager::handle_keyboard_key(uint32_t key, uint32_t state)
 
     if (state == WLR_KEY_PRESSED)
     {
-        if (check_vt_switch(wlr_multi_get_session(core->backend), key, get_modifiers()))
+        if (check_vt_switch(wlr_backend_get_session(core->backend), key, get_modifiers()))
             return true;
 
         /* as long as we have pressed only modifiers, we should check for modifier bindings on release */
