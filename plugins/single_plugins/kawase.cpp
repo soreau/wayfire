@@ -12,10 +12,14 @@ R"(
 #version 100
 
 attribute mediump vec2 position;
+attribute mediump vec2 texcoord;
+
+varying mediump vec2 uvpos;
 
 void main() {
 
    gl_Position = vec4(position.xy, 0.0, 1.0);
+   uvpos = texcoord;
 }
 )";
 
@@ -25,13 +29,15 @@ R"(
 precision mediump float;
 
 uniform vec2 size;
-uniform vec2 offset;
+uniform float offset;
 uniform vec2 halfpixel;
 uniform sampler2D texture;
 
+varying mediump vec2 uvpos;
+
 void main()
 {
-   vec2 uv = vec2(gl_FragCoord.xy / size);
+   vec2 uv = uvpos;
 
    vec4 sum = texture2D(texture, uv + vec2(-halfpixel.x * 2.0, 0.0) * offset);
    sum += texture2D(texture, uv + vec2(-halfpixel.x, halfpixel.y) * offset) * 2.0;
@@ -52,13 +58,15 @@ R"(
 precision mediump float;
 
 uniform vec2 size;
-uniform vec2 offset;
+uniform float offset;
 uniform vec2 halfpixel;
 uniform sampler2D texture;
 
+varying mediump vec2 uvpos;
+
 void main()
 {
-   vec2 uv = vec2(gl_FragCoord.xy / size);
+   vec2 uv = uvpos;
 
    vec4 sum = texture2D(texture, uv) * 4.0;
    sum += texture2D(texture, uv - halfpixel.xy * offset);
@@ -78,33 +86,31 @@ precision mediump float;
 uniform vec2 size;
 uniform sampler2D window_texture;
 uniform sampler2D blurred_texture;
-uniform sampler2D unblurred_texture;
+
+varying mediump vec2 uvpos;
 
 void main()
 {
-   vec4 wp = texture2D(window_texture, vec2(gl_FragCoord.xy / size));
-   vec4 bp = texture2D(blurred_texture, vec2(gl_FragCoord.xy / size));
-   vec4 up = texture2D(unblurred_texture, vec2(gl_FragCoord.xy / size));
-   vec4 c = clamp(4.0 * wp.a, 0.0, 1.0) * bp + (1.0 - clamp(4.0 * wp.a, 0.0, 1.0)) * up;
+   vec4 wp = texture2D(window_texture, uvpos);
+   vec4 bp = texture2D(blurred_texture, uvpos);
+   vec4 c = clamp(4.0 * wp.a, 0.0, 1.0) * bp;
    gl_FragColor = wp + (1.0 - wp.a) * c;
 }
 )";
 
-GLuint up_prog, down_prog, blend_prog, posID, texID, sizeID, offsetID, halfpixelID;
+GLuint up_prog, down_prog, blend_prog, posID[3], texcoordID[3], texID[2], offsetID[2], halfpixelID[2], fbo[30], tex[30];
+int i, iterations = 10;
+float offset = 7;
 
 static void
 render_to_fbo(GLuint in_tex_id, GLuint out_tex_id, GLuint fbo, int width, int height)
 {
     GL_CALL(glBindTexture(GL_TEXTURE_2D, out_tex_id));
     GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
     GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
-    GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, out_tex_id, 0));
     GL_CALL(glActiveTexture(GL_TEXTURE0));
     GL_CALL(glBindTexture(GL_TEXTURE_2D, in_tex_id));
+    GL_CALL(glViewport(0, 0, width, height));
     GL_CALL(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
 }
 
@@ -166,14 +172,11 @@ class wf_kawase_blur : public wf_view_transformer_t
                                         wlr_box scissor_box,
                                         const wf_framebuffer& target_fb)
         {
-        GLuint fbo[100], tex[100];
-        int i, iterations = 5;
-        float offset = 3;
-        int width = target_fb.viewport_width;
-        int height = target_fb.viewport_height;
-
+            int height = target_fb.viewport_height;
             float x = src_box.x, y = src_box.y, w = src_box.width, h = src_box.height;
-            gl_geometry src_geometry = {x, y, x + w, y + h};
+
+            float hw = w * 0.5;
+            float hh = h * 0.5;
 
             static const float vertexData[] = {
                 -1.0f, -1.0f,
@@ -181,110 +184,82 @@ class wf_kawase_blur : public wf_view_transformer_t
                  1.0f,  1.0f,
                 -1.0f,  1.0f
             };
+            static const float texCoords[] = {
+                 0.0f, 0.0f,
+                 1.0f, 0.0f,
+                 1.0f, 1.0f,
+                 0.0f, 1.0f
+            };
 
-            GL_CALL(glVertexAttribPointer(posID, 2, GL_FLOAT, GL_FALSE, 0, vertexData));
-            GL_CALL(glEnableVertexAttribArray(posID));
+            /* Blit surface rect from fbo of rendering beneath the surface, to tex[0] */
+            GL_CALL(glBindTexture(GL_TEXTURE_2D, tex[0]));
+            GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, 0));
+            GL_CALL(glBindFramebuffer(GL_READ_FRAMEBUFFER, target_fb.fb));
+            GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo[0]));
+            /* The target_fb origin is at bottom left and the y is flipped so we have
+             * to take these into account when blitting */
+            GL_CALL(glBlitFramebuffer(x, height - y - h, x + w, height - y, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_LINEAR));
 
-        for (i = 0; i < iterations; i++) {
-            GL_CALL(glGenTextures(1, &tex[i]));
-            GL_CALL(glGenFramebuffers(1, &fbo[i]));
-        }
-
-    GL_CALL(glBindTexture(GL_TEXTURE_2D, tex[0]));
-    GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, 0));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-    GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, fbo[0]));
-    GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex[0], 0));
-
-    GL_CALL(glBindFramebuffer(GL_READ_FRAMEBUFFER, target_fb.fb));
-        GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo[0]));
-
-        GL_CALL(glBlitFramebuffer(x, height - y - h, x + w, height - y, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_LINEAR));
-
+            /* Downsample */
             GL_CALL(glUseProgram(down_prog));
-        posID = GL_CALL(glGetAttribLocation(down_prog, "position"));
-        sizeID  = GL_CALL(glGetUniformLocation(down_prog, "size"));
-        offsetID  = GL_CALL(glGetUniformLocation(down_prog, "offset"));
-        halfpixelID  = GL_CALL(glGetUniformLocation(down_prog, "halfpixel"));
-            glUniform2f(sizeID, w * 0.5f, h * 0.5f);
-            glUniform2f(offsetID, offset, offset);
-            glUniform2f(halfpixelID, 0.5f / (w * 0.5f), 0.5f / (h * 0.5f));
+            GL_CALL(glVertexAttribPointer(posID[0], 2, GL_FLOAT, GL_FALSE, 0, vertexData));
+            GL_CALL(glVertexAttribPointer(texcoordID[0], 2, GL_FLOAT, GL_FALSE, 0, texCoords));
+            GL_CALL(glEnableVertexAttribArray(posID[0]));
+            GL_CALL(glEnableVertexAttribArray(texcoordID[0]));
+            GL_CALL(glUniform1f(offsetID[0], offset));
+            GL_CALL(glUniform2f(halfpixelID[0], 0.5f / hw, 0.5f / hh));
 
-    for (i = 1; i < iterations; i++)
-        render_to_fbo(tex[i - 1], tex[i], fbo[i], w * 0.5f, h * 0.5f);
+            for (i = 1; i < iterations; i++)
+                render_to_fbo(tex[i - 1], tex[i], fbo[i], hw, hh);
 
+            GL_CALL(glDisableVertexAttribArray(posID[0]));
+            GL_CALL(glDisableVertexAttribArray(texcoordID[0]));
+
+            /* Upsample */
             GL_CALL(glUseProgram(up_prog));
-        posID = GL_CALL(glGetAttribLocation(up_prog, "position"));
-        sizeID  = GL_CALL(glGetUniformLocation(up_prog, "size"));
-        offsetID  = GL_CALL(glGetUniformLocation(up_prog, "offset"));
-        halfpixelID  = GL_CALL(glGetUniformLocation(up_prog, "halfpixel"));
-            glUniform2f(sizeID, w * 0.5f, h * 0.5f);
-            glUniform2f(offsetID, offset, offset);
-            glUniform2f(halfpixelID, 0.5f / (w * 0.5f), 0.5f / (h * 0.5f));
+            GL_CALL(glVertexAttribPointer(posID[1], 2, GL_FLOAT, GL_FALSE, 0, vertexData));
+            GL_CALL(glVertexAttribPointer(texcoordID[1], 2, GL_FLOAT, GL_FALSE, 0, texCoords));
+            GL_CALL(glEnableVertexAttribArray(posID[1]));
+            GL_CALL(glEnableVertexAttribArray(texcoordID[1]));
+            GL_CALL(glUniform1f(offsetID[1], offset));
+            GL_CALL(glUniform2f(halfpixelID[1], 0.5f / hw, 0.5f / hh));
 
-    for (i = iterations - 1; i > 1; i--) {
-        if (i == 2) {
-            glUniform2f(sizeID, w, h);
-            glUniform2f(halfpixelID, 0.5f / w, 0.5f / h);
-            render_to_fbo(tex[i], tex[i - 1], fbo[i], w, h);
-        } else
-            render_to_fbo(tex[i], tex[i - 1], fbo[i], w * 0.5f, h * 0.5f);
-    }
+            for (i = iterations - 1; i > 0; i--)
+                render_to_fbo(tex[i], tex[i - 1], fbo[i - 1], hw, hh);
 
+            GL_CALL(glDisableVertexAttribArray(posID[1]));
+            GL_CALL(glDisableVertexAttribArray(texcoordID[1]));
+
+            /* Blend blurred background with window texture src_tex */
             GL_CALL(glUseProgram(blend_prog));
-
-    GL_CALL(glBindTexture(GL_TEXTURE_2D, tex[1]));
-    GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-    GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, fbo[1]));
-    GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex[1], 0));
-    texID = GL_CALL(glGetUniformLocation(blend_prog, "window_texture"));
-    glUniform1i(texID, 0);
-    texID = GL_CALL(glGetUniformLocation(blend_prog, "blurred_texture"));
-    glUniform1i(texID, 1);
-    texID = GL_CALL(glGetUniformLocation(blend_prog, "unblurred_texture"));
-    glUniform1i(texID, 2);
-    sizeID  = GL_CALL(glGetUniformLocation(blend_prog, "size"));
-    glUniform2f(sizeID, w, h);
+            GL_CALL(glVertexAttribPointer(posID[2], 2, GL_FLOAT, GL_FALSE, 0, vertexData));
+            GL_CALL(glVertexAttribPointer(texcoordID[2], 2, GL_FLOAT, GL_FALSE, 0, texCoords));
+            GL_CALL(glEnableVertexAttribArray(posID[2]));
+            GL_CALL(glEnableVertexAttribArray(texcoordID[2]));
+            GL_CALL(glUniform1i(texID[0], 0));
+            GL_CALL(glUniform1i(texID[1], 1));
             GL_CALL(glActiveTexture(GL_TEXTURE0 + 0));
             GL_CALL(glBindTexture(GL_TEXTURE_2D, src_tex));
             GL_CALL(glActiveTexture(GL_TEXTURE0 + 1));
-            GL_CALL(glBindTexture(GL_TEXTURE_2D, tex[2]));
-            GL_CALL(glActiveTexture(GL_TEXTURE0 + 2));
             GL_CALL(glBindTexture(GL_TEXTURE_2D, tex[0]));
             GL_CALL(glEnable(GL_BLEND));
-            GL_CALL(glClearColor(0.0, 0.0, 0.0, 0.0));
-            GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-    GL_CALL(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
-            GL_CALL(glActiveTexture(GL_TEXTURE0 + 0));
-            // we are ready to draw to target_fb
+            GL_CALL(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+
+            /* Render it to target_fb */
             target_fb.bind();
 
-            // setup scissor
+            GL_CALL(glViewport(x, height - y - h, w, h));
             target_fb.scissor(scissor_box);
 
-            // transform, relative to the target_fb.geometry
-            auto ortho = glm::ortho(1.0f * target_fb.geometry.x, 1.0f * target_fb.geometry.x + 1.0f * target_fb.geometry.width,
-                1.0f * target_fb.geometry.y + 1.0f * target_fb.geometry.height, 1.0f * target_fb.geometry.y);
+            GL_CALL(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
 
-            OpenGL::use_default_program();
-
-            OpenGL::render_transformed_texture(tex[1], src_geometry, {},
-                target_fb.transform * ortho);
-
-            GL_CALL(glDisableVertexAttribArray(posID));
+            /* Disable stuff */
+            GL_CALL(glDisable(GL_BLEND));
+            GL_CALL(glActiveTexture(GL_TEXTURE0));
             GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
-
-        for (i = 0; i < iterations; i++) {
-            GL_CALL(glDeleteTextures(1, &tex[i]));
-            GL_CALL(glDeleteFramebuffers(1, &fbo[i]));
-        }
+            GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+            GL_CALL(glDisableVertexAttribArray(posID[2]));
+            GL_CALL(glDisableVertexAttribArray(texcoordID[2]));
         }
 
         virtual ~wf_kawase_blur() {}
@@ -294,7 +269,6 @@ class wayfire_kawase : public wayfire_plugin_t
 {
     button_callback btn;
     effect_hook_t damage;
-    post_hook_t passthrough;
 
     public:
     void init(wayfire_config *config)
@@ -312,8 +286,6 @@ class wayfire_kawase : public wayfire_plugin_t
 
             auto view = core->find_view(focus->get_main_surface());
             view->add_transformer(nonstd::make_unique<wf_kawase_blur> ());
-
-            output->render->add_post(&passthrough);
         };
 
         output->add_button(new_static_option("<super> <alt> BTN_LEFT"), &btn);
@@ -323,18 +295,6 @@ class wayfire_kawase : public wayfire_plugin_t
         };
 
         output->render->add_effect(&damage, WF_OUTPUT_EFFECT_PRE);
-
-        passthrough = [=] (uint32_t fb, uint32_t tex, uint32_t target)
-        {
-            auto w = output->handle->width;
-            auto h = output->handle->height;
-
-            GL_CALL(glBindFramebuffer(GL_READ_FRAMEBUFFER, fb));
-            GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target));
-
-            GL_CALL(glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_LINEAR));
-            GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-        };
 
         auto vs = OpenGL::compile_shader(vertex_shader, GL_VERTEX_SHADER);
         auto ufs = OpenGL::compile_shader(up_sample_fragment_shader, GL_FRAGMENT_SHADER);
@@ -356,6 +316,31 @@ class wayfire_kawase : public wayfire_plugin_t
         GL_CALL(glAttachShader(blend_prog, bfs));
         GL_CALL(glLinkProgram(blend_prog));
 
+        for (i = 0; i < iterations; i++) {
+            GL_CALL(glGenTextures(1, &tex[i]));
+            GL_CALL(glGenFramebuffers(1, &fbo[i]));
+            GL_CALL(glBindTexture(GL_TEXTURE_2D, tex[i]));
+            GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+            GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+            GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+            GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+            GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, fbo[i]));
+            GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex[i], 0));
+        }
+
+        posID[0] = GL_CALL(glGetAttribLocation(down_prog, "position"));
+        texcoordID[0] = GL_CALL(glGetAttribLocation(down_prog, "texcoord"));
+        posID[1] = GL_CALL(glGetAttribLocation(up_prog, "position"));
+        texcoordID[1] = GL_CALL(glGetAttribLocation(up_prog, "texcoord"));
+        posID[2] = GL_CALL(glGetAttribLocation(blend_prog, "position"));
+        texcoordID[2] = GL_CALL(glGetAttribLocation(blend_prog, "texcoord"));
+        offsetID[0]  = GL_CALL(glGetUniformLocation(down_prog, "offset"));
+        halfpixelID[0]  = GL_CALL(glGetUniformLocation(down_prog, "halfpixel"));
+        offsetID[1]  = GL_CALL(glGetUniformLocation(up_prog, "offset"));
+        halfpixelID[1]  = GL_CALL(glGetUniformLocation(up_prog, "halfpixel"));
+        texID[0] = GL_CALL(glGetUniformLocation(blend_prog, "window_texture"));
+        texID[1] = GL_CALL(glGetUniformLocation(blend_prog, "blurred_texture"));
+
         /* won't be really deleted until program is deleted as well */
         GL_CALL(glDeleteShader(vs));
         GL_CALL(glDeleteShader(ufs));
@@ -368,6 +353,11 @@ class wayfire_kawase : public wayfire_plugin_t
         GL_CALL(glDeleteProgram(up_prog));
         GL_CALL(glDeleteProgram(down_prog));
         GL_CALL(glDeleteProgram(blend_prog));
+
+        for (i = 0; i < iterations; i++) {
+            GL_CALL(glDeleteTextures(1, &tex[i]));
+            GL_CALL(glDeleteFramebuffers(1, &fbo[i]));
+        }
     }
 };
 
