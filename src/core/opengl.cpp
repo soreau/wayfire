@@ -385,7 +385,7 @@ wlr_box wf_framebuffer::framebuffer_box_from_damage_box(wlr_box box) const
         wlr_output_transform_invert((wl_output_transform)wl_transform);
 
    // log_info("got %d,%d %dx%d, %d", box.x, box.y, box.width, box.height, wl_transform);
-    wlr_box_transform(&box, transform, width, height, &result);
+    wlr_box_transform(&result, &box, transform, width, height);
   //  log_info("tr %d,%d %dx%d", box.x, box.y, box.width, box.height);
     return result;
 }

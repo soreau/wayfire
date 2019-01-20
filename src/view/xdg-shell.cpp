@@ -338,7 +338,7 @@ std::string wayfire_xdg_view::get_title()
 
 void wayfire_xdg_view::close()
 {
-    wlr_xdg_surface_send_close(xdg_surface);
+    wlr_xdg_toplevel_send_close(xdg_surface);
     wayfire_view_t::close();
 }
 

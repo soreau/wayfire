@@ -50,14 +50,14 @@ bool operator & (const wf_geometry& rect, const wf_point& point)
 bool operator & (const wf_geometry& r1, const wf_geometry& r2)
 {
     wlr_box result;
-    return wlr_box_intersection(&r1, &r2, &result);
+    return wlr_box_intersection(&result, &r1, &r2);
 }
 
 wf_geometry wf_geometry_intersection(const wf_geometry& r1,
     const wf_geometry& r2)
 {
     wlr_box result;
-    if (wlr_box_intersection(&r1, &r2, &result))
+    if (wlr_box_intersection(&result, &r1, &r2))
         return result;
 
     return {0, 0, 0, 0};
