@@ -110,6 +110,18 @@ static void handle_request_set_cursor(wl_listener*, void *data)
     core->input->cursor->set_cursor(ev);
 }
 
+static void handle_request_set_selection_cb(wl_listener*, void *data)
+{
+    auto ev = static_cast<wlr_seat_request_set_selection_event*> (data);
+    wlr_seat_set_selection(core->get_current_seat(), ev->source, ev->serial);
+}
+
+static void handle_request_set_primary_selection_cb(wl_listener*, void *data)
+{
+    auto ev = static_cast<wlr_seat_request_set_primary_selection_event*> (data);
+    wlr_seat_set_primary_selection(core->get_current_seat(), ev->source, ev->serial);
+}
+
 void input_manager::update_drag_icons()
 {
     for (auto& icon : drag_icons)
@@ -128,6 +140,12 @@ void input_manager::create_seat()
 
     new_drag_icon.notify      = handle_new_drag_icon_cb;
     wl_signal_add(&seat->events.new_drag_icon, &new_drag_icon);
+
+    request_set_selection.notify = handle_request_set_selection_cb;
+    wl_signal_add(&seat->events.request_set_selection, &request_set_selection);
+
+    request_set_primary_selection.notify = handle_request_set_primary_selection_cb;
+    wl_signal_add(&seat->events.request_set_primary_selection, &request_set_primary_selection);
 }
 
 wf_input_device::config_t wf_input_device::config;

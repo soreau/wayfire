@@ -61,7 +61,8 @@ class input_manager
         wayfire_grab_interface active_grab = nullptr;
         bool session_active = true;
 
-        wl_listener input_device_created, new_drag_icon, request_set_cursor;
+        wl_listener input_device_created, new_drag_icon, request_set_cursor,
+                    request_set_selection, request_set_primary_selection;
 
 
         signal_callback_t config_updated;

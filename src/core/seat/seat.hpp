@@ -4,6 +4,7 @@
 extern "C"
 {
 #include <wlr/types/wlr_data_device.h>
+#include <wlr/types/wlr_primary_selection.h>
 #include <wlr/backend/libinput.h>
 }
 
