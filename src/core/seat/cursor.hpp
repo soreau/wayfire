@@ -25,7 +25,7 @@ struct wf_cursor
 
     void init_xcursor();
 
-    wl_listener button, motion, motion_absolute, axis;
+    wl_listener button, motion, motion_absolute, axis, frame;
     signal_callback_t config_reloaded;
 
     wlr_cursor *cursor = NULL;

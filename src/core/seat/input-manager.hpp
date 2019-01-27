@@ -140,6 +140,7 @@ class input_manager
         void handle_pointer_motion(wlr_event_pointer_motion *ev);
         void handle_pointer_motion_absolute(wlr_event_pointer_motion_absolute *ev);
         void handle_pointer_button(wlr_event_pointer_button *ev);
+        void handle_pointer_frame();
 
         bool handle_keyboard_key(uint32_t key, uint32_t state);
         void handle_keyboard_mod(uint32_t key, uint32_t state);
