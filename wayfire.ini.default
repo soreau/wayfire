@@ -170,6 +170,16 @@ duration = 250.000000
 offset = 50.000000
 toggle = <super>
 
+# select_workspace_n key bindings are only active if viewing workspaces overview.
+# It's possible to add a binding for every workspace,
+# the numbering is left to right, line by line.
+select_workspace_1 = KEY_1
+select_workspace_2 = KEY_2
+select_workspace_3 = KEY_3
+select_workspace_4 = KEY_4
+select_workspace_5 = KEY_5
+select_workspace_6 = KEY_6
+
 # position the windows in certain regions of the output
 # try ctrl-alt-keypad1,2,3,..9 in order to see the regions
 # necessary for aero-snap functionality of the move plugin

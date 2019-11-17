@@ -29,9 +29,26 @@ class expo_animation_t : public duration_t
     timed_transition_t delimiter_offset{*this};
 };
 
+static bool begins_with(std::string word, std::string prefix)
+{
+    if (word.length() < prefix.length())
+        return false;
+
+    return word.substr(0, prefix.length()) == prefix;
+}
+
 class wayfire_expo : public wf::plugin_interface_t
 {
   private:
+    wf::point_t convert_workspace_index_to_coords(int index)
+    {
+        index--; //compensate for indexing from 0
+        auto wsize = output->workspace->get_workspace_grid_size();
+        int x = index % wsize.width;
+        int y = index / wsize.width;
+        return wf::point_t{x, y};
+    }
+
     wf::activator_callback toggle_cb = [=] (wf::activator_source_t, uint32_t)
     {
         if (!state.active) {
@@ -53,6 +70,9 @@ class wayfire_expo : public wf::plugin_interface_t
     expo_animation_t animation{zoom_duration};
 
 
+    std::vector<wf::activator_callback> keyboard_select_cbs;
+    std::vector<wf::option_sptr_t<wf::activatorbinding_t>> keyboard_select_options;
+
     wf::render_hook_t renderer;
     wf::signal_callback_t view_removed = [=] (wf::signal_data_t *event)
     {
@@ -70,10 +90,59 @@ class wayfire_expo : public wf::plugin_interface_t
     std::vector<std::vector<wf::workspace_stream_t>> streams;
 
   public:
+    void setup_workspace_bindings_from_config()
+    {
+        auto section = wf::get_core().config.get_section("expo");
+
+        std::vector<std::string> workspace_numbers;
+        const std::string select_prefix = "select_workspace_";
+        for (auto binding : section->get_registered_options())
+        {
+            if (begins_with(binding->get_name(), select_prefix))
+            {
+                workspace_numbers.push_back(
+                    binding->get_name().substr(select_prefix.length()));
+            }
+        }
+
+        for (size_t i = 0; i < workspace_numbers.size(); i++)
+        {
+            auto binding = select_prefix + workspace_numbers[i];
+            int workspace_index = atoi(workspace_numbers[i].c_str());
+
+            auto wsize = output->workspace->get_workspace_grid_size();
+            if (workspace_index > (wsize.width * wsize.height) || workspace_index < 1){
+                continue;
+            }
+
+            wf::point_t target = convert_workspace_index_to_coords(workspace_index);
+
+            auto opt = section->get_option(binding);
+            auto value = wf::option_type::from_string<wf::activatorbinding_t> (opt->get_value_str());
+            keyboard_select_options.push_back(wf::create_option(value.value()));
+
+            keyboard_select_cbs.push_back([=] (wf::activator_source_t, uint32_t) 
+            { 
+                if (!state.active) {
+                    return false;
+                } else {
+                    if (!animation.running() || state.zoom_in){
+                        target_vx = target.x;
+                        target_vy = target.y;
+                        deactivate();
+                    }
+                }
+                return true;
+            });
+        }
+    }
+
     void init() override
     {
         grab_interface->name = "expo";
         grab_interface->capabilities = wf::CAPABILITY_MANAGE_COMPOSITOR;
+
+        setup_workspace_bindings_from_config();
 
         auto wsize = output->workspace->get_workspace_grid_size();
         streams.resize(wsize.width);
@@ -148,6 +217,11 @@ class wayfire_expo : public wf::plugin_interface_t
         output->render->set_renderer(renderer);
         output->render->set_redraw_always();
 
+        for (size_t i = 0; i < keyboard_select_cbs.size(); i++)
+        {
+            output->add_activator(keyboard_select_options[i], &keyboard_select_cbs[i]);
+        }
+
         return true;
     }
 
@@ -157,6 +231,11 @@ class wayfire_expo : public wf::plugin_interface_t
         animation.start();
         output->workspace->set_workspace({target_vx, target_vy});
         calculate_zoom(false);
+
+        for (size_t i = 0; i < keyboard_select_cbs.size(); i++)
+        {
+            output->rem_binding(&keyboard_select_cbs[i]);
+        }
     }
 
     wf::geometry_t get_grid_geometry()
