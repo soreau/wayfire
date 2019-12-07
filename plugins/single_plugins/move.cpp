@@ -184,6 +184,9 @@ class wayfire_move : public wf::plugin_interface_t
             if (!view || !view->is_mapped())
                 return false;
 
+            if (view->role == wf::VIEW_ROLE_SHELL_VIEW)
+                return false;
+
             auto current_ws_impl =
                 output->workspace->get_workspace_implementation();
             if (!current_ws_impl->view_movable(view))
