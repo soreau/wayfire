@@ -171,7 +171,7 @@ class output_viewport_manager_t
     bool view_visible_on(wayfire_view view, wf_point vp, bool use_bbox)
     {
         auto g = output->get_relative_geometry();
-        if (view->role != VIEW_ROLE_SHELL_VIEW)
+        if (view->role != VIEW_ROLE_DESKTOP_ENVIRONMENT)
         {
             g.x += (vp.x - current_vx) * g.width;
             g.y += (vp.y - current_vy) * g.height;
@@ -539,9 +539,9 @@ class workspace_manager::impl
 
         if (view_layer_before == 0)
         {
-            _view_signal data;
+            attach_view_signal data;
             data.view = view;
-            output->emit_signal("attach-view", &data);
+            output->emit_signal("layer-attach-view", &data);
         }
 
         check_autohide_panels();
@@ -628,9 +628,9 @@ class workspace_manager::impl
         uint32_t view_layer = layer_manager.get_view_layer(view);
         layer_manager.remove_view(view);
 
-        _view_signal data;
+        detach_view_signal data;
         data.view = view;
-        output->emit_signal("detach-view", &data);
+        output->emit_signal("layer-detach-view", &data);
 
         /* Check if the next focused view is fullscreen. If so, then we need
          * to make sure it is in the fullscreen layer */

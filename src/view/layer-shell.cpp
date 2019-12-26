@@ -25,6 +25,8 @@ static const uint32_t both_horiz =
 class wayfire_layer_shell_view : public wf::wlr_view_t
 {
     wf::wl_listener_wrapper on_map, on_unmap, on_destroy, on_new_popup;
+  protected:
+    void initialize() override;
 
   public:
     wlr_layer_surface_v1 *lsurface;
@@ -292,12 +294,18 @@ wayfire_layer_shell_view::wayfire_layer_shell_view(wlr_layer_surface_v1 *lsurf)
     LOGD("Create a layer surface: namespace ", lsurf->namespace_t,
         " layer ", lsurf->current.layer);
 
+    /* If we already have an output set, then assign it before core assigns us
+     * an output */
     if (lsurf->output)
     {
         auto wo = wf::get_core().output_layout->find_output(lsurf->output);
         set_output(wo);
     }
+}
 
+void wayfire_layer_shell_view::initialize()
+{
+    wlr_view_t::initialize();
     if (!get_output())
     {
         LOGE ("Couldn't find output for the layer surface");
@@ -305,9 +313,8 @@ wayfire_layer_shell_view::wayfire_layer_shell_view(wlr_layer_surface_v1 *lsurf)
         return;
     }
 
-    lsurf->output = get_output()->handle;
-
-    role = wf::VIEW_ROLE_SHELL_VIEW;
+    lsurface->output = get_output()->handle;
+    role = wf::VIEW_ROLE_DESKTOP_ENVIRONMENT;
     lsurface->data = dynamic_cast<wf::view_interface_t*> (this);
 
     on_map.set_callback([&] (void*) { map(lsurface->surface); });

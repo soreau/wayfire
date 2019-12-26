@@ -90,7 +90,7 @@ class wayfire_move : public wf::plugin_interface_t
                 was_client_request = false;
                 auto view = wf::get_core().get_cursor_focus_view();
 
-                if (view && view->role != wf::VIEW_ROLE_SHELL_VIEW)
+                if (view && view->role != wf::VIEW_ROLE_DESKTOP_ENVIRONMENT)
                     return initiate(view);
 
                 return false;
@@ -102,7 +102,7 @@ class wayfire_move : public wf::plugin_interface_t
                 was_client_request = false;
                 auto view = wf::get_core().get_touch_focus_view();
 
-                if (view && view->role != wf::VIEW_ROLE_SHELL_VIEW)
+                if (view && view->role != wf::VIEW_ROLE_DESKTOP_ENVIRONMENT)
                     return initiate(view);
 
                 return false;
@@ -242,7 +242,7 @@ class wayfire_move : public wf::plugin_interface_t
             delete_mirror_views(true);
 
             /* Don't do snapping, etc for shell views */
-            if (view->role == wf::VIEW_ROLE_SHELL_VIEW)
+            if (view->role == wf::VIEW_ROLE_DESKTOP_ENVIRONMENT)
             {
                 this->view = nullptr;
                 return;

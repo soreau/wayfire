@@ -278,13 +278,16 @@ wf::surface_interface_t* input_manager::input_surface_at(wf_pointf global,
     global.x -= og.x;
     global.y -= og.y;
 
-    for (auto& view : output->workspace->get_views_in_layer(wf::VISIBLE_LAYERS))
+    for (auto& v : output->workspace->get_views_in_layer(wf::VISIBLE_LAYERS))
     {
-        if (can_focus_surface(view.get()))
+        for (auto& view : v->enumerate_views())
         {
-            auto surface = view->map_input_coordinates(global, local);
-            if (surface)
-                return surface;
+            if (can_focus_surface(view.get()))
+            {
+                auto surface = view->map_input_coordinates(global, local);
+                if (surface)
+                    return surface;
+            }
         }
     }
 

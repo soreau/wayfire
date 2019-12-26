@@ -210,10 +210,8 @@ void plugin_manager::load_static_plugins()
     loaded_plugins["_exit"]         = create_plugin<wayfire_exit>();
     loaded_plugins["_focus"]        = create_plugin<wayfire_focus>();
     loaded_plugins["_close"]        = create_plugin<wayfire_close>();
-    loaded_plugins["_focus_parent"] = create_plugin<wayfire_handle_focus_parent>();
 
     init_plugin(loaded_plugins["_exit"]);
     init_plugin(loaded_plugins["_focus"]);
     init_plugin(loaded_plugins["_close"]);
-    init_plugin(loaded_plugins["_focus_parent"]);
 }

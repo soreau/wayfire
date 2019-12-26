@@ -378,7 +378,7 @@ void wf::wlr_surface_base_t::_wlr_render_box(
     wlr_matrix_projection(scissor_proj, fb.viewport_width, fb.viewport_height,
         WL_OUTPUT_TRANSFORM_NORMAL);
 
-    float col[4] = {0, 0.2, 0, 0.5};
+    float col[4] = {(std::rand() % 5) / 5, 0.2, 0, 0.5};
     wlr_render_rect(wf::get_core().renderer, &scissor, col, scissor_proj);
 #endif
 

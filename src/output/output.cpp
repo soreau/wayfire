@@ -211,6 +211,9 @@ void wf::output_impl_t::focus_view(wayfire_view v, bool raise)
         return;
     }
 
+    while (v->parent && v->parent->is_mapped())
+        v = v->parent;
+
     /* If no keyboard focus surface is set, then we don't want to focus the view */
     if (v->get_keyboard_focus_surface() || interactive_view_from_view(v.get()))
     {

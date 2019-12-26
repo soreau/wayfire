@@ -181,8 +181,11 @@ class wayfire_resize : public wf::plugin_interface_t
 
     bool initiate(wayfire_view view, uint32_t forced_edges = 0)
     {
-        if (!view || view->role == wf::VIEW_ROLE_SHELL_VIEW || !view->is_mapped())
+        if (!view || view->role == wf::VIEW_ROLE_DESKTOP_ENVIRONMENT ||
+            !view->is_mapped())
+        {
             return false;
+        }
 
         auto current_ws_impl =
             output->workspace->get_workspace_implementation();

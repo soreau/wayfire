@@ -68,8 +68,31 @@ static void unset_toplevel_parent(wayfire_view view)
     }
 }
 
+static wayfire_view find_toplevel_parent(wayfire_view view)
+{
+    while (view->parent)
+        view = view->parent;
+
+    return view;
+}
+
+/**
+ * Check whether the toplevel parent needs refocus.
+ * This may be needed because when focusing a view, its topmost child is given
+ * keyboard focus. When the parent-child relations change, it may happen that
+ * the parent needs to be focused again, this time with a different keyboard
+ * focus surface.
+ */
+static void check_refocus_parent(wayfire_view view)
+{
+    view = find_toplevel_parent(view);
+    if (view->get_output() && view->get_output()->get_active_view() == view)
+        view->get_output()->focus_view(view, false);
+};
+
 void wf::view_interface_t::set_toplevel_parent(wayfire_view new_parent)
 {
+    auto old_parent = parent;
     if (parent != new_parent)
     {
         /* Erase from the old parent */
@@ -82,9 +105,53 @@ void wf::view_interface_t::set_toplevel_parent(wayfire_view new_parent)
         parent = new_parent;
     }
 
-    /* if the view isn't mapped, then it will be positioned properly in map() */
-    if (is_mapped() && parent)
-        reposition_relative_to_parent(self());
+    if (parent)
+    {
+        /* Make sure the view is available only as a child */
+        if (this->get_output())
+            this->get_output()->workspace->remove_view(self());
+
+        /* if the view isn't mapped, then it will be positioned properly in map() */
+        if (is_mapped())
+            reposition_relative_to_parent(self());
+
+        check_refocus_parent(parent);
+    } else
+    {
+        /* At this point, we are a regular view. We should try to position ourselves
+         * directly above the old parent */
+        if (this->get_output())
+        {
+            this->get_output()->workspace->add_view(
+                self(), wf::LAYER_WORKSPACE);
+
+            if (old_parent)
+            {
+                check_refocus_parent(old_parent);
+                this->get_output()->workspace->restack_above(self(),
+                    find_toplevel_parent(old_parent));
+            }
+        }
+    }
+}
+
+std::vector<wayfire_view> wf::view_interface_t::enumerate_views()
+{
+    if (!is_mapped())
+        return {};
+
+    std::vector<wayfire_view> result;
+    for (auto& v : this->children)
+    {
+        if (v->is_mapped())
+        {
+            auto cdr = v->enumerate_views();
+            result.insert(result.end(), cdr.begin(), cdr.end());
+        }
+    }
+
+    result.push_back(self());
+    return result;
 }
 
 void wf::view_interface_t::set_role(view_role_t new_role)
@@ -108,14 +175,27 @@ void wf::view_interface_t::set_output(wf::output_t* new_output)
 {
     /* Make sure the view doesn't stay on the old output */
     if (get_output() && get_output() != new_output)
+    {
+        /* Emit layer-detach-view first */
         get_output()->workspace->remove_view(self());
+
+        detach_view_signal data;
+        data.view = self();
+        get_output()->emit_signal("detach-view", &data);
+    }
 
     _output_signal data;
     data.output = get_output();
 
     surface_interface_t::set_output(new_output);
-    if (new_output != data.output)
-        emit_signal("set-output", &data);
+    if (new_output != data.output && new_output)
+    {
+        attach_view_signal data;
+        data.view = self();
+        get_output()->emit_signal("attach-view", &data);
+    }
+
+    emit_signal("set-output", &data);
 }
 
 void wf::view_interface_t::resize(int w, int h)
@@ -865,7 +945,6 @@ void wf::view_interface_t::take_snapshot()
 wf::view_interface_t::view_interface_t() : surface_interface_t(nullptr)
 {
     this->view_impl = std::make_unique<wf::view_interface_t::view_priv_impl>();
-    set_output(wf::get_core().get_active_output());
 }
 
 wf::view_interface_t::~view_interface_t()
@@ -893,7 +972,7 @@ void wf::view_interface_t::damage_raw(const wlr_box& box)
 
     /* shell views are visible in all workspaces. That's why we must apply
      * their damage to all workspaces as well */
-    if (role == wf::VIEW_ROLE_SHELL_VIEW)
+    if (role == wf::VIEW_ROLE_DESKTOP_ENVIRONMENT)
     {
         auto wsize = get_output()->workspace->get_workspace_grid_size();
         auto cws = get_output()->workspace->get_current_workspace();

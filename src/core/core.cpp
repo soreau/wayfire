@@ -373,8 +373,14 @@ void wf::compositor_core_impl_t::unfocus_layer(int request)
 void wf::compositor_core_impl_t::add_view(
     std::unique_ptr<wf::view_interface_t> view)
 {
+    auto v = view->self(); /* non-owning copy */
     views.push_back(std::move(view));
+
     assert(active_output);
+    if (!v->get_output())
+        v->set_output(active_output);
+
+    v->initialize();
 }
 
 /* sets the "active" view and gives it keyboard focus
@@ -393,6 +399,9 @@ void wf::compositor_core_impl_t::set_active_view(wayfire_view new_focus)
     if (new_focus && !new_focus->is_mapped())
         new_focus = nullptr;
 
+    /* Descend into frontmost child view */
+    new_focus = new_focus ? new_focus->enumerate_views().front() : nullptr;
+
     bool refocus = (input->keyboard_focus == new_focus);
 
     /* don't deactivate view if the next focus is not a toplevel */
@@ -404,7 +413,7 @@ void wf::compositor_core_impl_t::set_active_view(wayfire_view new_focus)
             input->keyboard_focus->set_activated(false);
         }
 
-        /* make sure to deactivate the lastly activated toplevel */
+        /* make sure to deactivate the last activated toplevel */
         if (last_active_toplevel && new_focus != last_active_toplevel)
             last_active_toplevel->set_activated(false);
     }
@@ -448,7 +457,7 @@ void wf::compositor_core_impl_t::erase_view(wayfire_view v)
     if (!v) return;
 
     if (v->get_output())
-        v->get_output()->workspace->remove_view(v);
+        v->set_output(nullptr);
 
     auto it = std::find_if(views.begin(), views.end(),
         [&v] (const auto& view) { return view.get() == v.get(); });

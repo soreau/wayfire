@@ -439,8 +439,8 @@ class tile_plugin_t : public wf::plugin_interface_t
             std::make_unique<tile_workspace_implementation_t> (), true);
 
         output->connect_signal("unmap-view", &on_view_unmapped);
-        output->connect_signal("attach-view", &on_view_attached);
-        output->connect_signal("detach-view", &on_view_detached);
+        output->connect_signal("layer-attach-view", &on_view_attached);
+        output->connect_signal("layer-detach-view", &on_view_detached);
         output->connect_signal("reserved-workarea", &on_workarea_changed);
         output->connect_signal("view-maximized-request", &on_tile_request);
         output->connect_signal("view-fullscreen-request",
@@ -464,8 +464,8 @@ class tile_plugin_t : public wf::plugin_interface_t
         output->rem_binding(&on_focus_adjacent);
 
         output->disconnect_signal("unmap-view", &on_view_unmapped);
-        output->disconnect_signal("attach-view", &on_view_attached);
-        output->disconnect_signal("detach-view", &on_view_detached);
+        output->disconnect_signal("layer-attach-view", &on_view_attached);
+        output->disconnect_signal("layer-detach-view", &on_view_detached);
         output->disconnect_signal("reserved-workarea", &on_workarea_changed);
         output->disconnect_signal("view-maximized-request", &on_tile_request);
         output->disconnect_signal("view-fullscreen-request",

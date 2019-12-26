@@ -50,6 +50,9 @@ class wayfire_xdg_view : public wf::wlr_view_t
     wf_point xdg_surface_offset = {0, 0};
     XdgToplevelVersion *xdg_toplevel;
 
+  protected:
+    void initialize() override final;
+
   public:
     wayfire_xdg_view(XdgToplevelVersion *toplevel);
     virtual ~wayfire_xdg_view();

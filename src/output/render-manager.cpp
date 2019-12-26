@@ -585,13 +585,16 @@ class wf::render_manager::impl
 
         timespec repaint_ended;
         clock_gettime(CLOCK_MONOTONIC, &repaint_ended);
-        for (auto& view : visible_views)
+        for (auto& v : visible_views)
         {
-            if (!view->is_mapped())
-                continue;
+            for (auto& view : v->enumerate_views())
+            {
+                if (!view->is_mapped())
+                    continue;
 
-            for (auto& child : view->enumerate_surfaces())
-                child.surface->send_frame_done(repaint_ended);
+                for (auto& child : view->enumerate_surfaces())
+                    child.surface->send_frame_done(repaint_ended);
+            }
         }
     }
 
@@ -741,44 +744,42 @@ class wf::render_manager::impl
 
         schedule_drag_icon(repaint);
 
-        auto it = views.begin();
-        while (it != views.end() && !repaint.ws_damage.empty())
+        for (auto& v : views)
         {
-            auto view = *it;
-            wf_point view_delta{0, 0};
-
-            if (!view->is_visible())
+            for (auto& view : v->enumerate_views())
             {
-                ++it;
-                continue;
+                wf_point view_delta{0, 0};
+                if (!view->is_visible() || repaint.ws_damage.empty())
+                    continue;
+
+                if (view->role != VIEW_ROLE_DESKTOP_ENVIRONMENT)
+                    view_delta = {repaint.ws_dx, repaint.ws_dy};
+
+                /* We use the snapshot of a view on either of the following
+                 * conditions:
+                 *
+                 * 1. The view has a transform
+                 * 2. The view is visible, but not mapped
+                 *    => it is snapshotted and kept alive by some plugin
+                 */
+                if (view->has_transformer() || !view->is_mapped())
+                {
+                    /* Snapshotted views include all of their subsurfaces, so we
+                     * don't recursively go into subsurfaces. */
+                    schedule_snapshotted_view(repaint, view, view_delta);
+                }
+                else
+                {
+                    /* Make sure view position is relative to the workspace
+                     * being rendered */
+                    auto obox = view->get_output_geometry();
+                    obox.x -= view_delta.x;
+                    obox.y -= view_delta.y;
+
+                    for (auto& child : view->enumerate_surfaces({obox.x, obox.y}))
+                        schedule_surface(repaint, child.surface, child.position);
+                }
             }
-
-            if (view->role != VIEW_ROLE_SHELL_VIEW)
-                view_delta = {repaint.ws_dx, repaint.ws_dy};
-
-            /* We use the snapshot of a view if either condition is happening:
-             * 1. The view has a transform
-             * 2. The view is visible, but not mapped
-             *    => it is snapshotted and kept alive by some plugin */
-            if (view->has_transformer() || !view->is_mapped())
-            {
-                /* Snapshotted views include all of their subsurfaces, so we
-                 * handle them separately */
-                schedule_snapshotted_view(repaint, view, view_delta);
-            }
-            else
-            {
-                /* Make sure view position is relative to the workspace
-                 * being rendered */
-                auto obox = view->get_output_geometry();
-                obox.x -= view_delta.x;
-                obox.y -= view_delta.y;
-
-                for (auto& child : view->enumerate_surfaces({obox.x, obox.y}))
-                    schedule_surface(repaint, child.surface, child.position);
-            }
-
-            ++it;
         }
     }
 

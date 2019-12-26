@@ -56,7 +56,7 @@ class preview_indication_view_t : public wf::color_rect_view_t
         set_border_color(base_border);
         set_border(base_border_w);
 
-        this->role = VIEW_ROLE_COMPOSITOR_VIEW;
+        this->role = VIEW_ROLE_DESKTOP_ENVIRONMENT;
         get_output()->workspace->add_view(self(), wf::LAYER_TOP);
     }
 

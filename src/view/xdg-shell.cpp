@@ -126,7 +126,12 @@ template<> void create_xdg_popup<wlr_xdg_popup> (wlr_xdg_popup *popup) {
 template<class XdgToplevelVersion>
 wayfire_xdg_view<XdgToplevelVersion>::wayfire_xdg_view(XdgToplevelVersion *top)
     : wf::wlr_view_t(), xdg_toplevel(top)
+{ }
+
+template<class XdgToplevelVersion>
+void wayfire_xdg_view<XdgToplevelVersion>::initialize()
 {
+    wlr_view_t::initialize();
     LOGI("new xdg_shell_stable surface: ", xdg_toplevel->title,
         " app-id: ", xdg_toplevel->app_id);
 
@@ -137,7 +142,7 @@ wayfire_xdg_view<XdgToplevelVersion>::wayfire_xdg_view(XdgToplevelVersion *top)
     on_unmap.set_callback([&] (void*) { unmap(); });
     on_destroy.set_callback([&] (void*) { destroy(); });
     on_new_popup.set_callback([&] (void* data) {
-        create_xdg_popup((decltype(top->base->popup))data);
+        create_xdg_popup((decltype(xdg_toplevel->base->popup))data);
     });
 
     on_set_title.set_callback([&] (void*) {
@@ -273,7 +278,7 @@ void wayfire_xdg_view<XdgToplevelVersion>::set_activated(bool act)
 {
     /* we don't send activated or deactivated for shell views,
      * they should always be active */
-    if (this->role == wf::VIEW_ROLE_SHELL_VIEW)
+    if (this->role == wf::VIEW_ROLE_DESKTOP_ENVIRONMENT)
         act = true;
 
     _set_activated(act);

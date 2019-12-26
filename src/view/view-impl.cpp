@@ -228,17 +228,14 @@ bool wf::wlr_view_t::should_be_decorated()
 
 void wf::wlr_view_t::set_output(wf::output_t *wo)
 {
-    _output_signal data;
-    data.output = get_output();
-    toplevel_update_output(get_output(), false);
-
-    surface_interface_t::set_output(wo);
-    if (wo != data.output)
-        emit_signal("set-output", &data);
-
+    auto old_output = get_output();
+    toplevel_update_output(old_output, false);
+    view_interface_t::set_output(wo);
     toplevel_update_output(wo, true);
+
     /* send enter/leave events */
-    update_output(data.output, wo);
+    if (this->is_mapped())
+        update_output(old_output, wo);
 }
 
 void wf::wlr_view_t::commit()
@@ -264,7 +261,7 @@ void wf::wlr_view_t::map(wlr_surface *surface)
 
     update_size();
 
-    if (role == VIEW_ROLE_TOPLEVEL)
+    if (role == VIEW_ROLE_TOPLEVEL && !parent)
     {
         get_output()->workspace->add_view(self(), wf::LAYER_WORKSPACE);
         get_output()->focus_view(self());

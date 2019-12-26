@@ -42,11 +42,15 @@ class wayfire_xwayland_view_base : public wf::wlr_view_t
             move(geometry.x, geometry.y);
     }};
 
-    public:
-
+  public:
     wayfire_xwayland_view_base(wlr_xwayland_surface *xww)
         : wlr_view_t(), xw(xww)
     {
+    }
+
+    virtual void initialize() override
+    {
+        wf::wlr_view_t::initialize();
         on_map.set_callback([&] (void*) { map(xw->surface); });
         on_unmap.set_callback([&] (void*) { unmap(); });
         on_destroy.set_callback([&] (void*) { destroy(); });
@@ -141,7 +145,7 @@ class wayfire_xwayland_view_base : public wf::wlr_view_t
 
     void send_configure(int width, int height)
     {
-        if (!xw) // can happen after xsurface is destroyed
+        if (!xw)
             return;
 
         if (width < 0 || height < 0)
@@ -190,8 +194,10 @@ class wayfire_xwayland_view_base : public wf::wlr_view_t
             wo->connect_signal("output-configuration-changed",
                 &output_geometry_changed);
         }
+
         /* Update the real position */
-        send_configure();
+        if (is_mapped())
+            send_configure();
     }
 };
 
@@ -216,9 +222,13 @@ class wayfire_xwayland_view : public wayfire_xwayland_view_base
   public:
     wayfire_xwayland_view(wlr_xwayland_surface *xww)
         : wayfire_xwayland_view_base(xww)
+    { }
+
+    virtual void initialize() override
     {
         LOGE("new xwayland surface ", xw->title,
             " class: ", xw->class_t, " instance: ", xw->instance);
+        wayfire_xwayland_view_base::initialize();
 
         on_request_move.set_callback([&] (void*) { move_request(); });
         on_request_resize.set_callback([&] (void*) { resize_request(); });

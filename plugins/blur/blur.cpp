@@ -80,7 +80,6 @@ class wayfire_blur : public wf::plugin_interface_t
     std::unique_ptr<wf_blur_base> blur_algorithm;
 
     const std::string transformer_name = "blur";
-    const uint32_t blur_layers = wf::MIDDLE_LAYERS | wf::ABOVE_LAYERS;
 
     /* the pixels from padded_region */
     wf_framebuffer_base saved_pixels;
@@ -137,8 +136,11 @@ class wayfire_blur : public wf::plugin_interface_t
 
             if (std::string(mode_opt) == normal_mode)
             {
-                for (auto& view : output->workspace->get_views_in_layer(blur_layers))
+                for (auto& view :
+                    output->workspace->get_views_in_layer(wf::ALL_LAYERS))
+                {
                     add_transformer(view);
+                }
             }
 
             last_mode = mode_opt;
@@ -175,12 +177,15 @@ class wayfire_blur : public wf::plugin_interface_t
         view_attached = [=] (wf::signal_data_t *data)
         {
             auto view = get_signaled_view(data);
-            if (std::string(mode_opt) == normal_mode &&
-                (output->workspace->get_view_layer(view) & blur_layers))
+            /* View was just created -> we don't know its layer yet */
+            if (!view->is_mapped())
+                return;
+
+            if ((std::string)mode_opt == normal_mode &&
+                !(output->workspace->get_view_layer(view) & wf::BELOW_LAYERS))
             {
-                /* we shouldn't have added it already */
-                assert(!view->get_transformer(transformer_name));
-                add_transformer(view);
+                if (!view->get_transformer(transformer_name))
+                    add_transformer(view);
             }
         };
 
@@ -193,6 +198,7 @@ class wayfire_blur : public wf::plugin_interface_t
             pop_transformer(view);
         };
         output->connect_signal("attach-view", &view_attached);
+        output->connect_signal("map-view", &view_attached);
         output->connect_signal("detach-view", &view_detached);
 
         /* frame_pre_paint is called before each frame has started.
@@ -327,6 +333,7 @@ class wayfire_blur : public wf::plugin_interface_t
 
         output->rem_binding(&button_toggle);
         output->disconnect_signal("attach-view", &view_attached);
+        output->disconnect_signal("map-view", &view_attached);
         output->disconnect_signal("detach-view", &view_detached);
         output->render->rem_effect(&frame_pre_paint);
         output->render->disconnect_signal("workspace-stream-pre", &workspace_stream_pre);

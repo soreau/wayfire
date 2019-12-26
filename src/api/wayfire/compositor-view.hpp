@@ -87,6 +87,7 @@ class color_rect_view_t : public wf::view_interface_t, wf::compositor_surface_t
 
     wf_geometry geometry;
     bool _is_mapped;
+
   public:
     /**
      * Create a colored rect view. The map signal is not fired by default.

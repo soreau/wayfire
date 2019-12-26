@@ -31,10 +31,15 @@ class output_t;
  * This is a base class to all "drawables" - desktop views, subsurfaces, popups */
 enum view_role_t
 {
-    VIEW_ROLE_TOPLEVEL, // regular, "WM" views
-    VIEW_ROLE_UNMANAGED, // xwayland override redirect or unmanaged views
-    VIEW_ROLE_SHELL_VIEW, // background, lockscreen, panel, notifications, etc
-    VIEW_ROLE_COMPOSITOR_VIEW, // views created by the compositor for special use
+    /** Regular views which can be moved around. */
+    VIEW_ROLE_TOPLEVEL,
+    /** Views which position is fixed externally, for ex. Xwayland OR views */
+    VIEW_ROLE_UNMANAGED,
+    /**
+     * Views which are part of the desktop environment, for example panels,
+     * background views, etc.
+     */
+    VIEW_ROLE_DESKTOP_ENVIRONMENT,
 };
 
 /**
@@ -57,8 +62,19 @@ class view_interface_t : public surface_interface_t, public wf::object_base_t
      */
     wayfire_view parent = nullptr;
 
-    /** A list of the children views.  */
+    /**
+     * A list of the children views.
+     */
     std::vector<wayfire_view> children;
+
+    /**
+     * Generate a list of all views in the view's tree.
+     * This includes the view itself, its @children and so on.
+     *
+     * @return A list of all views in the view's tree. This includes the view
+     *   itself, its @children and so on.
+     */
+    std::vector<wayfire_view> enumerate_views();
 
     /**
      * Set the toplevel parent of the view, and adjust the children's list of
@@ -348,6 +364,9 @@ class view_interface_t : public surface_interface_t, public wf::object_base_t
      * snapshot created by take_snapshot() or when transformers were applied,
      * and use that buffer.
      *
+     * Child views like dialogues are considered a part of the view's surface
+     * tree, however they are not transformed by the view's transformers.
+     *
      * @param framebuffer the framebuffer to render to.
      * @param damage the damaged region of the view, in the same (but scaled)
      *        coordinate system as the framebuffer.
@@ -371,6 +390,20 @@ class view_interface_t : public surface_interface_t, public wf::object_base_t
     std::unique_ptr<view_priv_impl> view_impl;
   protected:
     view_interface_t();
+
+    friend class compositor_core_impl_t;
+    /**
+     * View initialization happens in three stages:
+     *
+     * First, memory for the view is allocated and default members are set.
+     * Second, the view is added to core, which assigns the view to an output.
+     * Third, core calls @initialize() on the view. This is where the real view
+     *   initialization should happen.
+     *
+     * Note that generally most of the operations in 3. can be also done in 1.,
+     * except when they require an output.
+     */
+    virtual void initialize() {};
 
     /** get_offset() is not valid for views */
     virtual wf_point get_offset() override { return {0, 0}; }

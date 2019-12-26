@@ -39,13 +39,4 @@ class wayfire_exit : public wf::plugin_interface_t {
         void init() override;
         void fini() override;
 };
-
-class wayfire_handle_focus_parent : public wf::plugin_interface_t {
-    wf::signal_callback_t focus_event, pending_focus_unmap;
-    wf::wl_idle_call idle_focus;
-  public:
-    void init() override;
-    void fini() override;
-};
-
 #endif

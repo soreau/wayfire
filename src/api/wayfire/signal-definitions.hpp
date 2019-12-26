@@ -12,8 +12,24 @@ struct _view_signal : public wf::signal_data_t
 };
 wayfire_view get_signaled_view(wf::signal_data_t *data);
 
-using create_view_signal     = _view_signal;
-using destroy_view_signal    = _view_signal;
+/**
+ * attach-view is a signal emitted by an output. It is emitted whenever a view's
+ * output is set to the given output.
+ *
+ * layer-attach-view is a signal emitted by an output. It is emitted whenever a
+ * view is added to a layer on the output, where it was not in any layer on the
+ * output previously.
+ */
+using attach_view_signal     = _view_signal;
+
+/**
+ * detach-view is a signal emitted by an output. It is emitted whenever a view's
+ * output is no longer the given output, or the view is about to be destroyed.
+ *
+ * layer-detach-view is a signal emitted by an output. It is emitted whenever a
+ * view is no longer in a layer of the given output.
+ */
+using detach_view_signal    = _view_signal;
 using unmap_view_signal      = _view_signal;
 using pre_unmap_view_signal  = _view_signal;
 

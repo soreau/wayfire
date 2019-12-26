@@ -18,7 +18,7 @@ class surface_interface_t::impl
     surface_interface_t* parent_surface;
     std::vector<surface_interface_t*> surface_children;
 
-    wf::output_t *output;
+    wf::output_t *output = nullptr;
     int ref_cnt = 0;
 
     static int active_shrink_constraint;
