@@ -46,7 +46,8 @@ conf_data = configuration_data()
 conf_data.set('WF_SRC_DIR', meson.source_root())
 conf_data.set('INSTALL_PREFIX', get_option('prefix'))
 conf_data.set('PLUGIN_PATH', join_paths(get_option('prefix'), get_option('libdir'), 'wayfire'))
-conf_data.set('PLUGIN_XML_DIR', join_paths(get_option('prefix'), 'share/wayfire/metadata'))
+metadata_dir_suffix = 'share/wayfire/metadata'
+conf_data.set('PLUGIN_XML_DIR', join_paths(get_option('prefix'), metadata_dir_suffix))
 
 # needed to dlopen() plugins
 # -E is for RTTI/dynamic_cast across plugins
@@ -92,6 +93,7 @@ add_project_arguments(['-Wno-unused-parameter'], language: 'cpp')
 
 subdir('proto')
 subdir('src')
+subdir('metadata')
 subdir('plugins')
 
 install_subdir('shaders', install_dir: 'share/wayfire')

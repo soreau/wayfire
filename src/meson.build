@@ -86,4 +86,7 @@ pkgconfig.generate(
     version:      meson.project_version(),
     filebase:     meson.project_name(),
     name:         meson.project_name(),
-    description: 'A Wayland Compositor')
+    description: 'A Wayland Compositor',
+    variables:    ['metadatadir=${prefix}/' + metadata_dir_suffix,
+                   'plugindir=${libdir}/wayfire']
+    )
