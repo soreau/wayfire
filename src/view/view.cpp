@@ -192,6 +192,9 @@ void wf::view_interface_t::set_output(wf::output_t* new_output)
     }
 
     emit_signal("set-output", &data);
+
+    for (auto& view : this->children)
+        view->set_output(new_output);
 }
 
 void wf::view_interface_t::resize(int w, int h)

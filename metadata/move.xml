@@ -23,5 +23,9 @@
 		<_short>Snap Off Threshold</_short>
 		<default>0</default>
 	</option>
+  <option name="join_views" type="bool">
+    <_short>Disallow independently moving dialogues</_short>
+    <default>false</default>
+  </option>
 	</plugin>
 </wayfire>

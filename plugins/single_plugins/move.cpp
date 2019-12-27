@@ -64,6 +64,7 @@ class wayfire_move : public wf::plugin_interface_t
     wayfire_view view;
 
     wf::option_wrapper_t<bool> enable_snap{"move/enable_snap"};
+    wf::option_wrapper_t<bool> join_views{"move/join_views"};
     wf::option_wrapper_t<int> snap_threshold{"move/snap_threshold"};
     wf::option_wrapper_t<wf::buttonbinding_t> activate_button{"move/activate"};
 
@@ -183,6 +184,9 @@ class wayfire_move : public wf::plugin_interface_t
         {
             if (!view || !view->is_mapped())
                 return false;
+
+            while (view->parent && join_views)
+                view = view->parent;
 
             auto current_ws_impl =
                 output->workspace->get_workspace_implementation();
@@ -466,11 +470,18 @@ class wayfire_move : public wf::plugin_interface_t
          * mirror views of the view being moved, while fading them in and out when needed */
         void update_multi_output()
         {
+            /* We are not in the join_view mode, so we can move dialogues
+             * independently of their main view. However, we do not support
+             * moving dialogues to a different output than their main view. */
+            if (this->view && this->view->parent)
+                return;
+
             /* The mouse isn't on our output anymore -> transfer ownership of
              * the move operation to the other output where the input currently is */
             auto global = get_global_input_coords();
             auto target_output =
                 wf::get_core().output_layout->get_output_at(global.x, global.y);
+
             if (target_output != output)
             {
                 /* The move plugin on the next output will create new mirror views */
