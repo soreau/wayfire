@@ -36,12 +36,11 @@ class wayfire_xwayland_view_base : public wf::wlr_view_t
     /** The geometry requested by the client */
     bool self_positioned = false;
 
-    wf::signal_callback_t output_geometry_changed =
-        [this] (wf::signal_data_t*)
+    wf::signal_connection_t output_geometry_changed{[this] (wf::signal_data_t*)
     {
         if (is_mapped())
             move(geometry.x, geometry.y);
-    };
+    }};
 
     public:
 
@@ -92,11 +91,7 @@ class wayfire_xwayland_view_base : public wf::wlr_view_t
     virtual void destroy() override
     {
         this->xw = nullptr;
-        if (get_output())
-        {
-            get_output()->disconnect_signal(
-                "output-configuration-changed", &output_geometry_changed);
-        }
+        output_geometry_changed.disconnect();
 
         on_map.disconnect();
         on_unmap.disconnect();
@@ -187,12 +182,7 @@ class wayfire_xwayland_view_base : public wf::wlr_view_t
 
     virtual void set_output(wf::output_t *wo) override
     {
-        if (get_output())
-        {
-            get_output()->disconnect_signal("output-configuration-changed",
-                &output_geometry_changed);
-        }
-
+        output_geometry_changed.disconnect();
         wlr_view_t::set_output(wo);
 
         if (wo)
@@ -523,9 +513,9 @@ void wf::init_xwayland()
 {
 #if WLR_HAS_XWAYLAND
     static wf::wl_listener_wrapper on_created;
-    static signal_callback_t on_shutdown = [&] (void*) {
+    static signal_connection_t on_shutdown{[&] (void*) {
         wlr_xwayland_destroy(xwayland_handle);
-    };
+    }};
 
     on_created.set_callback([] (void *data) {
         auto xsurf = (wlr_xwayland_surface*) data;
