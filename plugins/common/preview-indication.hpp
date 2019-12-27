@@ -24,6 +24,7 @@ class preview_indication_animation_t : public geometry_animation_t
 class preview_indication_view_t : public wf::color_rect_view_t
 {
     wf::effect_hook_t pre_paint;
+    wf::output_t *output;
 
     /* Default colors */
     const wf::color_t base_color = {0.5, 0.5, 1, 0.5};
@@ -44,6 +45,7 @@ class preview_indication_view_t : public wf::color_rect_view_t
     preview_indication_view_t(wf::output_t *output, wf_geometry start_geometry)
         : wf::color_rect_view_t(), animation(wf::create_option<int>(200))
     {
+        this->output = output;
         set_output(output);
         animation.set_start(start_geometry);
         animation.set_end(start_geometry);
@@ -57,6 +59,10 @@ class preview_indication_view_t : public wf::color_rect_view_t
         set_border(base_border_w);
 
         this->role = VIEW_ROLE_DESKTOP_ENVIRONMENT;
+    }
+
+    void initialize() override
+    {
         get_output()->workspace->add_view(self(), wf::LAYER_TOP);
     }
 
@@ -94,7 +100,7 @@ class preview_indication_view_t : public wf::color_rect_view_t
 
     virtual ~preview_indication_view_t()
     {
-        get_output()->render->rem_effect(&pre_paint);
+        this->output->render->rem_effect(&pre_paint);
     }
 
   protected:
