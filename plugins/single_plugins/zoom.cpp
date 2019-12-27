@@ -1,8 +1,8 @@
-#include <plugin.hpp>
-#include <output.hpp>
-#include <opengl.hpp>
-#include <debug.hpp>
-#include <render-manager.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/opengl.hpp>
+#include <wayfire/debug.hpp>
+#include <wayfire/render-manager.hpp>
 #include <wayfire/util/duration.hpp>
 
 class wayfire_zoom_screen : public wf::plugin_interface_t

@@ -1,8 +1,8 @@
 #ifndef WF_CORE_CORE_IMPL_HPP
 #define WF_CORE_CORE_IMPL_HPP
 
-#include "core.hpp"
-#include "util.hpp"
+#include "wayfire/core.hpp"
+#include "wayfire/util.hpp"
 
 #include <set>
 #include <unordered_map>

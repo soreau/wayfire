@@ -1,7 +1,7 @@
 #ifndef WOBBLY_SIGNAL_HPP
 #define WOBBLY_SIGNAL_HPP
 
-#include <signal-definitions.hpp>
+#include <wayfire/signal-definitions.hpp>
 
 enum wobbly_event
 {

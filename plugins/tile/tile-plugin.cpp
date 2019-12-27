@@ -1,8 +1,8 @@
-#include <plugin.hpp>
-#include <output.hpp>
-#include <core.hpp>
-#include <workspace-manager.hpp>
-#include <signal-definitions.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/workspace-manager.hpp>
+#include <wayfire/signal-definitions.hpp>
 
 #include "tree-controller.hpp"
 #include "../single_plugins/view-change-viewport-signal.hpp"

@@ -3,8 +3,8 @@
 
 #include <functional>
 #include <memory>
-#include "util.hpp"
-#include "bindings.hpp"
+#include "wayfire/util.hpp"
+#include "wayfire/bindings.hpp"
 
 extern "C"
 {

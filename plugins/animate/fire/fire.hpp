@@ -1,8 +1,8 @@
 #ifndef FIRE_ANIMATION_HPP
 #define FIRE_ANIMATION_HPP
 
-#include <view-transform.hpp>
-#include <render-manager.hpp>
+#include <wayfire/view-transform.hpp>
+#include <wayfire/render-manager.hpp>
 #include <memory>
 
 #include "../animate.hpp"

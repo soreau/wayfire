@@ -1,9 +1,9 @@
 #ifndef VIEW_TRANSFORM_HPP
 #define VIEW_TRANSFORM_HPP
 
-#include "view.hpp"
-#include "opengl.hpp"
-#include "debug.hpp"
+#include "wayfire/view.hpp"
+#include "wayfire/opengl.hpp"
+#include "wayfire/debug.hpp"
 
 enum wf_transformer_z_order
 {

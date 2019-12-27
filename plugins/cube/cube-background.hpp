@@ -1,7 +1,7 @@
 #ifndef WF_CUBE_BACKGROUND_HPP
 #define WF_CUBE_BACKGROUND_HPP
 
-#include <opengl.hpp>
+#include <wayfire/opengl.hpp>
 #include "cube.hpp"
 
 class wf_cube_background_base

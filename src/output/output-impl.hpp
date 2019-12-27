@@ -1,8 +1,8 @@
-#include "output.hpp"
+#include "wayfire/output.hpp"
 #include "plugin-loader.hpp"
 
 #include <unordered_set>
-#include <nonstd/safe-list.hpp>
+#include <wayfire/nonstd/safe-list.hpp>
 
 namespace wf
 {

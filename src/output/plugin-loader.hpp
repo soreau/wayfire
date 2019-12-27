@@ -3,10 +3,10 @@
 
 #include <vector>
 #include <unordered_map>
-#include "plugin.hpp"
+#include "wayfire/plugin.hpp"
 #include "config.h"
-#include "util.hpp"
-#include <option-wrapper.hpp>
+#include "wayfire/util.hpp"
+#include <wayfire/option-wrapper.hpp>
 
 namespace wf
 {

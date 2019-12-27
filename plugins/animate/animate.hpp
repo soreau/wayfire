@@ -1,9 +1,9 @@
 #ifndef ANIMATE_H_
 #define ANIMATE_H_
 
-#include <view.hpp>
+#include <wayfire/view.hpp>
 #include <wayfire/util/duration.hpp>
-#include <option-wrapper.hpp>
+#include <wayfire/option-wrapper.hpp>
 
 #define HIDING_ANIMATION (1 << 0)
 #define SHOWING_ANIMATION (1 << 1)

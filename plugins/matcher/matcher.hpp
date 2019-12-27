@@ -1,9 +1,9 @@
 #ifndef WF_MATCHER_PLUGIN_HPP
 #define WF_MATCHER_PLUGIN_HPP
 
-#include <core.hpp>
-#include <view.hpp>
-#include <option-wrapper.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/view.hpp>
+#include <wayfire/option-wrapper.hpp>
 
 namespace wf
 {

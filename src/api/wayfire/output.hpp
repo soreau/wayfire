@@ -1,11 +1,11 @@
 #ifndef OUTPUT_HPP
 #define OUTPUT_HPP
 
-#include "geometry.hpp"
-#include "object.hpp"
-#include "bindings.hpp"
+#include "wayfire/geometry.hpp"
+#include "wayfire/object.hpp"
+#include "wayfire/bindings.hpp"
 
-#include <option-wrapper.hpp>
+#include <wayfire/option-wrapper.hpp>
 #include <wayfire/config/types.hpp>
 
 extern "C"

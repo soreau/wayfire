@@ -22,12 +22,12 @@
  * SOFTWARE.
  */
 
-#include <core.hpp>
-#include <view.hpp>
-#include <plugin.hpp>
-#include <output.hpp>
-#include "view-transform.hpp"
-#include "workspace-manager.hpp"
+#include <wayfire/core.hpp>
+#include <wayfire/view.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/output.hpp>
+#include "wayfire/view-transform.hpp"
+#include "wayfire/workspace-manager.hpp"
 
 class wayfire_alpha : public wf::plugin_interface_t
 {

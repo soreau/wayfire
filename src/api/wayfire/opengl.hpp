@@ -4,10 +4,10 @@
 #include <GLES3/gl3.h>
 
 #include <wayfire/config/types.hpp>
-#include <util.hpp>
-#include <nonstd/noncopyable.hpp>
+#include <wayfire/util.hpp>
+#include <wayfire/nonstd/noncopyable.hpp>
 
-#include <geometry.hpp>
+#include <wayfire/geometry.hpp>
 
 #define GLM_FORCE_RADIANS
 #include <glm/mat4x4.hpp>

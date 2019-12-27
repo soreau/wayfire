@@ -1,8 +1,8 @@
 #ifndef RENDER_MANAGER_HPP
 #define RENDER_MANAGER_HPP
 
-#include "output.hpp"
-#include "object.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/object.hpp"
 
 struct wf_framebuffer_base;
 struct wf_framebuffer;

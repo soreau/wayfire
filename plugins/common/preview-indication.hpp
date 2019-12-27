@@ -1,10 +1,10 @@
-#include <geometry.hpp>
-#include <render-manager.hpp>
-#include <workspace-manager.hpp>
-#include <compositor-view.hpp>
+#include <wayfire/geometry.hpp>
+#include <wayfire/render-manager.hpp>
+#include <wayfire/workspace-manager.hpp>
+#include <wayfire/compositor-view.hpp>
 
 #include "geometry-animation.hpp"
-#include <option-wrapper.hpp>
+#include <wayfire/option-wrapper.hpp>
 #include <wayfire/util/duration.hpp>
 
 namespace wf

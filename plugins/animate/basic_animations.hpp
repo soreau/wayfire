@@ -1,9 +1,9 @@
 #include "animate.hpp"
-#include <debug.hpp>
-#include <plugin.hpp>
-#include <opengl.hpp>
-#include <view-transform.hpp>
-#include <output.hpp>
+#include <wayfire/debug.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/opengl.hpp>
+#include <wayfire/view-transform.hpp>
+#include <wayfire/output.hpp>
 
 class fade_animation : public animation_base
 {

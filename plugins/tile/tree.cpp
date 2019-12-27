@@ -1,10 +1,10 @@
 #include "tree.hpp"
-#include <debug.hpp>
-#include <util.hpp>
+#include <wayfire/debug.hpp>
+#include <wayfire/util.hpp>
 
-#include <output.hpp>
-#include <workspace-manager.hpp>
-#include <view-transform.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/workspace-manager.hpp>
+#include <wayfire/view-transform.hpp>
 #include <algorithm>
 
 namespace wf

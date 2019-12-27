@@ -1,8 +1,8 @@
-#include <plugin.hpp>
-#include <signal-definitions.hpp>
-#include <view-transform.hpp>
-#include <view.hpp>
-#include <workspace-manager.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/signal-definitions.hpp>
+#include <wayfire/view-transform.hpp>
+#include <wayfire/view.hpp>
+#include <wayfire/workspace-manager.hpp>
 #include <linux/input-event-codes.h>
 
 /*

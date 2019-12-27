@@ -1,5 +1,5 @@
 #include <GLES3/gl32.h>
-#include <debug.hpp>
+#include <wayfire/debug.hpp>
 
 const char *getStrSrc(GLenum src)
 {

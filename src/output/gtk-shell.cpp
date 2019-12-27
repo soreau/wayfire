@@ -2,10 +2,10 @@
 #include "gtk-shell-protocol.h"
 
 #include <wayfire/util/log.hpp>
-#include "view.hpp"
+#include "wayfire/view.hpp"
 #include "../core/core-impl.hpp"
-#include "core.hpp"
-#include "debug.hpp"
+#include "wayfire/core.hpp"
+#include "wayfire/debug.hpp"
 #include <map>
 
 struct wf_gtk_shell {

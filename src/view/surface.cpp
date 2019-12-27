@@ -14,12 +14,12 @@ extern "C"
 
 #include "surface-impl.hpp"
 #include "subsurface.hpp"
-#include "opengl.hpp"
+#include "wayfire/opengl.hpp"
 #include "../core/core-impl.hpp"
-#include "output.hpp"
+#include "wayfire/output.hpp"
 #include <wayfire/util/log.hpp>
-#include "render-manager.hpp"
-#include "signal-definitions.hpp"
+#include "wayfire/render-manager.hpp"
+#include "wayfire/signal-definitions.hpp"
 
 /****************************
  * surface_interface_t functions

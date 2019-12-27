@@ -1,4 +1,4 @@
-#include <option-wrapper.hpp>
+#include <wayfire/option-wrapper.hpp>
 #include <wayfire/util/duration.hpp>
 
 namespace wf

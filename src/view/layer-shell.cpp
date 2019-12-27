@@ -2,12 +2,12 @@
 #include <cstring>
 
 #include "xdg-shell.hpp"
-#include "core.hpp"
-#include "debug.hpp"
+#include "wayfire/core.hpp"
+#include "wayfire/debug.hpp"
 #include <wayfire/util/log.hpp>
-#include "output.hpp"
-#include "workspace-manager.hpp"
-#include "output-layout.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/workspace-manager.hpp"
+#include "wayfire/output-layout.hpp"
 #include "view-impl.hpp"
 
 extern "C"

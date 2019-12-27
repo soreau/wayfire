@@ -1,16 +1,16 @@
-#include "render-manager.hpp"
-#include "workspace-stream.hpp"
-#include "output.hpp"
+#include "wayfire/render-manager.hpp"
+#include "wayfire/workspace-stream.hpp"
+#include "wayfire/output.hpp"
 #include "../core/core-impl.hpp"
-#include "util.hpp"
-#include "workspace-manager.hpp"
+#include "wayfire/util.hpp"
+#include "wayfire/workspace-manager.hpp"
 #include "../core/seat/input-manager.hpp"
 #include "../core/opengl-priv.hpp"
-#include "debug.hpp"
+#include "wayfire/debug.hpp"
 #include "../main.hpp"
 #include <algorithm>
-#include <nonstd/reverse.hpp>
-#include <nonstd/safe-list.hpp>
+#include <wayfire/nonstd/reverse.hpp>
+#include <wayfire/nonstd/safe-list.hpp>
 #include <wayfire/util/log.hpp>
 
 extern "C"

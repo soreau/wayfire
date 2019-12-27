@@ -2,10 +2,10 @@
 #define WF_CUBE_HPP
 
 #include <config.h>
-#include <option-wrapper.hpp>
+#include <wayfire/option-wrapper.hpp>
 #include <wayfire/util/duration.hpp>
 #include <wayfire/util/log.hpp>
-#include <opengl.hpp>
+#include <wayfire/opengl.hpp>
 
 #define TEX_ERROR_FLAG_COLOR  0, 1, 0, 1
 

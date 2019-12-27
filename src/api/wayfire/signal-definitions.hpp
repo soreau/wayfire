@@ -1,8 +1,8 @@
 #ifndef SIGNAL_DEFINITIONS_HPP
 #define SIGNAL_DEFINITIONS_HPP
 
-#include "view.hpp"
-#include "output.hpp"
+#include "wayfire/view.hpp"
+#include "wayfire/output.hpp"
 
 /* signal definitions */
 /* convenience functions are provided to get some basic info from the signal */

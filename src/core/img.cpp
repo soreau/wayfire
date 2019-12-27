@@ -1,6 +1,6 @@
 #include <wayfire/util/log.hpp>
-#include "img.hpp"
-#include "opengl.hpp"
+#include "wayfire/img.hpp"
+#include "wayfire/opengl.hpp"
 
 #ifdef BUILD_WITH_IMAGEIO
 #include <png.h>

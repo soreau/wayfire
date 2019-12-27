@@ -6,7 +6,7 @@
  * It is used to provide autosnap functionality for the move plugin,
  * by reusing grid's abilities */
 
-#include <view.hpp>
+#include <wayfire/view.hpp>
 
 /* The "slot" where the view should be snapped */
 enum slot_type {

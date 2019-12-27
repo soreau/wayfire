@@ -1,10 +1,10 @@
 #ifndef SYSTEM_FADE_HPP
 #define SYSTEM_FADE_HPP
 
-#include <core.hpp>
-#include <output.hpp>
-#include <opengl.hpp>
-#include <render-manager.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/opengl.hpp>
+#include <wayfire/render-manager.hpp>
 
 #include "animate.hpp"
 

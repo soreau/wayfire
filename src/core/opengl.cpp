@@ -1,7 +1,7 @@
 #include <wayfire/util/log.hpp>
 #include <fstream>
 #include "opengl-priv.hpp"
-#include "output.hpp"
+#include "wayfire/output.hpp"
 #include "core-impl.hpp"
 #include "config.h"
 

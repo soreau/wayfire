@@ -1,18 +1,18 @@
-#include <plugin.hpp>
-#include <opengl.hpp>
-#include <view-transform.hpp>
-#include <debug.hpp>
-#include <core.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/opengl.hpp>
+#include <wayfire/view-transform.hpp>
+#include <wayfire/debug.hpp>
+#include <wayfire/core.hpp>
 
-#include <view.hpp>
-#include <output.hpp>
-#include <signal-definitions.hpp>
+#include <wayfire/view.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/signal-definitions.hpp>
 
-#include <render-manager.hpp>
-#include <workspace-manager.hpp>
+#include <wayfire/render-manager.hpp>
+#include <wayfire/workspace-manager.hpp>
 
 #include <wayfire/util/duration.hpp>
-#include <nonstd/reverse.hpp>
+#include <wayfire/nonstd/reverse.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <algorithm>

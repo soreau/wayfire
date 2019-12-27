@@ -1,5 +1,5 @@
-#include <plugin.hpp>
-#include <core.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/core.hpp>
 
 namespace wf
 {

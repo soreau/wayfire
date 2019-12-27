@@ -13,8 +13,8 @@ extern "C"
 #include "cursor.hpp"
 #include "touch.hpp"
 #include "input-manager.hpp"
-#include "compositor-view.hpp"
-#include "signal-definitions.hpp"
+#include "wayfire/compositor-view.hpp"
+#include "wayfire/signal-definitions.hpp"
 
 void wf_keyboard::setup_listeners()
 {

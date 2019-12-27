@@ -1,5 +1,5 @@
 #include "pointing-device.hpp"
-#include <debug.hpp>
+#include <wayfire/debug.hpp>
 
 wf::pointing_device_t::pointing_device_t(wlr_input_device *dev)
     : wf_input_device_internal(dev)

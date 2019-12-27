@@ -1,9 +1,9 @@
-#include <plugin.hpp>
-#include <signal-definitions.hpp>
-#include <core.hpp>
-#include <view-transform.hpp>
-#include <workspace-manager.hpp>
-#include <render-manager.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/signal-definitions.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/view-transform.hpp>
+#include <wayfire/workspace-manager.hpp>
+#include <wayfire/render-manager.hpp>
 
 extern "C"
 {

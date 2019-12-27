@@ -1,14 +1,14 @@
 /**
  * Implementation of the wayfire-shell-unstable-v2 protocol
  */
-#include "output.hpp"
-#include "core.hpp"
-#include "debug.hpp"
-#include "output-layout.hpp"
-#include "render-manager.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/core.hpp"
+#include "wayfire/debug.hpp"
+#include "wayfire/output-layout.hpp"
+#include "wayfire/render-manager.hpp"
 #include "wayfire-shell.hpp"
 #include "wayfire-shell-unstable-v2-protocol.h"
-#include "signal-definitions.hpp"
+#include "wayfire/signal-definitions.hpp"
 #include "../view/view-impl.hpp"
 #include <wayfire/util/log.hpp>
 

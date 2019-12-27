@@ -9,7 +9,7 @@
 
 #include "debug-func.hpp"
 #include "main.hpp"
-#include "nonstd/safe-list.hpp"
+#include "wayfire/nonstd/safe-list.hpp"
 #include <wayfire/config/file.hpp>
 
 extern "C"
@@ -26,7 +26,7 @@ extern "C"
 
 #include "core/core-impl.hpp"
 #include "view/view-impl.hpp"
-#include "output.hpp"
+#include "wayfire/output.hpp"
 
 wf_runtime_config runtime_config;
 

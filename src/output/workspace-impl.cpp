@@ -1,14 +1,14 @@
-#include <view.hpp>
-#include <debug.hpp>
-#include <output.hpp>
-#include <core.hpp>
-#include <workspace-manager.hpp>
-#include <render-manager.hpp>
-#include <signal-definitions.hpp>
-#include <opengl.hpp>
+#include <wayfire/view.hpp>
+#include <wayfire/debug.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/workspace-manager.hpp>
+#include <wayfire/render-manager.hpp>
+#include <wayfire/signal-definitions.hpp>
+#include <wayfire/opengl.hpp>
 #include <list>
 #include <algorithm>
-#include <nonstd/reverse.hpp>
+#include <wayfire/nonstd/reverse.hpp>
 #include <wayfire/util/log.hpp>
 
 namespace wf

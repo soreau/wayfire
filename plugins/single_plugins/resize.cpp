@@ -1,12 +1,12 @@
 #include <cmath>
-#include <plugin.hpp>
-#include <debug.hpp>
-#include <output.hpp>
-#include <view.hpp>
-#include <core.hpp>
-#include <workspace-manager.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/debug.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/view.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/workspace-manager.hpp>
 #include <linux/input.h>
-#include <signal-definitions.hpp>
+#include <wayfire/signal-definitions.hpp>
 
 extern "C"
 {

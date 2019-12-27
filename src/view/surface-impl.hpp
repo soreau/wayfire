@@ -1,8 +1,8 @@
 #ifndef SURFACE_IMPL_HPP
 #define SURFACE_IMPL_HPP
 
-#include <surface.hpp>
-#include <util.hpp>
+#include <wayfire/surface.hpp>
+#include <wayfire/util.hpp>
 
 extern "C"
 {

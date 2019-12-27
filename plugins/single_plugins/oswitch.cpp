@@ -1,8 +1,8 @@
-#include <plugin.hpp>
-#include <output.hpp>
-#include <core.hpp>
-#include <view.hpp>
-#include <output-layout.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/view.hpp>
+#include <wayfire/output-layout.hpp>
 #include <linux/input-event-codes.h>
 
 class wayfire_output_manager : public wf::plugin_interface_t

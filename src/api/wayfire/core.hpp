@@ -1,12 +1,12 @@
 #ifndef CORE_HPP
 #define CORE_HPP
 
-#include "object.hpp"
-#include <geometry.hpp>
+#include "wayfire/object.hpp"
+#include <wayfire/geometry.hpp>
 
 #include <limits>
 #include <vector>
-#include <nonstd/observer_ptr.h>
+#include <wayfire/nonstd/observer_ptr.h>
 #include <wayfire/config/config-manager.hpp>
 
 extern "C"

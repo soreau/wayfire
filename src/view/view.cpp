@@ -1,19 +1,19 @@
 #include <wayfire/util/log.hpp>
 #include "../core/core-impl.hpp"
 #include "view-impl.hpp"
-#include "opengl.hpp"
-#include "output.hpp"
-#include "view.hpp"
-#include "view-transform.hpp"
-#include "decorator.hpp"
-#include "workspace-manager.hpp"
-#include "render-manager.hpp"
+#include "wayfire/opengl.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/view.hpp"
+#include "wayfire/view-transform.hpp"
+#include "wayfire/decorator.hpp"
+#include "wayfire/workspace-manager.hpp"
+#include "wayfire/render-manager.hpp"
 #include "xdg-shell.hpp"
 #include "../output/gtk-shell.hpp"
 
 #include <algorithm>
 #include <glm/glm.hpp>
-#include "signal-definitions.hpp"
+#include "wayfire/signal-definitions.hpp"
 
 extern "C"
 {

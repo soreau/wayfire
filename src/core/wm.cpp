@@ -1,13 +1,13 @@
 #include "wm.hpp"
-#include "output.hpp"
-#include "view.hpp"
-#include "debug.hpp"
-#include "core.hpp"
-#include "workspace-manager.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/view.hpp"
+#include "wayfire/debug.hpp"
+#include "wayfire/core.hpp"
+#include "wayfire/workspace-manager.hpp"
 
 #include "../view/xdg-shell.hpp"
 #include "../output/output-impl.hpp"
-#include "signal-definitions.hpp"
+#include "wayfire/signal-definitions.hpp"
 
 void wayfire_exit::init()
 {

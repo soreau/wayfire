@@ -1,7 +1,7 @@
 #include "core-impl.hpp"
-#include "output.hpp"
+#include "wayfire/output.hpp"
 #include "seat/input-manager.hpp"
-#include "signal-definitions.hpp"
+#include "wayfire/signal-definitions.hpp"
 #include <wayfire/util/log.hpp>
 
 wf::plugin_grab_interface_t::plugin_grab_interface_t(wf::output_t *wo)

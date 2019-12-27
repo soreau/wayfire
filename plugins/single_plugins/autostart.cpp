@@ -1,5 +1,5 @@
-#include <singleton-plugin.hpp>
-#include <core.hpp>
+#include <wayfire/singleton-plugin.hpp>
+#include <wayfire/core.hpp>
 #include <wayfire/util/log.hpp>
 
 class wayfire_autostart

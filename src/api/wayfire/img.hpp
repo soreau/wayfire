@@ -1,7 +1,7 @@
 #ifndef IMG_HPP_
 #define IMG_HPP_
 
-#include "debug.hpp"
+#include "wayfire/debug.hpp"
 #include <GLES2/gl2.h>
 #include <string>
 

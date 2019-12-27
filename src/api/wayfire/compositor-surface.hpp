@@ -1,7 +1,7 @@
 #ifndef COMPOSITOR_SURFACE_HPP
 #define COMPOSITOR_SURFACE_HPP
 
-#include "surface.hpp"
+#include "wayfire/surface.hpp"
 
 namespace wf
 {

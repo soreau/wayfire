@@ -2,8 +2,8 @@
 #define TOUCH_HPP
 
 #include <map>
-#include "util.hpp"
-#include "view.hpp"
+#include "wayfire/util.hpp"
+#include "wayfire/view.hpp"
 
 extern "C"
 {

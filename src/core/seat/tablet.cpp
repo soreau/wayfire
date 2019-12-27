@@ -2,7 +2,7 @@
 #include "../core-impl.hpp"
 #include "../wm.hpp"
 #include "input-manager.hpp"
-#include <signal-definitions.hpp>
+#include <wayfire/signal-definitions.hpp>
 #include <linux/input-event-codes.h>
 
 extern "C"

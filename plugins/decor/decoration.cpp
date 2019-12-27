@@ -1,9 +1,9 @@
-#include <plugin.hpp>
-#include <view.hpp>
-#include <workspace-manager.hpp>
-#include <output.hpp>
-#include <debug.hpp>
-#include <signal-definitions.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/view.hpp>
+#include <wayfire/workspace-manager.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/debug.hpp>
+#include <wayfire/signal-definitions.hpp>
 
 #include "deco-subsurface.hpp"
 class wayfire_decoration : public wf::plugin_interface_t

@@ -1,7 +1,7 @@
 #include "blur.hpp"
-#include <debug.hpp>
-#include <output.hpp>
-#include <workspace-manager.hpp>
+#include <wayfire/debug.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/workspace-manager.hpp>
 #include <wayfire/util/log.hpp>
 
 static const char* blur_blend_vertex_shader = R"(

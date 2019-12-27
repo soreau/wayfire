@@ -5,7 +5,7 @@ extern "C" {
     struct wlr_cursor;
 #include <wlr/types/wlr_tablet_v2.h>
 }
-#include <util.hpp>
+#include <wayfire/util.hpp>
 #include "seat.hpp"
 
 namespace wf

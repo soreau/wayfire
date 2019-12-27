@@ -1,11 +1,11 @@
 #include "matcher.hpp"
 #include "matcher-ast.hpp"
 
-#include <debug.hpp>
-#include <singleton-plugin.hpp>
-#include <core.hpp>
-#include <output.hpp>
-#include <workspace-manager.hpp>
+#include <wayfire/debug.hpp>
+#include <wayfire/singleton-plugin.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/workspace-manager.hpp>
 #include <wayfire/util/log.hpp>
 
 namespace wf

@@ -1,10 +1,10 @@
-#include "debug.hpp"
+#include "wayfire/debug.hpp"
 #include <wayfire/util/log.hpp>
-#include "core.hpp"
-#include "output.hpp"
-#include "workspace-manager.hpp"
-#include "decorator.hpp"
-#include "output-layout.hpp"
+#include "wayfire/core.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/workspace-manager.hpp"
+#include "wayfire/decorator.hpp"
+#include "wayfire/output-layout.hpp"
 #include "../core/core-impl.hpp"
 #include "view-impl.hpp"
 

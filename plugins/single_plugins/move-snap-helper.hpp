@@ -1,9 +1,9 @@
 #pragma once
 
-#include <view.hpp>
-#include <core.hpp>
+#include <wayfire/view.hpp>
+#include <wayfire/core.hpp>
 #include "../wobbly/wobbly-signal.hpp"
-#include <option-wrapper.hpp>
+#include <wayfire/option-wrapper.hpp>
 
 namespace wf
 {

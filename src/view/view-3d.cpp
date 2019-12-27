@@ -1,8 +1,8 @@
-#include "view-transform.hpp"
-#include "opengl.hpp"
-#include "debug.hpp"
-#include "core.hpp"
-#include "output.hpp"
+#include "wayfire/view-transform.hpp"
+#include "wayfire/opengl.hpp"
+#include "wayfire/debug.hpp"
+#include "wayfire/core.hpp"
+#include "wayfire/output.hpp"
 #include <algorithm>
 #include <cmath>
 

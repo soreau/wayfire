@@ -1,10 +1,10 @@
-#include "core.hpp"
+#include "wayfire/core.hpp"
 #include "../core/core-impl.hpp"
 #include "../output/gtk-shell.hpp"
 #include "view-impl.hpp"
-#include "decorator.hpp"
-#include "signal-definitions.hpp"
-#include "workspace-manager.hpp"
+#include "wayfire/decorator.hpp"
+#include "wayfire/signal-definitions.hpp"
+#include "wayfire/workspace-manager.hpp"
 #include <wayfire/util/log.hpp>
 
 #include "xdg-shell.hpp"

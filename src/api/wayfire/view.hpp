@@ -2,11 +2,11 @@
 #define VIEW_HPP
 
 #include <vector>
-#include <nonstd/observer_ptr.h>
+#include <wayfire/nonstd/observer_ptr.h>
 
-#include "object.hpp"
-#include "surface.hpp"
-#include "geometry.hpp"
+#include "wayfire/object.hpp"
+#include "wayfire/surface.hpp"
+#include "wayfire/geometry.hpp"
 
 extern "C"
 {

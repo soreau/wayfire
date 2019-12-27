@@ -1,12 +1,12 @@
 #include "pointer.hpp"
 #include "pointing-device.hpp"
 #include "input-manager.hpp"
-#include "signal-definitions.hpp"
+#include "wayfire/signal-definitions.hpp"
 
 #include <wayfire/util/log.hpp>
-#include <core.hpp>
-#include <output-layout.hpp>
-#include <compositor-surface.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/output-layout.hpp>
+#include <wayfire/compositor-surface.hpp>
 
 extern "C"
 {

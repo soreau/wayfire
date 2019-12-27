@@ -2,8 +2,8 @@
 #define WF_SEAT_SURFACE_MAP_STATE_HPP
 
 #include <functional>
-#include <surface.hpp>
-#include <object.hpp>
+#include <wayfire/surface.hpp>
+#include <wayfire/object.hpp>
 
 namespace wf
 {

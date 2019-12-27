@@ -1,11 +1,11 @@
 #include <wayfire/util/log.hpp>
-#include <debug.hpp>
-#include "core.hpp"
+#include <wayfire/debug.hpp>
+#include "wayfire/core.hpp"
 #include "surface-impl.hpp"
-#include "output.hpp"
-#include "decorator.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/decorator.hpp"
 #include "xdg-shell.hpp"
-#include "output-layout.hpp"
+#include "wayfire/output-layout.hpp"
 
 template<class XdgPopupVersion>
 wayfire_xdg_popup<XdgPopupVersion>::wayfire_xdg_popup(XdgPopupVersion *popup)

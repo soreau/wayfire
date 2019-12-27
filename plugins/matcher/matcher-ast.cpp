@@ -1,5 +1,5 @@
 #include "matcher-ast.hpp"
-#include <debug.hpp>
+#include <wayfire/debug.hpp>
 
 #include <map>
 #include <set>

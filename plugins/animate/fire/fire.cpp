@@ -2,8 +2,8 @@
 #include "particle.hpp"
 
 #include <thread>
-#include <output.hpp>
-#include <core.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/core.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 static wf::option_wrapper_t<int> fire_particles{"animate/fire_particles"};

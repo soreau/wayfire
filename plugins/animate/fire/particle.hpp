@@ -1,7 +1,7 @@
 #ifndef ANIMATION_FIRE_PARTICLE_HPP
 #define ANIMATION_FIRE_PARTICLE_HPP
 
-#include <opengl.hpp>
+#include <wayfire/opengl.hpp>
 #include <functional>
 #include <atomic>
 #include <vector>

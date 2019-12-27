@@ -1,9 +1,9 @@
 #ifndef VIEW_IMPL_HPP
 #define VIEW_IMPL_HPP
 
-#include <nonstd/safe-list.hpp>
-#include <view.hpp>
-#include <opengl.hpp>
+#include <wayfire/nonstd/safe-list.hpp>
+#include <wayfire/view.hpp>
+#include <wayfire/opengl.hpp>
 
 #include "surface-impl.hpp"
 
@@ -13,8 +13,8 @@ extern "C"
 }
 
 // for emit_map_*()
-#include <compositor-view.hpp>
-#include <compositor-surface.hpp>
+#include <wayfire/compositor-view.hpp>
+#include <wayfire/compositor-surface.hpp>
 
 struct wlr_seat;
 namespace wf

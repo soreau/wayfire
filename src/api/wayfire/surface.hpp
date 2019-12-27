@@ -6,7 +6,7 @@
 #include <vector>
 #include <memory>
 
-#include "geometry.hpp"
+#include "wayfire/geometry.hpp"
 
 struct wf_region;
 struct wf_framebuffer;

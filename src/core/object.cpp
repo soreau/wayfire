@@ -1,5 +1,5 @@
-#include "object.hpp"
-#include "nonstd/safe-list.hpp"
+#include "wayfire/object.hpp"
+#include "wayfire/nonstd/safe-list.hpp"
 #include <unordered_map>
 
 class wf::signal_provider_t::sprovider_impl

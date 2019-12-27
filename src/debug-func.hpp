@@ -3,8 +3,8 @@
 #include <cxxabi.h>
 #include <wayfire/util/log.hpp>
 
-#include "api/debug.hpp"
-#include "api/core.hpp"
+#include <wayfire/debug.hpp>
+#include <wayfire/core.hpp>
 
 #define max_frames 100
 

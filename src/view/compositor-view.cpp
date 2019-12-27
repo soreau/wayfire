@@ -1,9 +1,9 @@
-#include "core.hpp"
-#include "output.hpp"
-#include "opengl.hpp"
-#include "compositor-view.hpp"
-#include "signal-definitions.hpp"
-#include "debug.hpp"
+#include "wayfire/core.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/opengl.hpp"
+#include "wayfire/compositor-view.hpp"
+#include "wayfire/signal-definitions.hpp"
+#include "wayfire/debug.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 

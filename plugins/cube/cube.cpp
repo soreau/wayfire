@@ -1,13 +1,13 @@
-#include <plugin.hpp>
-#include <opengl.hpp>
-#include <output.hpp>
-#include <core.hpp>
-#include <workspace-stream.hpp>
-#include <render-manager.hpp>
-#include <workspace-manager.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/opengl.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/workspace-stream.hpp>
+#include <wayfire/render-manager.hpp>
+#include <wayfire/workspace-manager.hpp>
 
 #include <glm/gtc/matrix_transform.hpp>
-#include <img.hpp>
+#include <wayfire/img.hpp>
 
 #include "cube.hpp"
 #include "simple-background.hpp"

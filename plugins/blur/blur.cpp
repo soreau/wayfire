@@ -1,10 +1,10 @@
-#include <plugin.hpp>
-#include <view.hpp>
-#include <output.hpp>
-#include <view-transform.hpp>
-#include <workspace-stream.hpp>
-#include <workspace-manager.hpp>
-#include <signal-definitions.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/view.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/view-transform.hpp>
+#include <wayfire/workspace-stream.hpp>
+#include <wayfire/workspace-manager.hpp>
+#include <wayfire/signal-definitions.hpp>
 
 #include "blur.hpp"
 

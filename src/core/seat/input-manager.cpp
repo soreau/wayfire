@@ -7,17 +7,17 @@ extern "C"
 #include <wlr/types/wlr_seat.h>
 }
 
-#include "signal-definitions.hpp"
+#include "wayfire/signal-definitions.hpp"
 #include "../core-impl.hpp"
 #include "../../output/output-impl.hpp"
 #include "touch.hpp"
 #include "keyboard.hpp"
 #include "cursor.hpp"
 #include "input-manager.hpp"
-#include "output-layout.hpp"
-#include "workspace-manager.hpp"
+#include "wayfire/output-layout.hpp"
+#include "wayfire/workspace-manager.hpp"
 #include <wayfire/util/log.hpp>
-#include <debug.hpp>
+#include <wayfire/debug.hpp>
 
 #include "switch.hpp"
 #include "tablet.hpp"

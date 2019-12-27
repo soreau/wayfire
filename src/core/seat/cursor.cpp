@@ -2,12 +2,12 @@
 #include "touch.hpp"
 #include "../core-impl.hpp"
 #include "input-manager.hpp"
-#include "workspace-manager.hpp"
-#include "debug.hpp"
-#include "compositor-surface.hpp"
-#include "output-layout.hpp"
+#include "wayfire/workspace-manager.hpp"
+#include "wayfire/debug.hpp"
+#include "wayfire/compositor-surface.hpp"
+#include "wayfire/output-layout.hpp"
 #include "tablet.hpp"
-#include "signal-definitions.hpp"
+#include "wayfire/signal-definitions.hpp"
 
 extern "C" {
 #include <wlr/util/region.h>

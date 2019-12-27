@@ -4,9 +4,9 @@
 #include <algorithm>
 #include <functional>
 #include <pixman.h>
-#include <nonstd/noncopyable.hpp>
+#include <wayfire/nonstd/noncopyable.hpp>
 
-#include "geometry.hpp"
+#include "wayfire/geometry.hpp"
 
 /* ---------------------- pixman utility functions -------------------------- */
 struct wf_region

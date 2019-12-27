@@ -1,9 +1,9 @@
 #ifndef WM_H
 #define WM_H
 
-#include "plugin.hpp"
-#include "bindings.hpp"
-#include "view.hpp"
+#include "wayfire/plugin.hpp"
+#include "wayfire/bindings.hpp"
+#include "wayfire/view.hpp"
 
 struct wm_focus_request : public wf::signal_data_t
 {

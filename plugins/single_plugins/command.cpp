@@ -1,9 +1,9 @@
-#include <plugin.hpp>
-#include <output.hpp>
-#include <core.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/core.hpp>
 #include <linux/input.h>
 #include <linux/input-event-codes.h>
-#include <signal-definitions.hpp>
+#include <wayfire/signal-definitions.hpp>
 #include <wayfire/util/log.hpp>
 
 static bool begins_with(std::string word, std::string prefix)

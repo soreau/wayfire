@@ -8,11 +8,11 @@
 #include "seat.hpp"
 #include "cursor.hpp"
 #include "pointer.hpp"
-#include "plugin.hpp"
-#include "view.hpp"
-#include "core.hpp"
-#include "signal-definitions.hpp"
-#include <option-wrapper.hpp>
+#include "wayfire/plugin.hpp"
+#include "wayfire/view.hpp"
+#include "wayfire/core.hpp"
+#include "wayfire/signal-definitions.hpp"
+#include <wayfire/option-wrapper.hpp>
 
 extern "C"
 {

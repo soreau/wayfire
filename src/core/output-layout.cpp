@@ -1,10 +1,10 @@
-#include "output.hpp"
-#include "core.hpp"
-#include "output-layout.hpp"
-#include "workspace-manager.hpp"
-#include "render-manager.hpp"
-#include "signal-definitions.hpp"
-#include "util.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/core.hpp"
+#include "wayfire/output-layout.hpp"
+#include "wayfire/workspace-manager.hpp"
+#include "wayfire/render-manager.hpp"
+#include "wayfire/signal-definitions.hpp"
+#include "wayfire/util.hpp"
 #include "../output/output-impl.hpp"
 #include <xf86drmMode.h>
 #include <sstream>

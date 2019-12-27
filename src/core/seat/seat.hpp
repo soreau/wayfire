@@ -10,8 +10,8 @@ extern "C"
 }
 
 #include "../../view/surface-impl.hpp"
-#include "output.hpp"
-#include "input-device.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/input-device.hpp"
 
 struct wf_drag_icon : public wf::wlr_child_surface_base_t
 {

@@ -1,4 +1,4 @@
-#include <util.hpp>
+#include <wayfire/util.hpp>
 
 #include <cmath>
 

@@ -1,7 +1,7 @@
 #ifndef WF_TILE_PLUGIN_TREE
 #define WF_TILE_PLUGIN_TREE
 
-#include <view.hpp>
+#include <wayfire/view.hpp>
 
 namespace wf {
 namespace tile {

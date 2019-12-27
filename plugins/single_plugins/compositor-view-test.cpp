@@ -1,8 +1,8 @@
-#include "compositor-view.hpp"
-#include "render-manager.hpp"
-#include "output.hpp"
-#include "core.hpp"
-#include "debug.hpp"
+#include "wayfire/compositor-view.hpp"
+#include "wayfire/render-manager.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/core.hpp"
+#include "wayfire/debug.hpp"
 
 extern "C"
 {

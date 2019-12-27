@@ -2,7 +2,7 @@
 #define CURSOR_HPP
 
 #include "seat.hpp"
-#include "plugin.hpp"
+#include "wayfire/plugin.hpp"
 
 extern "C"
 {

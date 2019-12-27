@@ -1,8 +1,8 @@
-#include <plugin.hpp>
-#include "view.hpp"
-#include "view-transform.hpp"
-#include "output.hpp"
-#include "core.hpp"
+#include <wayfire/plugin.hpp>
+#include "wayfire/view.hpp"
+#include "wayfire/view-transform.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/core.hpp"
 #include <linux/input.h>
 
 static double cross (double x1, double y1, double x2, double y2) // cross product

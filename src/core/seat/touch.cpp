@@ -1,13 +1,13 @@
 #include <cmath>
 
-#include "debug.hpp"
+#include "wayfire/debug.hpp"
 #include "touch.hpp"
 #include "input-manager.hpp"
 #include "../core-impl.hpp"
-#include "output.hpp"
-#include "workspace-manager.hpp"
-#include "compositor-surface.hpp"
-#include "output-layout.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/workspace-manager.hpp"
+#include "wayfire/compositor-surface.hpp"
+#include "wayfire/output-layout.hpp"
 
 constexpr static int MIN_FINGERS = 3;
 constexpr static int MIN_SWIPE_DISTANCE = 100;

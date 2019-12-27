@@ -3,14 +3,14 @@
 
 #include <linux/input-event-codes.h>
 
-#include <compositor-surface.hpp>
-#include <output.hpp>
-#include <opengl.hpp>
-#include <core.hpp>
-#include <debug.hpp>
-#include <decorator.hpp>
-#include <view-transform.hpp>
-#include <signal-definitions.hpp>
+#include <wayfire/compositor-surface.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/opengl.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/debug.hpp>
+#include <wayfire/decorator.hpp>
+#include <wayfire/view-transform.hpp>
+#include <wayfire/signal-definitions.hpp>
 #include "deco-subsurface.hpp"
 
 #include <cairo.h>

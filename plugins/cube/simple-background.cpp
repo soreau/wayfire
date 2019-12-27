@@ -1,4 +1,4 @@
-#include <core.hpp>
+#include <wayfire/core.hpp>
 #include "simple-background.hpp"
 
 wf_cube_simple_background::wf_cube_simple_background() {}

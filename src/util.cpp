@@ -1,6 +1,6 @@
-#include "util.hpp"
-#include <debug.hpp>
-#include <core.hpp>
+#include "wayfire/util.hpp"
+#include <wayfire/debug.hpp>
+#include <wayfire/core.hpp>
 #include <ctime>
 #include <cmath>
 

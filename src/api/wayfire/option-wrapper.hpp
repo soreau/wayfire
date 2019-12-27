@@ -1,9 +1,9 @@
 #pragma once
 
-#include <nonstd/noncopyable.hpp>
+#include <wayfire/nonstd/noncopyable.hpp>
 #include <wayfire/config/option.hpp>
 #include <wayfire/config/option-wrapper.hpp>
-#include <core.hpp>
+#include <wayfire/core.hpp>
 
 namespace wf
 {

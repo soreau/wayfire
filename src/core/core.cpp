@@ -31,16 +31,16 @@ extern "C"
 
 #include <wayfire/util/log.hpp>
 #include "opengl-priv.hpp"
-#include "output.hpp"
-#include "workspace-manager.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/workspace-manager.hpp"
 #include "seat/input-manager.hpp"
 #include "seat/touch.hpp"
 #include "../view/view-impl.hpp"
 #include "../output/wayfire-shell.hpp"
 #include "../output/output-impl.hpp"
 #include "../output/gtk-shell.hpp"
-#include "img.hpp"
-#include "output-layout.hpp"
+#include "wayfire/img.hpp"
+#include "wayfire/output-layout.hpp"
 
 #include "core-impl.hpp"
 

@@ -1,17 +1,17 @@
-#include <plugin.hpp>
-#include <output.hpp>
-#include <core.hpp>
-#include <view.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/view.hpp>
 #include <wayfire/util/duration.hpp>
-#include <workspace-manager.hpp>
-#include <render-manager.hpp>
-#include <compositor-view.hpp>
-#include <output-layout.hpp>
-#include <debug.hpp>
+#include <wayfire/workspace-manager.hpp>
+#include <wayfire/render-manager.hpp>
+#include <wayfire/compositor-view.hpp>
+#include <wayfire/output-layout.hpp>
+#include <wayfire/debug.hpp>
 
 #include <cmath>
 #include <linux/input.h>
-#include <signal-definitions.hpp>
+#include <wayfire/signal-definitions.hpp>
 
 #include "snap_signal.hpp"
 #include "move-snap-helper.hpp"

@@ -3,12 +3,12 @@ extern "C"
 #include <wlr/types/wlr_idle.h>
 }
 
-#include "singleton-plugin.hpp"
-#include "render-manager.hpp"
-#include "output.hpp"
-#include "core.hpp"
-#include "output-layout.hpp"
-#include "workspace-manager.hpp"
+#include "wayfire/singleton-plugin.hpp"
+#include "wayfire/render-manager.hpp"
+#include "wayfire/output.hpp"
+#include "wayfire/core.hpp"
+#include "wayfire/output-layout.hpp"
+#include "wayfire/workspace-manager.hpp"
 #include "../cube/cube-control-signal.hpp"
 
 #include <cmath>

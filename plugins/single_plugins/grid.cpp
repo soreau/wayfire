@@ -1,14 +1,14 @@
-#include <plugin.hpp>
-#include <debug.hpp>
-#include <output.hpp>
-#include <core.hpp>
-#include <view.hpp>
-#include <workspace-manager.hpp>
-#include <render-manager.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/debug.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/view.hpp>
+#include <wayfire/workspace-manager.hpp>
+#include <wayfire/render-manager.hpp>
 #include <algorithm>
 #include <cmath>
 #include <linux/input-event-codes.h>
-#include "signal-definitions.hpp"
+#include "wayfire/signal-definitions.hpp"
 #include "../common/geometry-animation.hpp"
 
 #include "snap_signal.hpp"

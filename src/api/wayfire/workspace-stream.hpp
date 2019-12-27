@@ -1,8 +1,8 @@
 #ifndef WF_WORKSPACE_STREAM_HPP
 #define WF_WORKSPACE_STREAM_HPP
 
-#include "opengl.hpp"
-#include "object.hpp"
+#include "wayfire/opengl.hpp"
+#include "wayfire/object.hpp"
 
 namespace wf
 {

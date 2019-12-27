@@ -1,11 +1,11 @@
-#include <plugin.hpp>
-#include <output.hpp>
-#include <core.hpp>
-#include <debug.hpp>
-#include <view.hpp>
-#include <view-transform.hpp>
-#include <render-manager.hpp>
-#include <workspace-manager.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/debug.hpp>
+#include <wayfire/view.hpp>
+#include <wayfire/view-transform.hpp>
+#include <wayfire/render-manager.hpp>
+#include <wayfire/workspace-manager.hpp>
 
 #include <queue>
 #include <linux/input.h>

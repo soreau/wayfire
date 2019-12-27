@@ -1,8 +1,8 @@
-#include <plugin.hpp>
-#include <view.hpp>
-#include <core.hpp>
-#include <workspace-manager.hpp>
-#include <signal-definitions.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/view.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/workspace-manager.hpp>
+#include <wayfire/signal-definitions.hpp>
 
 class wayfire_place_window : public wf::plugin_interface_t
 {

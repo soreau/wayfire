@@ -5,10 +5,10 @@
 #include <dlfcn.h>
 
 #include "plugin-loader.hpp"
-#include "output-layout.hpp"
-#include "output.hpp"
+#include "wayfire/output-layout.hpp"
+#include "wayfire/output.hpp"
 #include "../core/wm.hpp"
-#include "core.hpp"
+#include "wayfire/core.hpp"
 #include <wayfire/util/log.hpp>
 
 namespace

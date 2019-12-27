@@ -2,10 +2,10 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <debug.hpp>
+#include <wayfire/debug.hpp>
 #include <config.h>
-#include <core.hpp>
-#include <img.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/img.hpp>
 
 wf_cube_background_cubemap::wf_cube_background_cubemap()
 {

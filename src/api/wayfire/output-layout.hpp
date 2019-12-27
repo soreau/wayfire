@@ -13,8 +13,8 @@ extern "C"
 #include <memory>
 #include <functional>
 
-#include "object.hpp"
-#include "util.hpp"
+#include "wayfire/object.hpp"
+#include "wayfire/util.hpp"
 
 namespace wf
 {

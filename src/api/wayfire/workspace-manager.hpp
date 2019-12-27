@@ -3,7 +3,7 @@
 
 #include <functional>
 #include <vector>
-#include <view.hpp>
+#include <wayfire/view.hpp>
 
 namespace wf
 {

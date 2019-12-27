@@ -1,6 +1,6 @@
 #include "switch.hpp"
-#include <signal-definitions.hpp>
-#include <core.hpp>
+#include <wayfire/signal-definitions.hpp>
+#include <wayfire/core.hpp>
 
 wf::switch_device_t::switch_device_t(wlr_input_device *dev)
     : wf_input_device_internal(dev)

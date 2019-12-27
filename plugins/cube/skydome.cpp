@@ -1,10 +1,10 @@
 #include "skydome.hpp"
-#include <debug.hpp>
-#include <core.hpp>
-#include <img.hpp>
+#include <wayfire/debug.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/img.hpp>
 
-#include <output.hpp>
-#include <workspace-manager.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/workspace-manager.hpp>
 
 
 #include <glm/gtc/matrix_transform.hpp>

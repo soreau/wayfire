@@ -1,8 +1,8 @@
-#include <plugin.hpp>
-#include <output.hpp>
-#include <opengl.hpp>
-#include <debug.hpp>
-#include <render-manager.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/opengl.hpp>
+#include <wayfire/debug.hpp>
+#include <wayfire/render-manager.hpp>
 
 static const char* vertex_shader =
 R"(

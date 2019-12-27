@@ -1,8 +1,8 @@
 #ifndef WF_OPENGL_PRIV_HPP
 #define WF_OPENGL_PRIV_HPP
 
-#include <opengl.hpp>
-#include <output.hpp>
+#include <wayfire/opengl.hpp>
+#include <wayfire/output.hpp>
 
 namespace OpenGL
 {

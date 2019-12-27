@@ -3,11 +3,11 @@
 
 #include <set>
 #include <algorithm>
-#include <core.hpp>
-#include <output.hpp>
-#include <workspace-manager.hpp>
-#include <util.hpp>
-#include <nonstd/reverse.hpp>
+#include <wayfire/core.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/workspace-manager.hpp>
+#include <wayfire/util.hpp>
+#include <wayfire/nonstd/reverse.hpp>
 
 namespace wf
 {

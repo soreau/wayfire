@@ -2,8 +2,8 @@
 #define KEYBOARD_HPP
 
 #include "seat.hpp"
-#include "util.hpp"
-#include <option-wrapper.hpp>
+#include "wayfire/util.hpp"
+#include <wayfire/option-wrapper.hpp>
 
 struct wf_keyboard
 {

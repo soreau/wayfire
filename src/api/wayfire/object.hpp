@@ -5,7 +5,7 @@
 #include <memory>
 #include <string>
 
-#include <nonstd/observer_ptr.h>
+#include <wayfire/nonstd/observer_ptr.h>
 
 namespace wf
 {

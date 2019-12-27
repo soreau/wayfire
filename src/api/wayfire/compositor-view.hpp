@@ -1,8 +1,8 @@
 #ifndef COMPOSITOR_VIEW_HPP
 #define COMPOSITOR_VIEW_HPP
 
-#include "compositor-surface.hpp"
-#include "view.hpp"
+#include "wayfire/compositor-surface.hpp"
+#include "wayfire/view.hpp"
 #include <wayfire/config/types.hpp>
 
 namespace wf

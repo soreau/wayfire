@@ -1,9 +1,9 @@
-#include <plugin.hpp>
-#include <output.hpp>
-#include <view.hpp>
+#include <wayfire/plugin.hpp>
+#include <wayfire/output.hpp>
+#include <wayfire/view.hpp>
 #include <cwctype>
 #include <cstdio>
-#include <signal-definitions.hpp>
+#include <wayfire/signal-definitions.hpp>
 #include <assert.h>
 #include <map>
 
