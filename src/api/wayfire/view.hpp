@@ -71,10 +71,12 @@ class view_interface_t : public surface_interface_t, public wf::object_base_t
      * Generate a list of all views in the view's tree.
      * This includes the view itself, its @children and so on.
      *
+     * @param mapped_only Whether to include only mapped views.
+     *
      * @return A list of all views in the view's tree. This includes the view
      *   itself, its @children and so on.
      */
-    std::vector<wayfire_view> enumerate_views();
+    std::vector<wayfire_view> enumerate_views(bool mapped_only = true);
 
     /**
      * Set the toplevel parent of the view, and adjust the children's list of

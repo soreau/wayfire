@@ -746,7 +746,7 @@ class wf::render_manager::impl
 
         for (auto& v : views)
         {
-            for (auto& view : v->enumerate_views())
+            for (auto& view : v->enumerate_views(false))
             {
                 wf_point view_delta{0, 0};
                 if (!view->is_visible() || repaint.ws_damage.empty())

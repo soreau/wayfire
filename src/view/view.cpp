@@ -116,7 +116,8 @@ void wf::view_interface_t::set_toplevel_parent(wayfire_view new_parent)
             reposition_relative_to_parent(self());
 
         check_refocus_parent(parent);
-    } else
+    }
+    else if (old_parent)
     {
         /* At this point, we are a regular view. We should try to position ourselves
          * directly above the old parent */
@@ -125,29 +126,24 @@ void wf::view_interface_t::set_toplevel_parent(wayfire_view new_parent)
             this->get_output()->workspace->add_view(
                 self(), wf::LAYER_WORKSPACE);
 
-            if (old_parent)
-            {
-                check_refocus_parent(old_parent);
-                this->get_output()->workspace->restack_above(self(),
-                    find_toplevel_parent(old_parent));
-            }
+            check_refocus_parent(old_parent);
+            this->get_output()->workspace->restack_above(self(),
+                find_toplevel_parent(old_parent));
         }
     }
 }
 
-std::vector<wayfire_view> wf::view_interface_t::enumerate_views()
+std::vector<wayfire_view> wf::view_interface_t::enumerate_views(
+    bool mapped_only)
 {
-    if (!is_mapped())
+    if (!this->is_mapped() && mapped_only)
         return {};
 
     std::vector<wayfire_view> result;
     for (auto& v : this->children)
     {
-        if (v->is_mapped())
-        {
-            auto cdr = v->enumerate_views();
-            result.insert(result.end(), cdr.begin(), cdr.end());
-        }
+        auto cdr = v->enumerate_views();
+        result.insert(result.end(), cdr.begin(), cdr.end());
     }
 
     result.push_back(self());
