@@ -6,6 +6,7 @@
 #include <string>
 
 #include <wayfire/nonstd/observer_ptr.h>
+#include <wayfire/nonstd/noncopyable.hpp>
 
 namespace wf
 {
@@ -18,14 +19,61 @@ struct signal_data_t
     virtual ~signal_data_t() {};
 };
 using signal_callback_t = std::function<void(signal_data_t*)>;
+class signal_provider_t;
+
+/**
+ * Provides an interface to connect to signal providers.
+ *
+ * The same signal connection object can be used to connect to multiple signal
+ * providers.
+ */
+class signal_connection_t : public noncopyable_t
+{
+  public:
+    /** Initialize an empty signal connection */
+    signal_connection_t();
+    /** Automatically disconnects from all providers */
+    ~signal_connection_t();
+
+    /** Initialize a signal connection with the given callback */
+    signal_connection_t(signal_callback_t callback);
+
+    /** Set the signal callback or override the existing signal callback. */
+    void set_callback(signal_callback_t callback);
+
+    /** Call the stored callback with the given data. */
+    void emit(signal_data_t *data);
+
+    /** Disconnect from all connected signal providers */
+    void disconnect();
+
+    class impl;
+    std::unique_ptr<impl> priv;
+  private:
+    /* Non-movable, non-copyable */
+    signal_connection_t(signal_connection_t&& other) = delete;
+    signal_connection_t& operator= (signal_connection_t&& other) = delete;
+};
 
 class signal_provider_t
 {
   public:
-    /** Register a callback to be called whenever the given signal is emitted */
+    /** Register a connection to be called when the given signal is emitted. */
+    void connect_signal(std::string name, signal_connection_t* callback);
+    /** Unregister a connection. */
+    void disconnect_signal(signal_connection_t *callback);
+
+    /**
+     * Deprecated.
+     * Register a callback to be called whenever the given signal is emitted
+     */
     void connect_signal(std::string name, signal_callback_t* callback);
-    /** Unregister a registered callback */
+    /**
+     * Deprecated.
+     * Unregister a registered callback.
+     */
     void disconnect_signal(std::string name, signal_callback_t* callback);
+
     /** Emit the given signal. No type checking for data is required */
     void emit_signal(std::string name, signal_data_t *data);
 

@@ -1,12 +1,71 @@
 #include "wayfire/object.hpp"
 #include "wayfire/nonstd/safe-list.hpp"
 #include <unordered_map>
+#include <set>
+
+/* Implementation note: because of circular dependencies between
+ * signal_connection_t and signal_provider_t, the chosen way to resolve
+ * them is to have signal_provider_t directly modify signal_connection_t
+ * private data when needed. */
+
+class wf::signal_connection_t::impl
+{
+  public:
+    signal_callback_t callback;
+    std::set<nonstd::observer_ptr<signal_provider_t>> connected_providers;
+
+    void add(signal_provider_t *provider)
+    {
+        connected_providers.insert(provider);
+    }
+
+    void remove(signal_provider_t *provider)
+    {
+        connected_providers.erase(provider);
+    }
+};
+
+wf::signal_connection_t::signal_connection_t()
+{
+    this->priv = std::make_unique<impl> ();
+}
+wf::signal_connection_t::~signal_connection_t()
+{
+    disconnect();
+}
+
+wf::signal_connection_t::signal_connection_t(signal_callback_t callback)
+    : signal_connection_t()
+{
+    priv->callback = callback;
+}
+
+void wf::signal_connection_t::set_callback(signal_callback_t callback)
+{
+    priv->callback = callback;
+}
+
+void wf::signal_connection_t::emit(signal_data_t *data)
+{
+    if (this->priv->callback)
+        this->priv->callback(data);
+}
+
+void wf::signal_connection_t::disconnect()
+{
+    auto connected = this->priv->connected_providers;
+    for (auto& provider : connected)
+        provider->disconnect_signal(this);
+}
 
 class wf::signal_provider_t::sprovider_impl
 {
   public:
     std::unordered_map<std::string,
-        wf::safe_list_t<signal_callback_t*>> signals;
+        wf::safe_list_t<signal_connection_t*>> signals;
+
+    std::unordered_map<std::string,
+        wf::safe_list_t<signal_callback_t*>> deprecated_signals;
 };
 
 wf::signal_provider_t::signal_provider_t()
@@ -16,26 +75,61 @@ wf::signal_provider_t::signal_provider_t()
 
 wf::signal_provider_t::~signal_provider_t()
 {
+    for (auto& s : sprovider_priv->signals)
+    {
+        s.second.for_each([=] (signal_connection_t *connection) {
+            connection->priv->remove(this);
+        });
+    }
 }
 
 void wf::signal_provider_t::connect_signal(std::string name,
-    signal_callback_t* callback)
+    signal_connection_t* callback)
 {
     sprovider_priv->signals[name].push_back(callback);
+    callback->priv->add(this);
 }
 
-/* Unregister a registered callback */
+void wf::signal_provider_t::disconnect_signal(signal_connection_t* connection)
+{
+    for (auto& s : sprovider_priv->signals)
+    {
+        s.second.remove_if([=] (signal_connection_t *connected)
+        {
+            if (connected == connection)
+            {
+                connected->priv->remove(this);
+                return true;
+            }
+            return false;
+        });
+    }
+}
+
+/* Deprecated: */
+void wf::signal_provider_t::connect_signal(std::string name,
+    signal_callback_t* callback)
+{
+    sprovider_priv->deprecated_signals[name].push_back(callback);
+}
+
+/* Deprecated: */
 void wf::signal_provider_t::disconnect_signal(std::string name,
     signal_callback_t* callback)
 {
-    sprovider_priv->signals[name].remove_all(callback);
+    sprovider_priv->deprecated_signals[name].remove_all(callback);
 }
 
 /* Emit the given signal. No type checking for data is required */
 void wf::signal_provider_t::emit_signal(std::string name, wf::signal_data_t *data)
 {
     sprovider_priv->signals[name].for_each([data] (auto call) {
-        (*call) (data);
+        call->emit(data);
+    });
+
+    /* Deprecated: */
+    sprovider_priv->deprecated_signals[name].for_each([data] (auto call) {
+        (*call)(data);
     });
 }
 
