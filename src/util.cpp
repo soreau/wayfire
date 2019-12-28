@@ -1,6 +1,8 @@
 #include "wayfire/util.hpp"
 #include <wayfire/debug.hpp>
 #include <wayfire/core.hpp>
+#include <sstream>
+#include <iomanip>
 #include <ctime>
 #include <cmath>
 
@@ -10,6 +12,29 @@ extern "C"
 }
 
 /* Geometry helpers */
+template<> std::string wf::log::to_string(const wf_geometry& geometry)
+{
+    std::stringstream str;
+    str << '(' << geometry.x << ',' << geometry.y
+        << ' ' << geometry.width << 'x' << geometry.y << ')';
+    return str.str();
+}
+
+template<> std::string wf::log::to_string(const wf_point& point)
+{
+    std::stringstream str;
+    str << '(' << point.x << ',' << point.y << ')';
+    return str.str();
+}
+
+template<> std::string wf::log::to_string(const wf_pointf& point)
+{
+    std::stringstream str;
+    str << std::fixed << std::setprecision(4) <<
+        '(' << point.x << ',' << point.y << ')';
+    return str.str();
+}
+
 bool operator == (const wf_point& a, const wf_point& b)
 {
     return a.x == b.x && a.y == b.y;

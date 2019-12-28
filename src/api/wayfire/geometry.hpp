@@ -1,6 +1,7 @@
 #ifndef WF_GEOMETRY_HPP
 #define WF_GEOMETRY_HPP
 
+#include <wayfire/util/stringify.hpp>
 extern "C"
 {
 #include <wlr/types/wlr_box.h>
@@ -58,5 +59,16 @@ bool operator & (const wf_geometry& r1, const wf_geometry& r2);
  * the resulting geometry has undefined (x,y) and width == height == 0 */
 wf_geometry wf_geometry_intersection(const wf_geometry& r1,
     const wf_geometry& r2);
+
+/* Make geometry and point printable */
+namespace wf
+{
+namespace log
+{
+template<> std::string to_string(const wf_geometry& geometry);
+template<> std::string to_string(const wf_point& point);
+template<> std::string to_string(const wf_pointf& point);
+}
+}
 
 #endif /* end of include guard: WF_GEOMETRY_HPP */
