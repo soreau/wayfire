@@ -7,14 +7,6 @@ extern "C"
 #include <wlr/types/wlr_box.h>
 }
 
-/* Format for log_* to use when printing wf_point/wf_geometry/wlr_box */
-#define Prwp "(%d,%d)"
-#define Ewp(v) v.x, v.y
-
-/* Format for log_* to use when printing wf_geometry/wlr_box */
-#define Prwg "(%d,%d %dx%d)"
-#define Ewg(v) v.x, v.y, v.width, v.height
-
 struct wf_point
 {
     int x, y;

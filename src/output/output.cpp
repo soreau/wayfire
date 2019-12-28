@@ -271,10 +271,12 @@ bool wf::output_impl_t::activate_plugin(const plugin_grab_interface_uptr& owner,
     if (!can_activate_plugin(owner, ignore_inhibit))
         return false;
 
-    if (active_plugins.find(owner.get()) != active_plugins.end())
-        LOGD("output %s: activate plugin %s again", handle->name, owner->name.c_str());
-    else
-        LOGD("output %s: activate plugin %s", handle->name, owner->name.c_str());
+    if (active_plugins.find(owner.get()) != active_plugins.end()) {
+        LOGD("output ", handle->name,
+            ": activate plugin ", owner->name, " again");
+    } else {
+        LOGD("output ", handle->name, ": activate plugin ", owner->name);
+    }
 
     active_plugins.insert(owner.get());
     return true;
@@ -288,7 +290,7 @@ bool wf::output_impl_t::deactivate_plugin(
         return true;
 
     active_plugins.erase(it);
-    LOGD("output %s: deactivate plugin %s", handle->name, owner->name.c_str());
+    LOGD("output ", handle->name, ": deactivate plugin ", owner->name);
 
     if (active_plugins.count(owner.get()) == 0)
     {

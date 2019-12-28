@@ -896,7 +896,7 @@ namespace wf
         void remove_output(wlr_output *to_remove)
         {
             auto active_outputs = get_outputs();
-            LOGI("remove output: %s", to_remove->name);
+            LOGI("remove output: ", to_remove->name);
 
             /* Unset mode, plus destroy the wayfire output */
             auto configuration = get_current_configuration();

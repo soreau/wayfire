@@ -289,14 +289,8 @@ struct wf_layer_shell_manager
 wayfire_layer_shell_view::wayfire_layer_shell_view(wlr_layer_surface_v1 *lsurf)
     : wf::wlr_view_t(), lsurface(lsurf)
 {
-    LOGD("Create a layer surface: namespace %s layer %d anchor %d,"
-              "size %dx%d, margin top:%d, down:%d, left:%d, right:%d",
-              lsurf->namespace_t, lsurf->current.layer, lsurf->client_pending.anchor,
-              lsurf->client_pending.desired_width, lsurf->client_pending.desired_height,
-              lsurf->client_pending.margin.top,
-              lsurf->client_pending.margin.bottom,
-              lsurf->client_pending.margin.left,
-              lsurf->client_pending.margin.right);
+    LOGD("Create a layer surface: namespace ", lsurf->namespace_t,
+        " layer ", lsurf->current.layer);
 
     if (lsurf->output)
     {

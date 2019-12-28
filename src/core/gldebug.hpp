@@ -40,13 +40,12 @@ void errorHandler(GLenum src, GLenum type, GLuint id, GLenum severity,
         return;
 
     LOGI(
-        "_______________________________________________\n"
-        "Source: %s\n"
-        "Type: %s\n"
-        "Severity: %s\n"
-        "Msg: %s\n"
         "_______________________________________________\n",
-        getStrSrc(src), getStrType(type), getStrSeverity(severity), msg);
+        "Source: ", getStrSrc(src), "\n",
+        "Type: ", getStrType(type), "\n",
+        "Severity: ", getStrSeverity(severity), "\n",
+        "Msg: ", msg, "\n",
+        "_______________________________________________\n");
 }
 
 void enable_gl_synchronuous_debug()

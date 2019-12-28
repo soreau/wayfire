@@ -249,8 +249,8 @@ class output_viewport_manager_t
     {
         if(nws.x >= vwidth || nws.y >= vheight || nws.x < 0 || nws.y < 0)
         {
-            LOGE("Attempt to set invalid workspace: %d,%d,"
-                " workspace grid size is %dx%d", nws.x, nws.y, vwidth, vheight);
+            LOGE("Attempt to set invalid workspace: ", nws,
+                " workspace grid size is ", vwidth, "x", vheight);
             return;
         }
 
@@ -584,13 +584,12 @@ class workspace_manager::impl
         uint32_t below_layer = layer_manager.get_view_layer(below);
         if (view_layer == 0 || below_layer == 0 || view_layer != below_layer)
         {
-            LOGE("restacking views from different layers(%d vs %d!)",
-                view_layer, below_layer);
+            LOGE("restacking views from different layers(",
+                view_layer, " vs ", below_layer, ")!");
             return;
         }
 
-        LOGI("restack %s on top of %s", view->get_title().c_str(),
-            below->get_title().c_str());
+        LOGI("restack ", view->get_title(), " on top of ", below->get_title());
 
         /* If we restack on top of the front-most view, then this can
          * potentially change fullscreen state. So in this case use the
@@ -616,8 +615,8 @@ class workspace_manager::impl
         uint32_t below_layer = layer_manager.get_view_layer(above);
         if (view_layer == 0 || below_layer == 0 || view_layer != below_layer)
         {
-            LOGE("restacking views from different layers(%d vs %d!)",
-                view_layer, below_layer);
+            LOGE("restacking views from different layers(",
+                view_layer, " vs ", below_layer, "!)");
             return;
         }
 
