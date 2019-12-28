@@ -12,27 +12,24 @@ extern "C"
 }
 
 /* Geometry helpers */
-template<> std::string wf::log::to_string(const wf_geometry& geometry)
+std::ostream& operator << (std::ostream& stream, const wf_geometry& geometry)
 {
-    std::stringstream str;
-    str << '(' << geometry.x << ',' << geometry.y
+    stream << '(' << geometry.x << ',' << geometry.y
         << ' ' << geometry.width << 'x' << geometry.y << ')';
-    return str.str();
+    return stream;
 }
 
-template<> std::string wf::log::to_string(const wf_point& point)
+std::ostream& operator << (std::ostream& stream, const wf_point& point)
 {
-    std::stringstream str;
-    str << '(' << point.x << ',' << point.y << ')';
-    return str.str();
+    stream << '(' << point.x << ',' << point.y << ')';
+    return stream;
 }
 
-template<> std::string wf::log::to_string(const wf_pointf& point)
+std::ostream& operator << (std::ostream& stream, const wf_pointf& pointf)
 {
-    std::stringstream str;
-    str << std::fixed << std::setprecision(4) <<
-        '(' << point.x << ',' << point.y << ')';
-    return str.str();
+    stream << std::fixed << std::setprecision(4) <<
+        '(' << pointf.x << ',' << pointf.y << ')';
+    return stream;
 }
 
 bool operator == (const wf_point& a, const wf_point& b)
