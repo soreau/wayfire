@@ -16,13 +16,6 @@
 #include <utility>
 #include "vswipe-processing.hpp"
 
-class smooth_animation_t : public wf::animation::duration_t
-{
-  public:
-    using wf::animation::duration_t::duration_t;
-    wf::animation::timed_transition_t delta{*this};
-};
-
 class vswipe : public wf::plugin_interface_t
 {
     private:
@@ -55,8 +48,6 @@ class vswipe : public wf::plugin_interface_t
             int vh = 0;
         } state;
 
-        smooth_animation_t animation;
-
         wf::render_hook_t renderer;
         wf::option_wrapper_t<bool> enable_horizontal{"vswipe/enable_horizontal"};
         wf::option_wrapper_t<bool> enable_vertical{"vswipe/enable_vertical"};
@@ -64,6 +55,8 @@ class vswipe : public wf::plugin_interface_t
 
         wf::option_wrapper_t<wf::color_t> background_color{"vswipe/background"};
         wf::option_wrapper_t<int> animation_duration{"vswipe/duration"};
+        wf::animation::simple_animation_t smooth_delta{animation_duration};
+
         wf::option_wrapper_t<int> fingers{"vswipe/fingers"};
         wf::option_wrapper_t<double> gap{"vswipe/gap"};
         wf::option_wrapper_t<double> threshold{"vswipe/threshold"};
@@ -79,11 +72,9 @@ class vswipe : public wf::plugin_interface_t
         grab_interface->capabilities = wf::CAPABILITY_MANAGE_COMPOSITOR;
         grab_interface->callbacks.cancel = [=] () { finalize_and_exit(); };
 
-        animation = smooth_animation_t{animation_duration};
         wf::get_core().connect_signal("pointer_swipe_begin", &on_swipe_begin);
         wf::get_core().connect_signal("pointer_swipe_update", &on_swipe_update);
         wf::get_core().connect_signal("pointer_swipe_end", &on_swipe_end);
-
         renderer = [=] (const wf_framebuffer& buffer) { render(buffer); };
     }
 
@@ -110,7 +101,7 @@ class vswipe : public wf::plugin_interface_t
 
     void render(const wf_framebuffer &fb)
     {
-        if (!animation.running() && !state.swiping)
+        if (!smooth_delta.running() && !state.swiping)
             finalize_and_exit();
 
         update_stream(streams.prev);
@@ -128,7 +119,7 @@ class vswipe : public wf::plugin_interface_t
             .y2 = -1,
         };
 
-        auto swipe = get_translation(animation.delta * 2);
+        auto swipe = get_translation(smooth_delta * 2);
         /* Undo rotation of the workspace */
         auto workspace_transform = glm::inverse(fb.transform);
         swipe = swipe * workspace_transform;
@@ -187,7 +178,7 @@ class vswipe : public wf::plugin_interface_t
         state.swiping = true;
         state.direction = UNKNOWN;
         state.initial_deltas = {0.0, 0.0};
-        animation.delta.set(0, 0);
+        smooth_delta.set(0, 0);
 
         state.delta_last = 0;
         state.delta_prev = 0;
@@ -293,18 +284,18 @@ class vswipe : public wf::plugin_interface_t
         if (state.direction == HORIZONTAL)
         {
             current_delta_processed = vswipe_process_delta(ev->dx,
-                animation.delta, state.vx, state.vw, cap, fac);
+                smooth_delta, state.vx, state.vw, cap, fac);
             state.delta_last = ev->dx;
         } else
         {
             current_delta_processed = vswipe_process_delta(ev->dy,
-                animation.delta, state.vy, state.vh, cap, fac);
+                smooth_delta, state.vy, state.vh, cap, fac);
             state.delta_last = ev->dy;
         }
 
-        double new_delta_end = animation.delta.end + current_delta_processed;
-        double new_delta_start = smooth_transition ?  animation.delta : new_delta_end;
-        animation.delta.set(new_delta_start, new_delta_end);
+        double new_delta_end = smooth_delta.end + current_delta_processed;
+        double new_delta_start = smooth_transition ?  smooth_delta : new_delta_end;
+        smooth_delta.animate(new_delta_start, new_delta_end);
     };
 
     wf::signal_callback_t on_swipe_end = [=] (wf::signal_data_t *data)
@@ -325,22 +316,20 @@ class vswipe : public wf::plugin_interface_t
                 target_delta = 0;
                 break;
             case HORIZONTAL:
-                target_delta = vswipe_finish_target(animation.delta.end,
+                target_delta = vswipe_finish_target(smooth_delta.end,
                     state.vx, state.vw, state.delta_prev + state.delta_last,
                     move_threshold, fast_threshold);
                 target_workspace.x -= target_delta;
                 break;
             case VERTICAL:
-                target_delta = vswipe_finish_target(animation.delta.end,
+                target_delta = vswipe_finish_target(smooth_delta.end,
                     state.vy, state.vh, state.delta_prev + state.delta_last,
                     move_threshold, fast_threshold);
                 target_workspace.y -= target_delta;
                 break;
         }
 
-        animation.delta.restart_with_end(
-            target_delta + state.gap * target_delta);
-
+        smooth_delta.animate(target_delta + state.gap * target_delta);
         output->workspace->set_workspace(target_workspace);
         state.animating = true;
     };
