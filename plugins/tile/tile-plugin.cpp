@@ -378,13 +378,13 @@ class tile_plugin_t : public wf::plugin_interface_t
 
     key_callback on_focus_adjacent = [=] (uint32_t key)
     {
-        if (key == dynamic_cast<wf::keybinding_t*> (&key_focus_left)->get_key())
+        if (key == key_focus_left.raw_option->get_value().get_key())
             return focus_adjacent(tile::INSERT_LEFT);
-        if (key == dynamic_cast<wf::keybinding_t*> (&key_focus_right)->get_key())
+        if (key == key_focus_right.raw_option->get_value().get_key())
             return focus_adjacent(tile::INSERT_RIGHT);
-        if (key == dynamic_cast<wf::keybinding_t*> (&key_focus_above)->get_key())
+        if (key == key_focus_above.raw_option->get_value().get_key())
             return focus_adjacent(tile::INSERT_ABOVE);
-        if (key == dynamic_cast<wf::keybinding_t*> (&key_focus_below)->get_key())
+        if (key == key_focus_below.raw_option->get_value().get_key())
             return focus_adjacent(tile::INSERT_BELOW);
 
         return false;
