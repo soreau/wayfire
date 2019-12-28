@@ -150,16 +150,22 @@ static bool drop_permissions(void)
     return true;
 }
 
+static wf::log::color_mode_t detect_color_mode()
+{
+    return isatty(STDOUT_FILENO) ?
+        wf::log::LOG_COLOR_MODE_ON : wf::log::LOG_COLOR_MODE_OFF;
+}
+
 int main(int argc, char *argv[])
 {
 #ifdef WAYFIRE_DEBUG_ENABLED
     wlr_log_init(WLR_DEBUG, NULL);
     wf::log::initialize_logging(std::cout, wf::log::LOG_LEVEL_DEBUG,
-        wf::log::LOG_COLOR_MODE_ON); // TODO: disable color mode when needed
+        detect_color_mode());
 #else
     wlr_log_init(WLR_ERROR, NULL);
     wf::log::initialize_logging(std::cout, wf::log::LOG_LEVEL_WARNING,
-        wf::log::LOG_COLOR_MODE_OFF);
+        detect_color_mode());
 #endif
 
     std::string config_dir = nonull(getenv("XDG_CONFIG_DIR"));
