@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <map>
+#include <wayfire/debug.hpp>
 extern "C"
 {
 #include <wlr/types/wlr_surface.h>
@@ -269,6 +270,8 @@ void wf::wlr_surface_base_t::map(wlr_surface *surface)
 
 void wf::wlr_surface_base_t::unmap()
 {
+    if (!this->surface)
+        wf_print_trace();
     assert(this->surface);
     apply_surface_damage();
     damage_surface_box({.x = 0, .y = 0,

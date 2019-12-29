@@ -85,8 +85,8 @@ class wlr_surface_base_t
 };
 
 /**
- * wlr_child_surface_base_t is a base class for wlr-surface based child surfaces,
- * i.e popups, subsurfaces, etc.
+ * wlr_child_surface_base_t is a base class for wlr-surface based child
+ * surfaces, i.e subsurfaces.
  *
  * However, they can still exist without a parent, for ex. drag icons.
  */

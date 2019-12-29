@@ -6,16 +6,29 @@
 #include "wayfire/decorator.hpp"
 #include "xdg-shell.hpp"
 #include "wayfire/output-layout.hpp"
+#include <wayfire/workspace-manager.hpp>
 
 template<class XdgPopupVersion>
 wayfire_xdg_popup<XdgPopupVersion>::wayfire_xdg_popup(XdgPopupVersion *popup)
-    : wlr_child_surface_base_t(wf::wf_surface_from_void(popup->parent->data), this)
+    : wf::wlr_view_t()
 {
-    assert(priv->parent_surface);
+    this->popup_parent =
+        dynamic_cast<wlr_view_t*>(wf::wf_surface_from_void(popup->parent->data));
     this->popup = popup;
+    this->role = wf::VIEW_ROLE_UNMANAGED;
+    this->view_impl->keyboard_focus_enabled = false;
+    this->set_output(popup_parent->get_output());
+}
 
+template<class XdgPopupVersion>
+void wayfire_xdg_popup<XdgPopupVersion>::initialize()
+{
+    LOGI("New xdg popup");
     on_map.set_callback([&] (void*) { map(this->popup->base->surface); });
-    on_unmap.set_callback([&] (void*) { unmap(); });
+    on_unmap.set_callback([&] (void*) {
+        pending_close.disconnect();
+        unmap();
+    });
     on_destroy.set_callback([&] (void*) { unref(); });
     on_new_popup.set_callback([&] (void* data) {
         create_xdg_popup((XdgPopupVersion*) data);
@@ -27,18 +40,86 @@ wayfire_xdg_popup<XdgPopupVersion>::wayfire_xdg_popup(XdgPopupVersion *popup)
     on_new_popup.connect(&popup->base->events.new_popup);
 
     popup->base->data = this;
+    parent_geometry_changed.set_callback([=] (wf::signal_data_t*) {
+        this->update_position();
+    });
+    parent_app_id_changed.set_callback([=] (wf::signal_data_t*) {
+        this->handle_app_id_changed(popup_parent->get_app_id());
+    });
+    parent_title_changed.set_callback([=] (wf::signal_data_t*) {
+        this->handle_title_changed(popup_parent->get_title());
+    });
+
+    popup_parent->connect_signal("geometry-changed",
+        &this->parent_geometry_changed);
+    popup_parent->connect_signal("app-id-changed",
+        &this->parent_app_id_changed);
+    popup_parent->connect_signal("title-changed",
+        &this->parent_title_changed);
+}
+
+template<class XdgPopupVersion>
+void wayfire_xdg_popup<XdgPopupVersion>::map(wlr_surface *surface)
+{
+    uint32_t parent_layer =
+        get_output()->workspace->get_view_layer(popup_parent->self());
+
+    wf::layer_t target_layer = wf::LAYER_XWAYLAND;
+    if (parent_layer > wf::LAYER_WORKSPACE)
+        target_layer = (wf::layer_t)parent_layer;
+    get_output()->workspace->add_view(self(), target_layer);
+
+    wlr_view_t::map(surface);
+    update_position();
     unconstrain();
+}
+
+template<class XdgPopupVersion>
+void wayfire_xdg_popup<XdgPopupVersion>::commit()
+{
+    wlr_view_t::commit();
+    update_position();
+}
+
+template<class XdgPopupVersion>
+void wayfire_xdg_popup<XdgPopupVersion>::update_position()
+{
+    if (!popup_parent->is_mapped() || !is_mapped())
+        return;
+
+    wf_pointf popup_offset = {
+        1.0 * popup->geometry.x + popup_parent->get_window_offset().x,
+        1.0 * popup->geometry.y + popup_parent->get_window_offset().y,
+    };
+
+    auto parent_geometry = popup_parent->get_output_geometry();
+    popup_offset.x += parent_geometry.x - get_window_offset().x;
+    popup_offset.y += parent_geometry.y - get_window_offset().y;
+
+    popup_offset = popup_parent->transform_point(popup_offset);
+    this->move(popup_offset.x, popup_offset.y);
 }
 
 template<class XdgPopupVersion>
 void wayfire_xdg_popup<XdgPopupVersion>::unconstrain()
 {
-    auto view = dynamic_cast<wf::view_interface_t*> (get_main_surface());
-    if (!get_output() || !view)
+    wf::view_interface_t *toplevel_parent = this;
+    using popup_type = wayfire_xdg_popup<XdgPopupVersion>*;
+    while (true)
+    {
+        popup_type as_popup = dynamic_cast<popup_type> (toplevel_parent);
+        if (as_popup) {
+            toplevel_parent = as_popup->popup_parent;
+        } else {
+            break;
+        }
+    }
+
+    if (!get_output() || !toplevel_parent)
         return;
 
     auto box = get_output()->get_relative_geometry();
-    auto wm = view->get_output_geometry();
+    auto wm = toplevel_parent->get_output_geometry();
     box.x -= wm.x;
     box.y -= wm.y;
 
@@ -56,7 +137,7 @@ void wayfire_xdg_popup<wlr_xdg_popup_v6>::_do_unconstrain(wlr_box box) {
 }
 
 template<class XdgPopupVersion>
-wayfire_xdg_popup<XdgPopupVersion>::~wayfire_xdg_popup()
+void wayfire_xdg_popup<XdgPopupVersion>::destroy()
 {
     on_map.disconnect();
     on_unmap.disconnect();
@@ -73,33 +154,22 @@ wf_point wayfire_xdg_popup<XdgPopupVersion>::get_window_offset()
     };
 }
 
-template<class XdgPopupVersion>
-wf_point wayfire_xdg_popup<XdgPopupVersion>::get_offset()
+template<>
+void wayfire_xdg_popup<wlr_xdg_popup_v6>::close()
 {
-    auto parent = dynamic_cast<wf::wlr_surface_base_t*>(
-        wf::wf_surface_from_void(popup->parent->data));
-    assert(parent);
-
-    wf_point popup_offset = {
-        popup->geometry.x,
-        popup->geometry.y,
-    };
-
-    return (parent->get_window_offset() + popup_offset) + (-get_window_offset());
+    pending_close.run_once([=] () {
+        if (is_mapped())
+            wlr_xdg_surface_v6_send_close(popup->base);
+    });
 }
 
 template<>
-void wayfire_xdg_popup<wlr_xdg_popup_v6>::send_done()
+void wayfire_xdg_popup<wlr_xdg_popup>::close()
 {
-    if (is_mapped())
-        wlr_xdg_surface_v6_send_close(popup->base);
-}
-
-template<>
-void wayfire_xdg_popup<wlr_xdg_popup>::send_done()
-{
-    if (is_mapped())
-        wlr_xdg_popup_destroy(popup->base);
+    pending_close.run_once([=] () {
+        if (is_mapped())
+            wlr_xdg_popup_destroy(popup->base);
+    });
 }
 
 template<class XdgPopupVersion>
@@ -112,7 +182,8 @@ void create_xdg_popup_templ(XdgPopupVersion *popup)
         return;
     }
 
-    new wayfire_xdg_popup<XdgPopupVersion>(popup);
+    wf::get_core().add_view(
+        std::make_unique<wayfire_xdg_popup<XdgPopupVersion>> (popup));
 }
 
 template<class XdgPopupVersion>

@@ -20,12 +20,7 @@ class wayfire_close : public wf::plugin_interface_t {
 class wayfire_focus : public wf::plugin_interface_t {
     button_callback on_button;
     touch_callback on_touch;
-    wf::signal_callback_t on_view_disappear,
-        on_view_output_change, on_wm_focus_request;
-
-    wayfire_view last_focus;
-    void send_done(wayfire_view view);
-    void set_last_focus(wayfire_view view);
+    wf::signal_callback_t on_wm_focus_request;
     void check_focus_surface(wf::surface_interface_t *surface);
 
     public:

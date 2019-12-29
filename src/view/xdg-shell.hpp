@@ -13,23 +13,30 @@ extern "C"
  * `wlr_xdg_popup` or `wlr_xdg_popup_v6`.
  */
 template<class XdgPopupVersion>
-class wayfire_xdg_popup : public wf::wlr_child_surface_base_t
+class wayfire_xdg_popup : public wf::wlr_view_t
 {
   protected:
     wf::wl_listener_wrapper on_destroy, on_new_popup, on_map, on_unmap;
+    wf::signal_connection_t parent_geometry_changed,
+        parent_title_changed, parent_app_id_changed;
 
+    wf::wl_idle_call pending_close;
     XdgPopupVersion *popup;
-
     void unconstrain();
     void _do_unconstrain(wlr_box box);
+    void update_position();
 
   public:
     wayfire_xdg_popup(XdgPopupVersion *popup);
-    ~wayfire_xdg_popup();
+    void initialize() override;
 
-    virtual wf_point get_offset() override;
+    wlr_view_t *popup_parent;
+    virtual void map(wlr_surface *surface) override;
+    virtual void commit() override;
+
     virtual wf_point get_window_offset() override;
-    void send_done();
+    virtual void destroy() override;
+    virtual void close() override;
 };
 
 template<class XdgPopupVersion>

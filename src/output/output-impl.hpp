@@ -15,11 +15,29 @@ class output_impl_t : public output_t
     signal_callback_t view_disappeared_cb;
     bool inhibited = false;
 
+    enum focus_view_flags_t
+    {
+        /* Raise the view which is being focused */
+        FOCUS_VIEW_RAISE = (1 << 0),
+        /* Close popups of non-focused views */
+        FOCUS_VIEW_CLOSE_POPUPS = (1 << 1),
+    };
+
     /**
      * Set the given view as the active view.
      * If the output has focus, try to focus the view as well.
+     *
+     * @param flags bitmask of @focus_view_flags_t
      */
-    void update_active_view(wayfire_view view);
+    void update_active_view(wayfire_view view, uint32_t flags);
+
+    /**
+     * Close all popups on the output which do not belong to the active view.
+     */
+    void close_popups();
+
+    /** @param flags bitmask of @focus_view_flags_t */
+    void focus_view(wayfire_view view, uint32_t flags);
 
   public:
     output_impl_t(wlr_output *output);
