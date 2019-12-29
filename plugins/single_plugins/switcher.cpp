@@ -169,12 +169,10 @@ class WayfireSwitcher : public wf::plugin_interface_t
         output->render->damage_whole();
     };
 
-    wf::render_hook_t switcher_renderer;
     wf::signal_callback_t view_removed = [=] (wf::signal_data_t *data)
     {
         handle_view_removed(get_signaled_view(data));
     };
-
 
     void handle_view_removed(wayfire_view view)
     {
@@ -598,7 +596,7 @@ class WayfireSwitcher : public wf::plugin_interface_t
         transform->color[3] = 1.0;
     }
 
-    wf::render_hook_t switcher_rendererer = [=] (const wf_framebuffer& fb)
+    wf::render_hook_t switcher_renderer = [=] (const wf_framebuffer& fb)
     {
         OpenGL::render_begin(fb);
         OpenGL::clear({0, 0, 0, 1});
