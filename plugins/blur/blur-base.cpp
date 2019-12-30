@@ -52,7 +52,7 @@ wf_blur_base::wf_blur_base(wf::output_t *output,
     this->iterations_opt.set_callback(options_changed);
 
     OpenGL::render_begin();
-    blend_program = OpenGL::create_program_from_source(
+    blend_program = OpenGL::compile_program(
         blur_blend_vertex_shader, blur_blend_fragment_shader);
 
     blend_posID    = GL_CALL(glGetAttribLocation(blend_program, "position"));

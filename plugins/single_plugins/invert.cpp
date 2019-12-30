@@ -42,19 +42,15 @@ class wayfire_invert_screen : public wf::plugin_interface_t
     bool active = false;
     GLuint program, posID, uvID;
 
-    public:
-
+  public:
     void load_program()
     {
         OpenGL::render_begin();
-        program = OpenGL::create_program_from_source(
-            vertex_shader, fragment_shader);
-
+        program = OpenGL::compile_program(vertex_shader, fragment_shader);
         posID = GL_CALL(glGetAttribLocation(program, "position"));
         uvID  = GL_CALL(glGetAttribLocation(program, "uvPosition"));
         OpenGL::render_end();
     }
-
 
     void init() override
     {

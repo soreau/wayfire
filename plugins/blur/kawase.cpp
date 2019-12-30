@@ -77,9 +77,9 @@ class wf_kawase_blur : public wf_blur_base
         : wf_blur_base(output, kawase_defaults)
     {
         OpenGL::render_begin();
-        program[0] = OpenGL::create_program_from_source(kawase_vertex_shader,
+        program[0] = OpenGL::compile_program(kawase_vertex_shader,
             kawase_fragment_shader_down);
-        program[1] = OpenGL::create_program_from_source(kawase_vertex_shader,
+        program[1] = OpenGL::compile_program(kawase_vertex_shader,
             kawase_fragment_shader_down_up);
         get_id_locations(0);
         get_id_locations(1);

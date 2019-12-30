@@ -7,6 +7,8 @@
 #include <wayfire/core.hpp>
 #include <wayfire/img.hpp>
 
+#include "cubemap-shaders.tpp"
+
 wf_cube_background_cubemap::wf_cube_background_cubemap()
 {
     create_program();
@@ -23,14 +25,9 @@ wf_cube_background_cubemap::~wf_cube_background_cubemap()
 void wf_cube_background_cubemap::create_program()
 {
     OpenGL::render_begin();
-
-    std::string shader_path = INSTALL_PREFIX "/share/wayfire/cube/shaders_2.0";
-    program = OpenGL::create_program(shader_path + "/vertex_cubemap.glsl",
-        shader_path + "/frag_cubemap.glsl");
-
+    program = OpenGL::compile_program(cubemap_vertex, cubemap_fragment);
     posID =  GL_CALL(glGetAttribLocation(program, "position"));
     matrixID = GL_CALL(glGetUniformLocation(program, "cubeMapMatrix"));
-
     OpenGL::render_end();
 }
 

@@ -111,7 +111,7 @@ class wayfire_fisheye : public wf::plugin_interface_t
     void load_program()
     {
         OpenGL::render_begin();
-        program = OpenGL::create_program_from_source(
+        program = OpenGL::compile_program(
             vertex_shader, fragment_shader);
 
         posID = GL_CALL(glGetAttribLocation(program, "position"));

@@ -70,7 +70,7 @@ class wf_bokeh_blur : public wf_blur_base
     {
 
         OpenGL::render_begin();
-        program[0] = OpenGL::create_program_from_source(bokeh_vertex_shader,
+        program[0] = OpenGL::compile_program(bokeh_vertex_shader,
             bokeh_fragment_shader);
         program[1] = -1;
 

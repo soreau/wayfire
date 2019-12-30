@@ -51,7 +51,7 @@ void load_program()
         return;
 
     OpenGL::render_begin();
-    program = OpenGL::create_program_from_source(vertex_source, frag_source);
+    program = OpenGL::compile_program(vertex_source, frag_source);
     uvID  = GL_CALL(glGetAttribLocation(program, "uvPosition"));
     posID = GL_CALL(glGetAttribLocation(program, "position"));
     mvpID = GL_CALL(glGetUniformLocation(program, "MVP"));

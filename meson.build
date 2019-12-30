@@ -103,8 +103,6 @@ subdir('src')
 subdir('metadata')
 subdir('plugins')
 
-install_subdir('shaders', install_dir: 'share/wayfire')
-
 wlroots_x_info = []
 
 if use_system_wlroots

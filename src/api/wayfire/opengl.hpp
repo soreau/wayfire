@@ -147,16 +147,11 @@ namespace OpenGL
                                     glm::vec4 color = glm::vec4(1.f),
                                     uint32_t bits = 0);
 
-    /* Reads the shader source from the given file and compiles it */
-    GLuint load_shader(std::string path, GLuint type);
     /* Compiles the given shader source */
     GLuint compile_shader(std::string source, GLuint type);
 
     /* Create a very simple gl program from the given shader sources */
-    GLuint create_program_from_source(std::string vertex_source,
-        std::string frag_source);
-    /* Same as create_program_from_source, but loads shaders from files */
-    GLuint create_program(std::string vertex_path, std::string frag_path);
+    GLuint compile_program(std::string vertex_source, std::string frag_source);
 }
 
 /* utils */

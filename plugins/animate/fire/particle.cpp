@@ -163,7 +163,7 @@ void ParticleSystem::create_program()
     /* Just load the proper context, viewport doesn't matter */
     OpenGL::render_begin();
 
-    program.id = OpenGL::create_program_from_source(particle_vert_source,
+    program.id = OpenGL::compile_program(particle_vert_source,
         particle_frag_source);
 
     program.radius    = GL_CALL(glGetAttribLocation(program.id, "radius"));

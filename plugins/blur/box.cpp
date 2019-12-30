@@ -94,9 +94,9 @@ class wf_box_blur : public wf_blur_base
     wf_box_blur(wf::output_t *output) : wf_blur_base(output, box_defaults)
     {
         OpenGL::render_begin();
-        program[0] = OpenGL::create_program_from_source(
+        program[0] = OpenGL::compile_program(
             box_vertex_shader, box_fragment_shader_horz);
-        program[1] = OpenGL::create_program_from_source(
+        program[1] = OpenGL::compile_program(
             box_vertex_shader, box_fragment_shader_vert);
         get_id_locations(0);
         get_id_locations(1);

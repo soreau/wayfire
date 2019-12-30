@@ -101,9 +101,9 @@ class wf_gaussian_blur : public wf_blur_base
     wf_gaussian_blur(wf::output_t *output) : wf_blur_base(output, gaussian_defaults)
     {
         OpenGL::render_begin();
-        program[0] = OpenGL::create_program_from_source(
+        program[0] = OpenGL::compile_program(
             gaussian_vertex_shader, gaussian_fragment_shader_horz);
-        program[1] = OpenGL::create_program_from_source(
+        program[1] = OpenGL::compile_program(
             gaussian_vertex_shader, gaussian_fragment_shader_vert);
         get_id_locations(0);
         get_id_locations(1);

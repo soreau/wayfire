@@ -25,6 +25,9 @@
 #include <GLES3/gl32.h>
 #endif
 
+#include "shaders.tpp"
+#include "shaders-3-2.tpp"
+
 class wayfire_cube : public wf::plugin_interface_t
 {
     wf::button_callback activate_binding;
@@ -161,49 +164,35 @@ class wayfire_cube : public wf::plugin_interface_t
         std::string ext_string(reinterpret_cast<const char*> (glGetString(GL_EXTENSIONS)));
         tessellation_support =
             ext_string.find(std::string("GL_EXT_tessellation_shader")) != std::string::npos;
-        GLuint tcs = -1, tes = -1, gss = -1;
 #else
         tessellation_support = false;
 #endif
 
-        std::string shaderSrcPath;
-        if (tessellation_support) {
-            shaderSrcPath = INSTALL_PREFIX "/share/wayfire/cube/shaders_3.2";
+        if (!tessellation_support) {
+            program.id = OpenGL::compile_program(
+                cube_vertex_2_0, cube_fragment_2_0);
         } else {
-            shaderSrcPath = INSTALL_PREFIX "/share/wayfire/cube/shaders_2.0";
-        }
-
-        program.id = GL_CALL(glCreateProgram());
-        GLuint vss, fss;
-
-        /* Vertex and fragment shaders are used in both GLES 2.0 and 3.2 modes */
-        vss = OpenGL::load_shader(shaderSrcPath + "/vertex.glsl", GL_VERTEX_SHADER);
-        fss = OpenGL::load_shader(shaderSrcPath + "/frag.glsl", GL_FRAGMENT_SHADER);
-        GL_CALL(glAttachShader(program.id, vss));
-        GL_CALL(glAttachShader(program.id, fss));
-
-        if (tessellation_support)
-        {
 #ifdef USE_GLES32
-            tcs = OpenGL::load_shader(shaderSrcPath + "/tcs.glsl", GL_TESS_CONTROL_SHADER);
-            tes = OpenGL::load_shader(shaderSrcPath + "/tes.glsl", GL_TESS_EVALUATION_SHADER);
-            gss = OpenGL::load_shader(shaderSrcPath + "/geom.glsl", GL_GEOMETRY_SHADER);
+            program.id = GL_CALL(glCreateProgram());
+            GLuint vss, fss, tcs, tes, gss;
 
+            vss = OpenGL::compile_shader(cube_vertex_3_2, GL_VERTEX_SHADER);
+            fss = OpenGL::compile_shader(cube_fragment_3_2, GL_FRAGMENT_SHADER);
+            tcs = OpenGL::compile_shader(cube_tcs_3_2, GL_TESS_CONTROL_SHADER);
+            tes = OpenGL::compile_shader(cube_tes_3_2, GL_TESS_EVALUATION_SHADER);
+            gss = OpenGL::compile_shader(cube_geometry_3_2, GL_GEOMETRY_SHADER);
+
+            GL_CALL(glAttachShader(program.id, vss));
             GL_CALL(glAttachShader(program.id, tcs));
             GL_CALL(glAttachShader(program.id, tes));
             GL_CALL(glAttachShader(program.id, gss));
-#endif
-        }
+            GL_CALL(glAttachShader(program.id, fss));
 
-        GL_CALL(glLinkProgram(program.id));
-        GL_CALL(glUseProgram(program.id));
+            GL_CALL(glLinkProgram(program.id));
+            GL_CALL(glUseProgram(program.id));
 
-        GL_CALL(glDeleteShader(vss));
-        GL_CALL(glDeleteShader(fss));
-
-        if (tessellation_support)
-        {
-#ifdef USE_GLES32
+            GL_CALL(glDeleteShader(vss));
+            GL_CALL(glDeleteShader(fss));
             GL_CALL(glDeleteShader(tcs));
             GL_CALL(glDeleteShader(tes));
             GL_CALL(glDeleteShader(gss));

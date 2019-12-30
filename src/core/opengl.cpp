@@ -16,6 +16,8 @@ extern "C"
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "shaders.tpp"
+
 const char* gl_error_string(const GLenum err) {
     switch (err) {
         case GL_INVALID_ENUM:
@@ -51,7 +53,7 @@ namespace OpenGL
         GLuint position, uvPosition;
     } program;
 
-    GLuint compile_shader_from_file(std::string path, std::string source, GLuint type)
+    GLuint compile_shader(std::string source, GLuint type)
     {
         GLuint shader = GL_CALL(glCreateShader(type));
 
@@ -67,37 +69,18 @@ namespace OpenGL
 
         if (s == GL_FALSE)
         {
-            LOGE("Failed to load shader from ", path, "\n; Errors:\n", b1);
+            LOGE("Failed to load shader:\n", b1);
             return -1;
         }
 
         return shader;
     }
 
-    GLuint compile_shader(std::string source, GLuint type)
+    /* Create a very simple gl program from the given shader sources */
+    GLuint compile_program(std::string vertex_source, std::string frag_source)
     {
-        return compile_shader_from_file("internal", source, type);
-    }
-
-    GLuint load_shader(std::string path, GLuint type)
-    {
-        std::fstream file(path, std::ios::in);
-        if(!file.is_open())
-        {
-            LOGE("cannot open shader file ", path);
-            return -1;
-        }
-
-        std::string str, line;
-        while(std::getline(file, line))
-            str += line, str += '\n';
-
-        return compile_shader(str.c_str(), type);
-    }
-
-    GLuint create_program_from_shaders(GLuint vertex_shader,
-        GLuint fragment_shader)
-    {
+        auto vertex_shader = compile_shader(vertex_source, GL_VERTEX_SHADER);
+        auto fragment_shader = compile_shader(frag_source, GL_FRAGMENT_SHADER);
         auto result_program = GL_CALL(glCreateProgram());
         GL_CALL(glAttachShader(result_program, vertex_shader));
         GL_CALL(glAttachShader(result_program, fragment_shader));
@@ -110,29 +93,14 @@ namespace OpenGL
         return result_program;
     }
 
-    GLuint create_program_from_source(std::string vertex_source,
-        std::string frag_source)
-    {
-        return create_program_from_shaders(
-            compile_shader(vertex_source, GL_VERTEX_SHADER),
-            compile_shader(frag_source, GL_FRAGMENT_SHADER));
-    }
-
-    GLuint create_program(std::string vertex_path, std::string frag_path)
-    {
-        return create_program_from_shaders(
-            load_shader(vertex_path, GL_VERTEX_SHADER),
-            load_shader(frag_path, GL_FRAGMENT_SHADER));
-    }
-
     void init()
     {
         render_begin();
 
         // enable_gl_synchronuous_debug()
         std::string shader_path = INSTALL_PREFIX "/share/wayfire/shaders";
-        program.id = create_program(
-            shader_path + "/vertex.glsl", shader_path + "/frag.glsl");
+        program.id = compile_program(default_vertex_shader_source,
+            default_fragment_shader_source);
 
         program.mvpID      = GL_CALL(glGetUniformLocation(program.id, "MVP"));
         program.colorID    = GL_CALL(glGetUniformLocation(program.id, "color"));

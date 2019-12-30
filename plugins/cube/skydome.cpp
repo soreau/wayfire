@@ -8,6 +8,7 @@
 
 
 #include <glm/gtc/matrix_transform.hpp>
+#include "shaders.tpp"
 
 #define SKYDOME_GRID_WIDTH 128
 #define SKYDOME_GRID_HEIGHT 128
@@ -29,17 +30,11 @@ wf_cube_background_skydome::~wf_cube_background_skydome()
 void wf_cube_background_skydome::load_program()
 {
     OpenGL::render_begin();
-
-    std::string shader_path = INSTALL_PREFIX "/share/wayfire/cube/shaders_2.0";
-
-    program = OpenGL::create_program(
-        shader_path + "/vertex.glsl", shader_path + "/frag.glsl");
-
+    program = OpenGL::compile_program(cube_vertex_2_0, cube_fragment_2_0);
     vpID    = GL_CALL(glGetUniformLocation(program, "VP"));
     modelID = GL_CALL(glGetUniformLocation(program, "model"));
     uvID  = GL_CALL(glGetAttribLocation(program, "uvPosition"));
     posID = GL_CALL(glGetAttribLocation(program, "position"));
-
     OpenGL::render_end();
 }
 
