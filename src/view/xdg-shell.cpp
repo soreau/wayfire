@@ -29,7 +29,7 @@ void wayfire_xdg_popup<XdgPopupVersion>::initialize()
         pending_close.disconnect();
         unmap();
     });
-    on_destroy.set_callback([&] (void*) { unref(); });
+    on_destroy.set_callback([&] (void*) { destroy(); });
     on_new_popup.set_callback([&] (void* data) {
         create_xdg_popup((XdgPopupVersion*) data);
     });
@@ -143,6 +143,8 @@ void wayfire_xdg_popup<XdgPopupVersion>::destroy()
     on_unmap.disconnect();
     on_destroy.disconnect();
     on_new_popup.disconnect();
+
+    wlr_view_t::destroy();
 }
 
 template<class XdgPopupVersion>
