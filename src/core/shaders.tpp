@@ -23,3 +23,13 @@ void main()
     tex_color.rgb = tex_color.rgb * color.a;
     gl_FragColor = tex_color * color;
 })";
+
+static const char *color_rect_fragment_source =
+R"(#version 100
+varying highp vec2 uvpos;
+uniform mediump vec4 color;
+
+void main()
+{
+    gl_FragColor = color;
+})";

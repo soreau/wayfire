@@ -48,10 +48,9 @@ namespace OpenGL
     struct
     {
         GLuint id;
-
         GLuint mvpID, colorID;
         GLuint position, uvPosition;
-    } program;
+    } program, color_program;
 
     GLuint compile_shader(std::string source, GLuint type)
     {
@@ -96,17 +95,19 @@ namespace OpenGL
     void init()
     {
         render_begin();
-
         // enable_gl_synchronuous_debug()
-        std::string shader_path = INSTALL_PREFIX "/share/wayfire/shaders";
         program.id = compile_program(default_vertex_shader_source,
             default_fragment_shader_source);
-
         program.mvpID      = GL_CALL(glGetUniformLocation(program.id, "MVP"));
         program.colorID    = GL_CALL(glGetUniformLocation(program.id, "color"));
         program.position   = GL_CALL(glGetAttribLocation(program.id, "position"));
         program.uvPosition = GL_CALL(glGetAttribLocation(program.id, "uvPosition"));
 
+        color_program.id = compile_program(default_vertex_shader_source,
+            color_rect_fragment_source);
+        color_program.mvpID    = GL_CALL(glGetUniformLocation(color_program.id, "MVP"));
+        color_program.colorID  = GL_CALL(glGetUniformLocation(color_program.id, "color"));
+        color_program.position = GL_CALL(glGetAttribLocation(color_program.id, "position"));
         render_end();
     }
 
@@ -182,6 +183,41 @@ namespace OpenGL
         GL_CALL(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
 
         GL_CALL(glDisableVertexAttribArray(program.uvPosition));
+        GL_CALL(glDisableVertexAttribArray(program.position));
+    }
+
+    void render_rectangle(wf::geometry_t geometry, wf::color_t color,
+        glm::mat4 matrix)
+    {
+        GL_CALL(glUseProgram(color_program.id));
+
+        float x = geometry.x, y = geometry.y,
+              w = geometry.width, h = geometry.height;
+        GLfloat vertexData[] = {
+            x, y + h,
+            x + w, y + h,
+            x + w, y,
+            x, y,
+        };
+
+        GL_CALL(glVertexAttribPointer(color_program.position, 2, GL_FLOAT,
+                GL_FALSE, 0, vertexData));
+        GL_CALL(glEnableVertexAttribArray(color_program.position));
+
+        GL_CALL(glUniformMatrix4fv(color_program.mvpID, 1, GL_FALSE,
+                &matrix[0][0]));
+        float colorf[] = {
+            (float)color.r,
+            (float)color.g,
+            (float)color.b,
+            (float)color.a
+        };
+        GL_CALL(glUniform4fv(color_program.colorID, 1, colorf));
+
+        GL_CALL(glEnable(GL_BLEND));
+        GL_CALL(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+        GL_CALL(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
+
         GL_CALL(glDisableVertexAttribArray(program.position));
     }
 

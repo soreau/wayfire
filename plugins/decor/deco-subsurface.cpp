@@ -85,8 +85,8 @@ class simple_decoration_surface : public wf::surface_interface_t,
     int width = 100, height = 100;
 
     bool active = true; // when views are mapped, they are usually activated
-    float border_color[4] = {0.15f, 0.15f, 0.15f, 0.8f};
-    float border_color_inactive[4] = {0.25f, 0.25f, 0.25f, 0.95f};
+    wf::color_t border_color{0.15, 0.15, 0.15, 0.8};
+    wf::color_t border_color_inactive = {0.25, 0.25, 0.25, 0.95};
 
     GLuint tex = -1;
 
@@ -136,23 +136,13 @@ class simple_decoration_surface : public wf::surface_interface_t,
     void render_box(const wf::framebuffer_t& fb, int x, int y,
         const wlr_box& scissor)
     {
-        wlr_box geometry {x, y, width, height};
-        geometry = fb.damage_box_from_geometry_box(geometry);
-
-        float projection[9];
-        wlr_matrix_projection(projection,
-            fb.viewport_width, fb.viewport_height,
-            (wl_output_transform)fb.wl_transform);
-
-        float matrix[9];
-        wlr_matrix_project_box(matrix, &geometry,
-            WL_OUTPUT_TRANSFORM_NORMAL, 0, projection);
-
+        wlr_box geometry {x + fb.geometry.x, y + fb.geometry.y, width, height};
         OpenGL::render_begin(fb);
         fb.scissor(scissor);
+        OpenGL::render_rectangle(geometry,
+            active ? border_color : border_color_inactive,
+            fb.get_orthographic_projection());
 
-        wlr_render_quad_with_matrix(wf::get_core().renderer,
-            active ? border_color : border_color_inactive, matrix);
 
         if (tex == (uint)-1)
         {

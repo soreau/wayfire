@@ -176,29 +176,22 @@ wf::dimensions_t wf::color_rect_view_t::get_size() const
     };
 }
 
-static void render_colored_rect(const wf::framebuffer_t& fb, float projection[9],
+static void render_colored_rect(const wf::framebuffer_t& fb,
     int x, int y, int w, int h, const wf::color_t& color)
 {
-    wlr_box render_geometry_unscaled {x, y, w, h};
-    wlr_box render_geometry = fb.damage_box_from_geometry_box(
-        render_geometry_unscaled);
+    wf::color_t premultiply{
+        color.r * color.a,
+        color.g * color.a,
+        color.b * color.a,
+        color.a};
 
-    float matrix[9];
-    wlr_matrix_project_box(matrix, &render_geometry,
-        WL_OUTPUT_TRANSFORM_NORMAL, 0, projection);
-
-    float a = color.a;
-    float col[4] = {(float)color.r * a, (float)color.g * a, (float)color.b * a, a};
-    wlr_render_quad_with_matrix(wf::get_core().renderer, col, matrix);
+    OpenGL::render_rectangle({x, y, w, h}, premultiply,
+        fb.get_orthographic_projection());
 }
 
 void wf::color_rect_view_t::simple_render(const wf::framebuffer_t& fb, int x, int y,
     const wf::region_t& damage)
 {
-    float projection[9];
-    wlr_matrix_projection(projection, fb.viewport_width, fb.viewport_height,
-        (wl_output_transform)fb.wl_transform);
-
     OpenGL::render_begin(fb);
     for (const auto& box : damage)
     {
@@ -209,23 +202,24 @@ void wf::color_rect_view_t::simple_render(const wf::framebuffer_t& fb, int x, in
         /* Draw the border, making sure border parts don't overlap, otherwise
          * we will get wrong corners if border has alpha != 1.0 */
         // top
-        render_colored_rect(fb, projection, x, y, geometry.width, border,
+        render_colored_rect(fb, x, y, geometry.width, border,
             _border_color);
         // bottom
-        render_colored_rect(fb, projection, x, y + geometry.height - border,
+        render_colored_rect(fb, x, y + geometry.height - border,
             geometry.width, border, _border_color);
         // left
-        render_colored_rect(fb, projection, x, y + border, border,
+        render_colored_rect(fb, x, y + border, border,
             geometry.height - 2 * border, _border_color);
         // right
-        render_colored_rect(fb, projection, x + geometry.width - border,
+        render_colored_rect(fb, x + geometry.width - border,
             y + border, border, geometry.height - 2 * border, _border_color);
 
         /* Draw the inside of the rect */
-        render_colored_rect(fb, projection, x + border, y + border,
+        render_colored_rect(fb, x + border, y + border,
             geometry.width - 2 * border, geometry.height - 2 * border,
             _color);
     }
+
     OpenGL::render_end();
 }
 

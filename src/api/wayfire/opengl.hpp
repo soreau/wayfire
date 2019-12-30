@@ -152,6 +152,16 @@ namespace OpenGL
 
     /* Create a very simple gl program from the given shader sources */
     GLuint compile_program(std::string vertex_source, std::string frag_source);
+
+    /**
+     * Render a colored rectangle using OpenGL.
+     *
+     * @param box The rectangle geometry.
+     * @param color The color of the rectangle.
+     * @param matrix The matrix to transform the rectangle with.
+     */
+    void render_rectangle(wf::geometry_t box, wf::color_t color, glm::mat4 matrix);
+
 }
 
 /* utils */
