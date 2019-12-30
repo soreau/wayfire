@@ -8,6 +8,17 @@
 #include <wayfire/workspace-manager.hpp>
 #include <wayfire/util/log.hpp>
 
+extern "C"
+{
+#define static
+#define class class_t
+#define namespace namespace_t
+#include <wlr/xwayland.h>
+#undef static
+#undef class
+#undef namespace
+}
+
 namespace wf
 {
     namespace matcher
@@ -16,8 +27,16 @@ namespace wf
         {
             if (view->role == VIEW_ROLE_TOPLEVEL)
                 return "toplevel";
+
             if (view->role == VIEW_ROLE_UNMANAGED)
-                return "x-or";
+            {
+                auto surf = view->get_wlr_surface();
+                if (surf && wlr_surface_is_xwayland_surface(surf)) {
+                    return "x-or";
+                } else {
+                    return "unmanaged";
+                }
+            }
 
             if (!view->get_output())
                 return "unknown";
