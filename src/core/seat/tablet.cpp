@@ -115,7 +115,7 @@ void wf::tablet_tool_t::update_tool_position()
     set_focus(surface);
 
     /* If focus is a wlr surface, send position */
-    wlr_surface *next_focus = surface ? surface->priv->wsurface : nullptr;
+    wlr_surface *next_focus = surface ? surface->get_wlr_surface() : nullptr;
     if (next_focus)
         wlr_tablet_v2_tablet_tool_notify_motion(tool_v2, local.x, local.y);
 }
@@ -130,7 +130,7 @@ void wf::tablet_tool_t::set_focus(wf::surface_interface_t *surface)
     }
 
     /* Set the new focus, if it is a wlr surface */
-    wlr_surface *next_focus = surface ? surface->priv->wsurface : nullptr;
+    wlr_surface *next_focus = surface ? surface->get_wlr_surface() : nullptr;
     if (next_focus && wlr_surface_accepts_tablet_v2(tablet_v2, next_focus))
     {
         this->proximity_surface = surface;

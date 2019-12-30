@@ -7,6 +7,9 @@
 #include <memory>
 
 #include "wayfire/geometry.hpp"
+extern "C"{
+struct wlr_surface;
+}
 
 struct wf_region;
 struct wf_framebuffer;
@@ -147,9 +150,14 @@ class surface_interface_t
 
     /**
      * @return the wl_client associated with this surface, or null if the
-     *         surface doesn't have a backing wlr_surface.
+     *   surface doesn't have a backing wlr_surface.
      */
     virtual wl_client *get_client();
+
+    /**
+     * @return the wlr_surface associated with this surface, or null if no
+     *   the surface doesn't have a backing wlr_surface. */
+    virtual wlr_surface *get_wlr_surface();
 
     /**
      * Render the surface, without applying any transformations.

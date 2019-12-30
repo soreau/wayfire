@@ -323,7 +323,7 @@ void input_manager::set_touch_focus(wf::surface_interface_t *surface,
 
     wlr_surface *next_focus = NULL;
     if (surface && !focus_compositor_surface)
-        next_focus = surface->priv->wsurface;
+        next_focus = surface->get_wlr_surface();
 
     // create a new touch point, we have a valid new focus
     if (!had_focus && next_focus)

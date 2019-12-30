@@ -182,6 +182,11 @@ wl_client* wf::surface_interface_t::get_client()
     return nullptr;
 }
 
+wlr_surface *wf::surface_interface_t::get_wlr_surface()
+{
+    return priv->wsurface;
+}
+
 wf::wlr_surface_base_t::wlr_surface_base_t(surface_interface_t *self)
 {
     _as_si = self;
