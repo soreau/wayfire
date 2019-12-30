@@ -15,7 +15,7 @@ extern "C"
 std::ostream& operator << (std::ostream& stream, const wf_geometry& geometry)
 {
     stream << '(' << geometry.x << ',' << geometry.y
-        << ' ' << geometry.width << 'x' << geometry.y << ')';
+        << ' ' << geometry.width << 'x' << geometry.height << ')';
     return stream;
 }
 
