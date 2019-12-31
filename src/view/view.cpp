@@ -922,24 +922,42 @@ void wf::view_interface_t::take_snapshot()
 
     float scale = get_output()->handle->scale;
 
+    offscreen_buffer.cached_damage &= buffer_geometry;
     /* Nothing has changed, the last buffer is still valid */
     if (offscreen_buffer.cached_damage.empty())
         return;
 
-    /* TODO: use offscreen buffer better */
-    offscreen_buffer.cached_damage.clear();
+    int scaled_width = buffer_geometry.width * scale;
+    int scaled_height = buffer_geometry.height * scale;
+    if (scaled_width != offscreen_buffer.viewport_width ||
+        scaled_height != offscreen_buffer.viewport_height)
+    {
+        offscreen_buffer.cached_damage |= buffer_geometry;
+    }
+
+    offscreen_buffer.cached_damage +=
+        -wf::point_t{buffer_geometry.x, buffer_geometry.y};
 
     OpenGL::render_begin();
-    offscreen_buffer.allocate(buffer_geometry.width * scale,
-        buffer_geometry.height * scale);
-
+    offscreen_buffer.allocate(scaled_width, scaled_height);
     offscreen_buffer.scale = scale;
     offscreen_buffer.bind();
-    OpenGL::clear({0, 0, 0, 0});
+    for (auto& box : offscreen_buffer.cached_damage)
+    {
+        offscreen_buffer.scissor(
+            offscreen_buffer.framebuffer_box_from_geometry_box(
+                wlr_box_from_pixman_box(box)));
+        OpenGL::clear({0, 0, 0, 0});
+    }
+
     OpenGL::render_end();
 
-    wf::region_t full_region{{0, 0, offscreen_buffer.viewport_width,
-        offscreen_buffer.viewport_height}};
+    wf::region_t damage_region;
+    for (auto& rect : offscreen_buffer.cached_damage)
+    {
+        auto box = wlr_box_from_pixman_box(rect);
+        damage_region |= offscreen_buffer.damage_box_from_geometry_box(box);
+    }
 
     auto output_geometry = get_output_geometry();
     int ox = output_geometry.x - buffer_geometry.x;
@@ -949,8 +967,10 @@ void wf::view_interface_t::take_snapshot()
     for (auto& child : wf::reverse(children))
     {
         child.surface->simple_render(offscreen_buffer,
-            child.position.x, child.position.y, full_region);
+            child.position.x, child.position.y, damage_region);
     }
+
+    offscreen_buffer.cached_damage.clear();
 }
 
 wf::view_interface_t::view_interface_t() : surface_interface_t(nullptr)
