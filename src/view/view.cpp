@@ -801,6 +801,7 @@ bool wf::view_interface_t::render_transformed(const wf::framebuffer_t& framebuff
 
     wf::geometry_t obox = get_untransformed_bounding_box();
     wf::texture_t previous_texture;
+    float texture_scale;
 
     if (is_mapped() && enumerate_surfaces().size() == 1 && get_wlr_surface())
     {
@@ -808,10 +809,12 @@ bool wf::view_interface_t::render_transformed(const wf::framebuffer_t& framebuff
          * We can directly start with its texture */
         previous_texture =
             wf::get_texture_from_surface(this->get_wlr_surface());
+        texture_scale = this->get_wlr_surface()->current.scale;
     } else
     {
         take_snapshot();
         previous_texture = wf::texture_t{view_impl->offscreen_buffer.tex};
+        texture_scale = view_impl->offscreen_buffer.scale;
     }
 
     /* We keep a shared_ptr to the previous transform which we executed, so that
@@ -841,18 +844,20 @@ bool wf::view_interface_t::render_transformed(const wf::framebuffer_t& framebuff
         /* Calculate size after this transform */
         auto transformed_box =
             transform->transform->get_bounding_box(obox, obox);
+        int scaled_width = transformed_box.width * texture_scale;
+        int scaled_height = transformed_box.height * texture_scale;
 
         /* Prepare buffer to store result after the transform */
         OpenGL::render_begin();
-        transform->fb.allocate(transformed_box.width, transformed_box.height);
+        transform->fb.allocate(scaled_width, scaled_height);
+        transform->fb.scale = texture_scale;
         transform->fb.geometry = transformed_box;
         transform->fb.bind(); // bind buffer to clear it
         OpenGL::clear({0, 0, 0, 0});
         OpenGL::render_end();
 
         /* Actually render the transform to the next framebuffer */
-        wf::region_t whole_region{wlr_box{0, 0,
-            transformed_box.width, transformed_box.height}};
+        wf::region_t whole_region{wlr_box{0, 0, scaled_width, scaled_height}};
         transform->transform->render_with_damage(previous_texture, obox,
             whole_region, transform->fb);
 
