@@ -799,16 +799,20 @@ bool wf::view_interface_t::render_transformed(const wf::framebuffer_t& framebuff
     if (!is_mapped() && !view_impl->offscreen_buffer.valid())
         return false;
 
-    take_snapshot();
-    auto& offscreen_buffer = view_impl->offscreen_buffer;
-    auto& transforms = view_impl->transforms;
-
-    /* Render the view passing its snapshot through the transformers.
-     * For each transformer except the last we render on offscreen buffers,
-     * and the last one is rendered to the real fb. */
     wf::geometry_t obox = get_untransformed_bounding_box();
-    obox.width = offscreen_buffer.geometry.width;
-    obox.height = offscreen_buffer.geometry.height;
+    wf::texture_t previous_texture;
+
+    if (is_mapped() && enumerate_surfaces().size() == 1 && get_wlr_surface())
+    {
+        /* Optimized case: there is a single mapped surface.
+         * We can directly start with its texture */
+        previous_texture =
+            wf::get_texture_from_surface(this->get_wlr_surface());
+    } else
+    {
+        take_snapshot();
+        previous_texture = wf::texture_t{view_impl->offscreen_buffer.tex};
+    }
 
     /* We keep a shared_ptr to the previous transform which we executed, so that
      * even if it gets removed, its texture remains valid.
@@ -817,11 +821,14 @@ bool wf::view_interface_t::render_transformed(const wf::framebuffer_t& framebuff
      * cycle is complete, because the memory might have already been freed.
      * We only know that the texture is still alive. */
     std::shared_ptr<view_transform_block_t> previous_transform = nullptr;
-    GLuint previous_texture = offscreen_buffer.tex;
 
     /* final_transform is the one that should render to the screen */
     std::shared_ptr<view_transform_block_t> final_transform = nullptr;
 
+    /* Render the view passing its snapshot through the transformers.
+     * For each transformer except the last we render on offscreen buffers,
+     * and the last one is rendered to the real fb. */
+    auto& transforms = view_impl->transforms;
     transforms.for_each([&] (auto& transform) -> void
     {
         /* Last transform is handled separately */
