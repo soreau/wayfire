@@ -31,7 +31,7 @@ class tile_plugin_t : public wf::plugin_interface_t
     wf::option_wrapper_t<std::string> tile_by_default{"simple-tile/tile_by_default"};
     wf::option_wrapper_t<bool> keep_fullscreen_on_adjacent{"simple-tile/keep_fullscreen_on_adjacent"};
     wf::option_wrapper_t<wf::buttonbinding_t> button_move{"simple-tile/button_move"}, button_resize{"simple-tile/button_resize"};
-    wf::option_wrapper_t<wf::keybinding_t> key_toggle_tile{"simple-tile/key_toggle_tile"}, key_toggle_fullscreen{"simple-tile/key_toggle_fullscreen"};
+    wf::option_wrapper_t<wf::keybinding_t> key_toggle_tile{"simple-tile/key_toggle"}, key_toggle_fullscreen{"simple-tile/key_toggle_fullscreen"};
 
     wf::option_wrapper_t<wf::keybinding_t> key_focus_left{"simple-tile/key_focus_left"}, key_focus_right{"simple-tile/key_focus_right"};
     wf::option_wrapper_t<wf::keybinding_t> key_focus_above{"simple-tile/key_focus_above"}, key_focus_below{"simple-tile/key_focus_below"};
