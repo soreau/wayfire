@@ -37,6 +37,8 @@ void main()
     gl_FragColor = color;
 })";
 
+
+
 static const char *builtin_rgba_source =
 R"(
 uniform sampler2D _wayfire_texture;

@@ -1,6 +1,7 @@
 #ifndef SURFACE_IMPL_HPP
 #define SURFACE_IMPL_HPP
 
+#include <wayfire/opengl.hpp>
 #include <wayfire/surface.hpp>
 #include <wayfire/util.hpp>
 
@@ -47,9 +48,6 @@ class wlr_surface_base_t
     virtual void damage_surface_region(const wf::region_t& region);
 
     void apply_surface_damage();
-    virtual void _wlr_render_box(const wf::framebuffer_t& fb, int x, int y,
-        const wlr_box& scissor);
-
     wlr_surface_base_t(wf::surface_interface_t *self);
     /* Pointer to this as surface_interface, see requirement above */
     wf::surface_interface_t *_as_si = nullptr;
@@ -110,6 +108,9 @@ class wlr_child_surface_base_t :
         surface_interface_t::set_output(output);
     }
 };
+
+/** Get a texture from a mapped surface. */
+wf::texture_t get_texture_from_surface(wlr_surface *surface);
 }
 
 #endif /* end of include guard: SURFACE_IMPL_HPP */

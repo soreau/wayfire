@@ -7,6 +7,7 @@ extern "C"
 #define static
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/render/wlr_renderer.h>
+#include <wlr/render/gles2.h>
 #include <wlr/types/wlr_matrix.h>
 #include <wlr/types/wlr_buffer.h>
 #include <wlr/util/region.h>
@@ -357,48 +358,52 @@ void wf::wlr_surface_base_t::update_output(wf::output_t *old_output,
         wlr_surface_send_enter(surface, new_output->handle);
 }
 
-void wf::wlr_surface_base_t::_wlr_render_box(
-    const wf::framebuffer_t& fb, int x, int y, const wlr_box& scissor)
+wf::texture_t wf::get_texture_from_surface(wlr_surface *surface)
 {
-    if (!get_buffer())
-        return;
+    assert(wlr_texture_is_gles2(surface->buffer->texture));
 
-    wlr_box geometry {x, y, surface->current.width, surface->current.height};
-    geometry = fb.damage_box_from_geometry_box(geometry);
+    wlr_gles2_texture_attribs attribs;
+    wlr_gles2_texture_get_attribs(surface->buffer->texture, &attribs);
 
-    float projection[9];
-    wlr_matrix_projection(projection, fb.viewport_width, fb.viewport_height,
-        (wl_output_transform)fb.wl_transform);
+    wf::texture_t tex;
+    /* Wayfire Y-inverts by default */
+    tex.invert_y = !attribs.inverted_y;
+    tex.target = attribs.target;
+    tex.tex_id = attribs.tex;
 
-    float matrix[9];
-    wlr_matrix_project_box(matrix, &geometry,
-        wlr_output_transform_invert(surface->current.transform), 0, projection);
+    if (tex.target == GL_TEXTURE_2D) {
+        tex.type = attribs.has_alpha ?
+            wf::TEXTURE_TYPE_RGBA : wf::TEXTURE_TYPE_RGBX;
+    } else {
+        tex.type = wf::TEXTURE_TYPE_EXTERNAL;
+    }
 
-    OpenGL::render_begin(fb);
-    auto sbox = scissor; wlr_renderer_scissor(wf::get_core().renderer, &sbox);
-    wlr_render_texture_with_matrix(wf::get_core().renderer,
-        get_buffer()->texture, matrix, 1.0);
-
-#ifdef WAYFIRE_GRAPHICS_DEBUG
-    float scissor_proj[9];
-    wlr_matrix_projection(scissor_proj, fb.viewport_width, fb.viewport_height,
-        WL_OUTPUT_TRANSFORM_NORMAL);
-
-    float col[4] = {(std::rand() % 5) / 5, 0.2, 0, 0.5};
-    wlr_render_rect(wf::get_core().renderer, &scissor, col, scissor_proj);
-#endif
-
-    OpenGL::render_end();
+    return tex;
 }
 
 void wf::wlr_surface_base_t::_simple_render(const wf::framebuffer_t& fb,
     int x, int y, const wf::region_t& damage)
 {
+    if (!get_buffer())
+        return;
+
+    float rx = x + fb.geometry.x;
+    float ry = y + fb.geometry.y;
+    gl_geometry geometry {
+        rx, ry,
+        rx + surface->current.width, ry + surface->current.height,
+    };
+    auto texture = get_texture_from_surface(surface);
+    auto matrix = fb.get_orthographic_projection();
+
+    OpenGL::render_begin(fb);
     for (const auto& rect : damage)
     {
         auto box = wlr_box_from_pixman_box(rect);
-        _wlr_render_box(fb, x, y, fb.framebuffer_box_from_damage_box(box));
+        fb.scissor(fb.framebuffer_box_from_damage_box(box));
+        OpenGL::render_transformed_texture(texture, geometry, {}, matrix);
     }
+    OpenGL::render_end();
 }
 
 wf::wlr_child_surface_base_t::wlr_child_surface_base_t(

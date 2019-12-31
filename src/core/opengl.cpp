@@ -615,6 +615,7 @@ void program_t::set_active_texture(const wf::texture_t& texture)
 {
     GL_CALL(glActiveTexture(GL_TEXTURE0));
     GL_CALL(glBindTexture(texture.target, texture.tex_id));
+    GL_CALL(glTexParameteri(texture.target, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 
     uniform1f("_wayfire_y_base", texture.invert_y ? 1 : 0);
     uniform1f("_wayfire_y_mult", texture.invert_y ? -1 : 1);
