@@ -46,13 +46,7 @@ class wayfire_cube : public wf::plugin_interface_t
      * for the given FOV */
     float identity_z_offset;
 
-    struct {
-        GLuint id = -1;
-        GLuint modelID, vpID;
-        GLuint posID, uvID;
-        GLuint defID, lightID;
-        GLuint easeID;
-    } program;
+    OpenGL::program_t program;
 
     wf_cube_animation_attribs animation;
     wf::option_wrapper_t<bool> use_light{"cube/light"};
@@ -169,11 +163,11 @@ class wayfire_cube : public wf::plugin_interface_t
 #endif
 
         if (!tessellation_support) {
-            program.id = OpenGL::compile_program(
-                cube_vertex_2_0, cube_fragment_2_0);
+            program.set_simple(OpenGL::compile_program(
+                cube_vertex_2_0, cube_fragment_2_0));
         } else {
 #ifdef USE_GLES32
-            program.id = GL_CALL(glCreateProgram());
+            auto id = GL_CALL(glCreateProgram());
             GLuint vss, fss, tcs, tes, gss;
 
             vss = OpenGL::compile_shader(cube_vertex_3_2, GL_VERTEX_SHADER);
@@ -182,33 +176,22 @@ class wayfire_cube : public wf::plugin_interface_t
             tes = OpenGL::compile_shader(cube_tes_3_2, GL_TESS_EVALUATION_SHADER);
             gss = OpenGL::compile_shader(cube_geometry_3_2, GL_GEOMETRY_SHADER);
 
-            GL_CALL(glAttachShader(program.id, vss));
-            GL_CALL(glAttachShader(program.id, tcs));
-            GL_CALL(glAttachShader(program.id, tes));
-            GL_CALL(glAttachShader(program.id, gss));
-            GL_CALL(glAttachShader(program.id, fss));
+            GL_CALL(glAttachShader(id, vss));
+            GL_CALL(glAttachShader(id, tcs));
+            GL_CALL(glAttachShader(id, tes));
+            GL_CALL(glAttachShader(id, gss));
+            GL_CALL(glAttachShader(id, fss));
 
-            GL_CALL(glLinkProgram(program.id));
-            GL_CALL(glUseProgram(program.id));
+            GL_CALL(glLinkProgram(id));
+            GL_CALL(glUseProgram(id));
 
             GL_CALL(glDeleteShader(vss));
             GL_CALL(glDeleteShader(fss));
             GL_CALL(glDeleteShader(tcs));
             GL_CALL(glDeleteShader(tes));
             GL_CALL(glDeleteShader(gss));
+            program.set_simple(id);
 #endif
-        }
-
-        program.vpID = GL_CALL(glGetUniformLocation(program.id, "VP"));
-        program.uvID = GL_CALL(glGetAttribLocation(program.id, "uvPosition"));
-        program.posID = GL_CALL(glGetAttribLocation(program.id, "position"));
-        program.modelID = GL_CALL(glGetUniformLocation(program.id, "model"));
-
-        if (tessellation_support)
-        {
-            program.defID = GL_CALL(glGetUniformLocation(program.id, "deform"));
-            program.easeID = GL_CALL(glGetUniformLocation(program.id, "ease"));
-            program.lightID = GL_CALL(glGetUniformLocation(program.id, "light"));
         }
 
         auto wsize = output->workspace->get_workspace_grid_size();
@@ -449,7 +432,7 @@ class wayfire_cube : public wf::plugin_interface_t
             GL_CALL(glBindTexture(GL_TEXTURE_2D, streams[index].buffer.tex));
 
             auto model = calculate_model_matrix(i, fb_transform);
-            GL_CALL(glUniformMatrix4fv(program.modelID, 1, GL_FALSE, &model[0][0]));
+            program.uniformMatrix4f("model", model);
 
             if (tessellation_support) {
 #ifdef USE_GLES32
@@ -474,8 +457,7 @@ class wayfire_cube : public wf::plugin_interface_t
         }
 
         update_workspace_streams();
-
-        if (program.id == (uint32_t)-1)
+        if (program.get_program_id(wf::TEXTURE_TYPE_RGBA) == 0)
             load_program();
 
         OpenGL::render_begin(dest);
@@ -488,7 +470,7 @@ class wayfire_cube : public wf::plugin_interface_t
         auto vp = calculate_vp_matrix(dest);
 
         OpenGL::render_begin(dest);
-        GL_CALL(glUseProgram(program.id));
+        program.use(wf::TEXTURE_TYPE_RGBA);
         GL_CALL(glEnable(GL_DEPTH_TEST));
         GL_CALL(glDepthFunc(GL_LESS));
 
@@ -506,19 +488,15 @@ class wayfire_cube : public wf::plugin_interface_t
             0.0f, 0.0f
         };
 
-        GL_CALL(glVertexAttribPointer(program.posID, 2, GL_FLOAT, GL_FALSE, 0, vertexData));
-        GL_CALL(glVertexAttribPointer(program.uvID, 2, GL_FLOAT, GL_FALSE, 0, coordData));
-
-        GL_CALL(glEnableVertexAttribArray(program.posID));
-        GL_CALL(glEnableVertexAttribArray(program.uvID));
-
-        GL_CALL(glUniformMatrix4fv(program.vpID, 1, GL_FALSE, &vp[0][0]));
+        program.attrib_pointer("position", 2, 0, vertexData);
+        program.attrib_pointer("uvPosition", 2, 0, coordData);
+        program.uniformMatrix4f("VP", vp);
         if (tessellation_support)
         {
-            GL_CALL(glUniform1i(program.defID, use_deform));
-            GL_CALL(glUniform1i(program.lightID, use_light));
-            GL_CALL(glUniform1f(program.easeID,
-                    animation.cube_animation.ease_deformation));
+            program.uniform1i("deform", use_deform);
+            program.uniform1i("light", use_light);
+            program.uniform1f("ease",
+                animation.cube_animation.ease_deformation);
         }
 
         /* We render the cube in two stages, based on winding.
@@ -531,9 +509,7 @@ class wayfire_cube : public wf::plugin_interface_t
         GL_CALL(glDisable(GL_CULL_FACE));
 
         GL_CALL(glDisable(GL_DEPTH_TEST));
-        GL_CALL(glUseProgram(0));
-        GL_CALL(glDisableVertexAttribArray(program.posID));
-        GL_CALL(glDisableVertexAttribArray(program.uvID));
+        program.deactivate();
         OpenGL::render_end();
 
         update_view_matrix();
@@ -599,6 +575,7 @@ class wayfire_cube : public wf::plugin_interface_t
         OpenGL::render_begin();
         for (size_t i = 0; i < streams.size(); i++)
             streams[i].buffer.release();
+        program.free_resources();
         OpenGL::render_end();
 
         output->rem_binding(&activate_binding);

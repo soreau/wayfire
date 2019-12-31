@@ -16,8 +16,8 @@ class wf_cube_background_cubemap : public wf_cube_background_base
     void reload_texture();
     void create_program();
 
-    GLuint program = -1, tex = -1;
-    GLuint matrixID, posID;
+    OpenGL::program_t program;
+    GLuint tex = -1;
 
     std::string last_background_image;
     wf::option_wrapper_t<std::string> background_image{"cube/cubemap_image"};

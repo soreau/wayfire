@@ -40,18 +40,9 @@ class wayfire_invert_screen : public wf::plugin_interface_t
     wf::activator_callback toggle_cb;
 
     bool active = false;
-    GLuint program, posID, uvID;
+    OpenGL::program_t program;
 
   public:
-    void load_program()
-    {
-        OpenGL::render_begin();
-        program = OpenGL::compile_program(vertex_shader, fragment_shader);
-        posID = GL_CALL(glGetAttribLocation(program, "position"));
-        uvID  = GL_CALL(glGetAttribLocation(program, "uvPosition"));
-        OpenGL::render_end();
-    }
-
     void init() override
     {
         wf::option_wrapper_t<wf::activatorbinding_t> toggle_key{"invert/toggle"};
@@ -82,7 +73,11 @@ class wayfire_invert_screen : public wf::plugin_interface_t
             return true;
         };
 
-        load_program();
+        OpenGL::render_begin();
+        program.set_simple(
+            OpenGL::compile_program(vertex_shader, fragment_shader));
+        OpenGL::render_end();
+
         output->add_activator(toggle_key, &toggle_cb);
     }
 
@@ -105,26 +100,19 @@ class wayfire_invert_screen : public wf::plugin_interface_t
 
         OpenGL::render_begin(destination);
 
-        GL_CALL(glUseProgram(program));
+        program.use(wf::TEXTURE_TYPE_RGBA);
         GL_CALL(glBindTexture(GL_TEXTURE_2D, source.tex));
         GL_CALL(glActiveTexture(GL_TEXTURE0));
 
-        GL_CALL(glVertexAttribPointer(posID, 2, GL_FLOAT, GL_FALSE, 0, vertexData));
-        GL_CALL(glEnableVertexAttribArray(posID));
-
-        GL_CALL(glVertexAttribPointer(uvID, 2, GL_FLOAT, GL_FALSE, 0, coordData));
-        GL_CALL(glEnableVertexAttribArray(uvID));
+        program.attrib_pointer("position", 2, 0, vertexData);
+        program.attrib_pointer("uvPosition", 2, 0, coordData);
 
         GL_CALL(glDisable(GL_BLEND));
         GL_CALL(glDrawArrays (GL_TRIANGLE_FAN, 0, 4));
-
         GL_CALL(glEnable(GL_BLEND));
-
-        GL_CALL(glDisableVertexAttribArray(posID));
-        GL_CALL(glDisableVertexAttribArray(uvID));
         GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
-        GL_CALL(glUseProgram(0));
 
+        program.deactivate();
         OpenGL::render_end();
     }
 
@@ -134,7 +122,7 @@ class wayfire_invert_screen : public wf::plugin_interface_t
             output->render->rem_post(&hook);
 
         OpenGL::render_begin();
-        GL_CALL(glDeleteProgram(program));
+        program.free_resources();
         OpenGL::render_end();
 
         output->rem_binding(&toggle_cb);

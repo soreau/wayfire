@@ -76,14 +76,7 @@ class ParticleSystem
         static constexpr int center_per_particle = 2;
         std::vector<float> center;
 
-
-        struct {
-            GLuint id;
-            GLuint radius, position, center, color;
-            GLuint smoothing;
-            GLuint matrix;
-        } program;
-
+        OpenGL::program_t program;
         void exec_worker_threads(std::function<void(int, int)> spawn_worker);
         void update_worker(float time, int start, int end);
         void create_program();

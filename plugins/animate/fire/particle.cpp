@@ -47,7 +47,7 @@ ParticleSystem::ParticleSystem(int particles, ParticleIniter init_func)
 ParticleSystem::~ParticleSystem()
 {
     OpenGL::render_begin();
-    GL_CALL(glDeleteProgram(program.id));
+    program.free_resources();
     OpenGL::render_end();
 }
 
@@ -162,24 +162,14 @@ void ParticleSystem::create_program()
 {
     /* Just load the proper context, viewport doesn't matter */
     OpenGL::render_begin();
-
-    program.id = OpenGL::compile_program(particle_vert_source,
-        particle_frag_source);
-
-    program.radius    = GL_CALL(glGetAttribLocation(program.id, "radius"));
-    program.position  = GL_CALL(glGetAttribLocation(program.id, "position"));
-    program.center    = GL_CALL(glGetAttribLocation(program.id, "center"));
-    program.color     = GL_CALL(glGetAttribLocation(program.id, "color"));
-    program.matrix    = GL_CALL(glGetUniformLocation(program.id, "matrix"));
-    program.smoothing = GL_CALL(glGetUniformLocation(program.id, "smoothing"));
-
+    program.set_simple(OpenGL::compile_program(particle_vert_source,
+        particle_frag_source));
     OpenGL::render_end();
 }
 
 void ParticleSystem::render(glm::mat4 matrix)
 {
-    GL_CALL(glUseProgram(program.id));
-
+    program.use(wf::TEXTURE_TYPE_RGBA);
     static float vertex_data[] = {
         -1, -1,
          1, -1,
@@ -187,62 +177,37 @@ void ParticleSystem::render(glm::mat4 matrix)
         -1,  1
     };
 
-    // position
-    GL_CALL(glEnableVertexAttribArray(program.position));
-    GL_CALL(glVertexAttribPointer(program.position, 2, GL_FLOAT,
-                                  false, 0, vertex_data));
-    GL_CALL(glVertexAttribDivisor(program.position, 0));
+    program.attrib_pointer("position", 2, 0, vertex_data);
+    program.attrib_divisor("position", 0);
 
-    // particle radius
-    GL_CALL(glEnableVertexAttribArray(program.radius));
-    GL_CALL(glVertexAttribPointer(program.radius, 1, GL_FLOAT,
-                                  false, 0, radius.data()));
-    GL_CALL(glVertexAttribDivisor(program.radius, 1));;
+    program.attrib_pointer("radius", 1, 0, radius.data());
+    program.attrib_divisor("radius", 1);
 
-    // particle center (offset)
-    GL_CALL(glEnableVertexAttribArray(program.center));
-    GL_CALL(glVertexAttribPointer(program.center, 2, GL_FLOAT,
-                                  false, 0, center.data()));
-    GL_CALL(glVertexAttribDivisor(program.center, 1));
+    program.attrib_pointer("center", 2, 0, center.data());
+    program.attrib_divisor("center", 1);
 
     // matrix
-    GL_CALL(glUniformMatrix4fv(program.matrix, 1, false, &matrix[0][0]));
-
-    GL_CALL(glEnableVertexAttribArray(program.color));
-    GL_CALL(glVertexAttribDivisor(program.color, 1));
+    program.uniformMatrix4f("matrix", matrix);
 
     /* Darken the background */
-    GL_CALL(glVertexAttribPointer(program.color, 4, GL_FLOAT,
-                                  false, 0, dark_color.data()));
+    program.attrib_pointer("color", 4, 0, dark_color.data());
+    program.attrib_divisor("color", 1);
 
     GL_CALL(glEnable(GL_BLEND));
     GL_CALL(glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA));
-    GL_CALL(glUniform1f(program.smoothing, 0.7f));
+    program.uniform1f("smoothing", 0.7);
+
     // TODO: optimize shaders for this case
     GL_CALL(glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, ps.size()));
 
     // particle color
-    GL_CALL(glVertexAttribPointer(program.color, 4, GL_FLOAT,
-                                  false, 0, color.data()));
+    program.attrib_pointer("color", 4, 0, color.data());
     GL_CALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE));
-    GL_CALL(glUniform1f(program.smoothing, 0.5f));
+    program.uniform1f("smoothing", 0.5);
     GL_CALL(glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, ps.size()));
 
     GL_CALL(glDisable(GL_BLEND));
-
-    // reset vertex attrib state, other renderers may need this
-    GL_CALL(glVertexAttribDivisor(program.position, 0));
-    GL_CALL(glVertexAttribDivisor(program.radius, 0));;
-    GL_CALL(glVertexAttribDivisor(program.center, 0));
-    GL_CALL(glVertexAttribDivisor(program.color, 0));
-
     GL_CALL(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
-    GL_CALL(glUseProgram(0));
 
-    GL_CALL(glDisableVertexAttribArray(program.position));
-    GL_CALL(glDisableVertexAttribArray(program.radius));
-    GL_CALL(glDisableVertexAttribArray(program.center));
-    GL_CALL(glDisableVertexAttribArray(program.color));
+    program.deactivate();
 }
-
-

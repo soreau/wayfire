@@ -106,23 +106,7 @@ class wayfire_fisheye : public wf::plugin_interface_t
     wf::option_wrapper_t<double> radius{"fisheye/radius"};
     wf::option_wrapper_t<double> zoom{"fisheye/zoom"};
 
-    GLuint program, posID, mouseID, resID, radiusID, zoomID;
-
-    void load_program()
-    {
-        OpenGL::render_begin();
-        program = OpenGL::compile_program(
-            vertex_shader, fragment_shader);
-
-        posID = GL_CALL(glGetAttribLocation(program, "position"));
-        mouseID  = GL_CALL(glGetUniformLocation(program, "u_mouse"));
-        resID  = GL_CALL(glGetUniformLocation(program, "u_resolution"));
-        radiusID  = GL_CALL(glGetUniformLocation(program, "u_radius"));
-        zoomID  = GL_CALL(glGetUniformLocation(program, "u_zoom"));
-
-        OpenGL::render_end();
-    }
-
+    OpenGL::program_t program;
     public:
         void init() override
         {
@@ -140,7 +124,10 @@ class wayfire_fisheye : public wf::plugin_interface_t
                     this->progression.animate(zoom);
             });
 
-            load_program();
+            OpenGL::render_begin();
+            program.set_simple(
+                OpenGL::compile_program(vertex_shader, fragment_shader));
+            OpenGL::render_end();
         }
 
         wf::activator_callback toggle_cb = [=] (wf::activator_source_t, uint32_t)
@@ -185,23 +172,21 @@ class wayfire_fisheye : public wf::plugin_interface_t
             };
 
             OpenGL::render_begin(dest);
-
-            GL_CALL(glUseProgram(program));
+            program.use(wf::TEXTURE_TYPE_RGBA);
             GL_CALL(glBindTexture(GL_TEXTURE_2D, source.tex));
             GL_CALL(glActiveTexture(GL_TEXTURE0));
 
-            GL_CALL(glUniform2f(mouseID, oc.x, oc.y));
-            GL_CALL(glUniform2f(resID, dest.viewport_width, dest.viewport_height));
-            GL_CALL(glUniform1f(radiusID, radius));
-            GL_CALL(glUniform1f(zoomID, progression));
+            program.uniform2f("u_mouse", oc.x, oc.y);
+            program.uniform2f("u_resolution", dest.viewport_width, dest.viewport_height);
+            program.uniform1f("u_radius", radius);
+            program.uniform1f("u_zoom", progression);
 
-            GL_CALL(glVertexAttribPointer(posID, 2, GL_FLOAT, GL_FALSE, 0, vertexData));
-            GL_CALL(glEnableVertexAttribArray(posID));
+            program.attrib_pointer("position", 2, 0, vertexData);
 
             GL_CALL(glDrawArrays (GL_TRIANGLE_FAN, 0, 4));
-            GL_CALL(glDisableVertexAttribArray(posID));
             GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
 
+            program.deactivate();
             OpenGL::render_end();
 
             if (!active && !progression.running())
@@ -221,7 +206,7 @@ class wayfire_fisheye : public wf::plugin_interface_t
                 finalize();
 
             OpenGL::render_begin();
-            GL_CALL(glDeleteProgram(program));
+            program.free_resources();
             OpenGL::render_end();
 
             output->rem_binding(&toggle_cb);

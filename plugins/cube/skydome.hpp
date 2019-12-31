@@ -21,8 +21,8 @@ class wf_cube_background_skydome : public wf_cube_background_base
     void fill_vertices();
     void reload_texture();
 
-    GLuint program = -1, tex = -1;
-    GLuint posID, uvID, modelID, vpID;
+    OpenGL::program_t program;
+    GLuint tex = -1;
 
     std::vector<GLfloat> vertices;
     std::vector<GLfloat> coords;
