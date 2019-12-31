@@ -63,26 +63,15 @@ static const wf_blur_default_option_values kawase_defaults = {
 
 class wf_kawase_blur : public wf_blur_base
 {
-    GLuint posID[2], offsetID[2], halfpixelID[2];
-
-    public:
-    void get_id_locations(int i)
-    {
-        posID[i]    = GL_CALL(glGetAttribLocation(program[i], "position"));
-        offsetID[i] = GL_CALL(glGetUniformLocation(program[i], "offset"));
-        halfpixelID[i]   = GL_CALL(glGetUniformLocation(program[i], "halfpixel"));
-    }
-
+  public:
     wf_kawase_blur(wf::output_t *output)
         : wf_blur_base(output, kawase_defaults)
     {
         OpenGL::render_begin();
-        program[0] = OpenGL::compile_program(kawase_vertex_shader,
-            kawase_fragment_shader_down);
-        program[1] = OpenGL::compile_program(kawase_vertex_shader,
-            kawase_fragment_shader_down_up);
-        get_id_locations(0);
-        get_id_locations(1);
+        program[0].set_simple(OpenGL::compile_program(kawase_vertex_shader,
+            kawase_fragment_shader_down));
+        program[1].set_simple(OpenGL::compile_program(kawase_vertex_shader,
+            kawase_fragment_shader_down_up));
         OpenGL::render_end();
     }
 
@@ -101,39 +90,38 @@ class wf_kawase_blur : public wf_blur_base
         };
 
         OpenGL::render_begin();
+        program[0].use(wf::TEXTURE_TYPE_RGBA);
 
         /* Downsample */
-        GL_CALL(glUseProgram(program[0]));
-        GL_CALL(glVertexAttribPointer(posID[0], 2, GL_FLOAT, GL_FALSE, 0, vertexData));
-        GL_CALL(glEnableVertexAttribArray(posID[0]));
+        program[0].attrib_pointer("position", 2, 0, vertexData);
         /* Disable blending, because we may have transparent background, which
          * we want to render on uncleared framebuffer */
         GL_CALL(glDisable(GL_BLEND));
+        program[0].uniform1f("offset", offset);
 
-        GL_CALL(glUniform1f(offsetID[0], offset));
-
-        for (int i = 0; i < iterations; i++){
+        for (int i = 0; i < iterations; i++)
+        {
             sampleWidth = width / (1 << i);
             sampleHeight = height / (1 << i);
 
-            GL_CALL(glUniform2f(halfpixelID[0], 0.5f / sampleWidth, 0.5f / sampleHeight));
+            program[0].uniform2f("halfpixel",
+                0.5f / sampleWidth, 0.5f / sampleHeight);
             render_iteration(fb[i % 2], fb[1 - i % 2], sampleWidth, sampleHeight);
         }
 
-        GL_CALL(glDisableVertexAttribArray(posID[0]));
+        program[0].deactivate();
 
         /* Upsample */
-        GL_CALL(glUseProgram(program[1]));
-        GL_CALL(glVertexAttribPointer(posID[1], 2, GL_FLOAT, GL_FALSE, 0, vertexData));
-        GL_CALL(glEnableVertexAttribArray(posID[1]));
-
-        GL_CALL(glUniform1f(offsetID[1], offset));
-
-        for (int i = iterations - 1; i >= 0; i--) {
+        program[1].use(wf::TEXTURE_TYPE_RGBA);
+        program[1].attrib_pointer("position", 2, 0, vertexData);
+        program[1].uniform1f("offset", offset);
+        for (int i = iterations - 1; i >= 0; i--)
+        {
             sampleWidth = width / (1 << i);
             sampleHeight = height / (1 << i);
 
-            GL_CALL(glUniform2f(halfpixelID[1], 0.5f / sampleWidth, 0.5f / sampleHeight));
+            program[1].uniform2f("halfpixel",
+                0.5f / sampleWidth, 0.5f / sampleHeight);
             render_iteration(fb[1 - i % 2], fb[i % 2], sampleWidth, sampleHeight);
         }
 
@@ -141,9 +129,8 @@ class wf_kawase_blur : public wf_blur_base
         GL_CALL(glEnable(GL_BLEND));
         GL_CALL(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
 
-        GL_CALL(glUseProgram(0));
+        program[1].deactivate();
         GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
-        GL_CALL(glDisableVertexAttribArray(posID[1]));
         OpenGL::render_end();
 
         return 0;

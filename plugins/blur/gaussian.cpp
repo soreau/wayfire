@@ -88,25 +88,14 @@ static const wf_blur_default_option_values gaussian_defaults = {
 
 class wf_gaussian_blur : public wf_blur_base
 {
-    GLuint posID[2], sizeID[2], offsetID[2];
-
-    public:
-    void get_id_locations(int i)
-    {
-        posID[i]    = GL_CALL(glGetAttribLocation(program[i], "position"));
-        sizeID[i]   = GL_CALL(glGetUniformLocation(program[i], "size"));
-        offsetID[i] = GL_CALL(glGetUniformLocation(program[i], "offset"));
-    }
-
+  public:
     wf_gaussian_blur(wf::output_t *output) : wf_blur_base(output, gaussian_defaults)
     {
         OpenGL::render_begin();
-        program[0] = OpenGL::compile_program(
-            gaussian_vertex_shader, gaussian_fragment_shader_horz);
-        program[1] = OpenGL::compile_program(
-            gaussian_vertex_shader, gaussian_fragment_shader_vert);
-        get_id_locations(0);
-        get_id_locations(1);
+        program[0].set_simple(OpenGL::compile_program(
+            gaussian_vertex_shader, gaussian_fragment_shader_horz));
+        program[1].set_simple(OpenGL::compile_program(
+            gaussian_vertex_shader, gaussian_fragment_shader_vert));
         OpenGL::render_end();
     }
 
@@ -120,18 +109,16 @@ class wf_gaussian_blur : public wf_blur_base
             -1.0f,  1.0f
         };
 
-        GL_CALL(glUseProgram(program[i]));
-        GL_CALL(glUniform2f(sizeID[i], width, height));
-        GL_CALL(glUniform1f(offsetID[i], offset));
-        GL_CALL(glVertexAttribPointer(posID[i], 2, GL_FLOAT, GL_FALSE, 0, vertexData));
+        program[i].use(wf::TEXTURE_TYPE_RGBA);
+        program[i].uniform2f("size", width, height);
+        program[i].uniform1f("offset", offset);
+        program[i].attrib_pointer("position", 2, 0, vertexData);
     }
 
     void blur(int i, int width, int height)
     {
-        GL_CALL(glUseProgram(program[i]));
-        GL_CALL(glEnableVertexAttribArray(posID[i]));
+        program[i].use(wf::TEXTURE_TYPE_RGBA);
         render_iteration(fb[i], fb[!i], width, height);
-        GL_CALL(glDisableVertexAttribArray(posID[i]));
     }
 
     int blur_fb0(int width, int height) override
@@ -158,10 +145,9 @@ class wf_gaussian_blur : public wf_blur_base
         GL_CALL(glEnable(GL_BLEND));
         GL_CALL(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
 
-        GL_CALL(glUseProgram(0));
         GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
+        program[1].deactivate();
         OpenGL::render_end();
-
         return 0;
     }
 

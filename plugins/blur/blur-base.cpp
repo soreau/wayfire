@@ -21,9 +21,10 @@ void main() {
 
 static const char* blur_blend_fragment_shader = R"(
 #version 100
+@builtin_ext@
 precision mediump float;
 
-uniform sampler2D window_texture;
+@builtin@
 uniform sampler2D bg_texture;
 
 varying mediump vec2 uvpos[2];
@@ -31,7 +32,7 @@ varying mediump vec2 uvpos[2];
 void main()
 {
     vec4 bp = texture2D(bg_texture, uvpos[0]);
-    vec4 wp = texture2D(window_texture, uvpos[1]);
+    vec4 wp = get_pixel(uvpos[1]);
     vec4 c = clamp(4.0 * wp.a, 0.0, 1.0) * bp;
     gl_FragColor = wp + (1.0 - wp.a) * c;
 })";
@@ -52,15 +53,7 @@ wf_blur_base::wf_blur_base(wf::output_t *output,
     this->iterations_opt.set_callback(options_changed);
 
     OpenGL::render_begin();
-    blend_program = OpenGL::compile_program(
-        blur_blend_vertex_shader, blur_blend_fragment_shader);
-
-    blend_posID    = GL_CALL(glGetAttribLocation(blend_program, "position"));
-
-    blend_mvpID    = GL_CALL(glGetUniformLocation(blend_program, "mvp"));
-    blend_texID[0] = GL_CALL(glGetUniformLocation(blend_program, "window_texture"));
-    blend_texID[1] = GL_CALL(glGetUniformLocation(blend_program, "bg_texture"));
-
+    blend_program.compile(blur_blend_vertex_shader, blur_blend_fragment_shader);
     OpenGL::render_end();
 }
 
@@ -69,9 +62,9 @@ wf_blur_base::~wf_blur_base()
     OpenGL::render_begin();
     fb[0].release();
     fb[1].release();
-    GL_CALL(glDeleteProgram(program[0]));
-    GL_CALL(glDeleteProgram(program[1]));
-    GL_CALL(glDeleteProgram(blend_program));
+    program[0].free_resources();
+    program[1].free_resources();
+    blend_program.free_resources();
     OpenGL::render_end();
 }
 
@@ -205,10 +198,9 @@ void wf_blur_base::render(uint32_t src_tex, wlr_box src_box, wlr_box scissor_box
     view_box.y -= fb_geom.y;
 
     OpenGL::render_begin(target_fb);
+    blend_program.use(wf::TEXTURE_TYPE_RGBA);
 
     /* Use shader and enable vertex and texcoord data */
-    GL_CALL(glUseProgram(blend_program));
-    GL_CALL(glEnableVertexAttribArray(blend_posID));
     static const float vertexData[] = {
         -1.0f, -1.0f,
          1.0f, -1.0f,
@@ -216,15 +208,14 @@ void wf_blur_base::render(uint32_t src_tex, wlr_box src_box, wlr_box scissor_box
         -1.0f,  1.0f
     };
 
-    GL_CALL(glVertexAttribPointer(blend_posID, 2, GL_FLOAT, GL_FALSE, 0, vertexData));
+    blend_program.attrib_pointer("position", 2, 0, vertexData);
 
     /* Blend blurred background with window texture src_tex */
-    GL_CALL(glUniformMatrix4fv(blend_mvpID, 1, GL_FALSE, &glm::inverse(target_fb.transform)[0][0]));
-    GL_CALL(glUniform1i(blend_texID[0], 0));
-    GL_CALL(glUniform1i(blend_texID[1], 1));
+    blend_program.uniformMatrix4f("mvp", glm::inverse(target_fb.transform));
+    /* XXX: core should give us the number of texture units used */
+    blend_program.uniform1i("bg_texture", 1);
 
-    GL_CALL(glActiveTexture(GL_TEXTURE0 + 0));
-    GL_CALL(glBindTexture(GL_TEXTURE_2D, src_tex));
+    blend_program.set_active_texture(src_tex);
     GL_CALL(glActiveTexture(GL_TEXTURE0 + 1));
     GL_CALL(glBindTexture(GL_TEXTURE_2D, fb[1].tex));
     /* Render it to target_fb */
@@ -236,13 +227,11 @@ void wf_blur_base::render(uint32_t src_tex, wlr_box src_box, wlr_box scissor_box
     GL_CALL(glDrawArrays(GL_TRIANGLE_FAN, 0, 4));
 
     /* Disable stuff */
-    GL_CALL(glUseProgram(0));
     /* GL_CALL(glActiveTexture(GL_TEXTURE0 + 1)); */
     GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
     GL_CALL(glActiveTexture(GL_TEXTURE0));
     GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
-    GL_CALL(glDisableVertexAttribArray(blend_posID));
-
+    blend_program.deactivate();
     OpenGL::render_end();
 }
 

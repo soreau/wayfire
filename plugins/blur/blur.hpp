@@ -97,11 +97,10 @@ class wf_blur_base
      * destructor */
     wf::framebuffer_base_t fb[2];
     /* the program created by the given algorithm, cleaned up in base destructor */
-    GLuint program[2];
+    OpenGL::program_t program[2];
     /* the program used by wf_blur_base to combine the blurred, unblurred and
      * view texture */
-    GLuint blend_program;
-    GLuint blend_posID, blend_mvpID, blend_texID[2];
+    OpenGL::program_t blend_program;
 
     /* used to get individual algorithm options from config
      * should be set by the constructor */

@@ -31,18 +31,19 @@ void main() {
 
 const char *frag_source = R"(
 #version 100
+@builtin_ext@
+
 varying highp vec2 uvpos;
-uniform sampler2D smp;
+@builtin@
 
 void main()
 {
-    gl_FragColor = texture2D(smp, uvpos);
+    gl_FragColor = get_pixel(uvpos);
 }
 )";
 }
 
-GLuint program, uvID, posID, mvpID;
-
+OpenGL::program_t program;
 int times_loaded = 0;
 
 void load_program()
@@ -51,10 +52,7 @@ void load_program()
         return;
 
     OpenGL::render_begin();
-    program = OpenGL::compile_program(vertex_source, frag_source);
-    uvID  = GL_CALL(glGetAttribLocation(program, "uvPosition"));
-    posID = GL_CALL(glGetAttribLocation(program, "position"));
-    mvpID = GL_CALL(glGetUniformLocation(program, "MVP"));
+    program.compile(vertex_source, frag_source);
     OpenGL::render_end();
 }
 
@@ -63,7 +61,7 @@ void destroy_program()
     if (--times_loaded == 0)
     {
         OpenGL::render_begin();
-        GL_CALL(glDeleteProgram(program));
+        program.free_resources();
         OpenGL::render_end();
     }
 }
@@ -125,30 +123,20 @@ void prepare_geometry(wobbly_surface *model, wf::geometry_t src_box,
 /* Requires bound opengl context */
 void render_triangles(GLuint tex, glm::mat4 mat, float *pos, float *uv, int cnt)
 {
-    GL_CALL(glUseProgram(program));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    program.use(wf::TEXTURE_TYPE_RGBA);
+    program.set_active_texture(tex);
 
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    GL_CALL(glBindTexture(GL_TEXTURE_2D, tex));
-    GL_CALL(glActiveTexture(GL_TEXTURE0));
+    program.attrib_pointer("position", 2, 0, pos);
+    program.attrib_pointer("uvPosition", 2, 0, uv);
+    program.uniformMatrix4f("MVP", mat);
 
-    GL_CALL(glVertexAttribPointer(posID, 2, GL_FLOAT, GL_FALSE, 0, pos));
-    GL_CALL(glEnableVertexAttribArray(posID));
-
-    GL_CALL(glVertexAttribPointer(uvID, 2, GL_FLOAT, GL_FALSE, 0, uv));
-    GL_CALL(glEnableVertexAttribArray(uvID));
-
-    GL_CALL(glUniformMatrix4fv(mvpID, 1, GL_FALSE, &mat[0][0]));
     GL_CALL(glEnable(GL_BLEND));
     GL_CALL(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
 
     GL_CALL(glDrawArrays (GL_TRIANGLES, 0, 3 * cnt));
     GL_CALL(glDisable(GL_BLEND));
 
-    GL_CALL(glDisableVertexAttribArray(uvID));
-    GL_CALL(glDisableVertexAttribArray(posID));
+    program.deactivate();
 }
 };
 
