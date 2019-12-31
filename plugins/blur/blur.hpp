@@ -135,11 +135,11 @@ class wf_blur_base
     virtual int calculate_blur_radius();
     void damage_all_workspaces();
 
-    virtual void pre_render(uint32_t src_tex, wlr_box src_box,
+    virtual void pre_render(wf::texture_t src_tex, wlr_box src_box,
         const wf::region_t& damage, const wf::framebuffer_t& target_fb);
 
-    virtual void render(uint32_t src_tex, wlr_box src_box, wlr_box scissor_box,
-        const wf::framebuffer_t& target_fb);
+    virtual void render(wf::texture_t src_tex, wlr_box src_box,
+        wlr_box scissor_box, const wf::framebuffer_t& target_fb);
 };
 
 std::unique_ptr<wf_blur_base> create_box_blur(wf::output_t *output);

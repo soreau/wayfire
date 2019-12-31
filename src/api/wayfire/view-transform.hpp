@@ -52,11 +52,10 @@ class view_transformer_t
          * to it and then call render_box(). Plugins can override either of the
          * functions.
          * */
-
-        virtual void render_with_damage(uint32_t src_tex, wlr_box src_box,
+        virtual void render_with_damage(wf::texture_t src_tex, wlr_box src_box,
             const wf::region_t& damage, const wf::framebuffer_t& target_fb);
 
-        virtual void render_box(uint32_t src_tex, wlr_box src_box,
+        virtual void render_box(wf::texture_t src_tex, wlr_box src_box,
             wlr_box scissor_box, const wf::framebuffer_t& target_fb) {}
 
         virtual ~view_transformer_t() {}
@@ -82,7 +81,7 @@ class view_2D : public view_transformer_t
         virtual wf::pointf_t local_to_transformed_point(wf::geometry_t view, wf::pointf_t point);
         virtual wf::pointf_t transformed_to_local_point(wf::geometry_t view, wf::pointf_t point);
 
-        virtual void render_box(uint32_t src_tex, wlr_box src_box,
+        virtual void render_box(wf::texture_t src_tex, wlr_box src_box,
             wlr_box scissor_box, const wf::framebuffer_t& target_fb);
 };
 
@@ -106,7 +105,7 @@ class view_3D : public view_transformer_t
         virtual wf::pointf_t local_to_transformed_point(wf::geometry_t view, wf::pointf_t point);
         virtual wf::pointf_t transformed_to_local_point(wf::geometry_t view, wf::pointf_t point);
 
-        virtual void render_box(uint32_t src_tex, wlr_box src_box,
+        virtual void render_box(wf::texture_t src_tex, wlr_box src_box,
             wlr_box scissor_box, const wf::framebuffer_t& target_fb);
 
         static const float fov; // PI / 8

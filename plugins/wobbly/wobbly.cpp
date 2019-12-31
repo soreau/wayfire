@@ -121,9 +121,9 @@ void prepare_geometry(wobbly_surface *model, wf::geometry_t src_box,
 }
 
 /* Requires bound opengl context */
-void render_triangles(GLuint tex, glm::mat4 mat, float *pos, float *uv, int cnt)
+void render_triangles(wf::texture_t tex, glm::mat4 mat, float *pos, float *uv, int cnt)
 {
-    program.use(wf::TEXTURE_TYPE_RGBA);
+    program.use(tex.type);
     program.set_active_texture(tex);
 
     program.attrib_pointer("position", 2, 0, pos);
@@ -605,7 +605,7 @@ class wf_wobbly : public wf::view_transformer_t
             destroy_self();
     }
 
-    virtual void render_box(uint32_t src_tex, wlr_box src_box,
+    virtual void render_box(wf::texture_t src_tex, wlr_box src_box,
         wlr_box scissor_box, const wf::framebuffer_t& target_fb)
     {
         OpenGL::render_begin(target_fb);

@@ -133,7 +133,7 @@ wlr_box wf_blur_base::copy_region(wf::framebuffer_base_t& result,
     return subbox;
 }
 
-void wf_blur_base::pre_render(uint32_t src_tex, wlr_box src_box,
+void wf_blur_base::pre_render(wf::texture_t src_tex, wlr_box src_box,
     const wf::region_t& damage, const wf::framebuffer_t& target_fb)
 {
     int degrade = degrade_opt;
@@ -189,8 +189,8 @@ void wf_blur_base::pre_render(uint32_t src_tex, wlr_box src_box,
     OpenGL::render_end();
 }
 
-void wf_blur_base::render(uint32_t src_tex, wlr_box src_box, wlr_box scissor_box,
-    const wf::framebuffer_t& target_fb)
+void wf_blur_base::render(wf::texture_t src_tex, wlr_box src_box,
+    wlr_box scissor_box, const wf::framebuffer_t& target_fb)
 {
     wlr_box fb_geom = target_fb.framebuffer_box_from_geometry_box(target_fb.geometry);
     auto view_box = target_fb.framebuffer_box_from_geometry_box(src_box);
@@ -198,7 +198,7 @@ void wf_blur_base::render(uint32_t src_tex, wlr_box src_box, wlr_box scissor_box
     view_box.y -= fb_geom.y;
 
     OpenGL::render_begin(target_fb);
-    blend_program.use(wf::TEXTURE_TYPE_RGBA);
+    blend_program.use(src_tex.type);
 
     /* Use shader and enable vertex and texcoord data */
     static const float vertexData[] = {

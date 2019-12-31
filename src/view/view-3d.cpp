@@ -25,7 +25,7 @@ wlr_box wf::view_transformer_t::get_bounding_box(wf::geometry_t view, wlr_box re
     return wlr_box{x1, y1, x2 - x1, y2 - y1};
 }
 
-void wf::view_transformer_t::render_with_damage(uint32_t src_tex, wlr_box src_box,
+void wf::view_transformer_t::render_with_damage(wf::texture_t src_tex, wlr_box src_box,
             const wf::region_t& damage, const wf::framebuffer_t& target_fb)
 {
     for (const auto& rect : damage)
@@ -134,7 +134,7 @@ wf::pointf_t wf::view_2D::transformed_to_local_point(
     return get_absolute_coords_from_relative(view->get_wm_geometry(), {x, y});
 }
 
-void wf::view_2D::render_box(uint32_t src_tex, wlr_box src_box,
+void wf::view_2D::render_box(wf::texture_t src_tex, wlr_box src_box,
     wlr_box scissor_box, const wf::framebuffer_t& fb)
 {
     auto quad = center_geometry(fb.geometry, src_box, get_center(view->get_wm_geometry()));
@@ -210,7 +210,7 @@ wf::pointf_t wf::view_3D::transformed_to_local_point(
         wf::compositor_core_t::invalid_coordinate};
 }
 
-void wf::view_3D::render_box(uint32_t src_tex, wlr_box src_box,
+void wf::view_3D::render_box(wf::texture_t src_tex, wlr_box src_box,
     wlr_box scissor_box, const wf::framebuffer_t& fb)
 {
     auto quad = center_geometry(fb.geometry, src_box, get_center(src_box));

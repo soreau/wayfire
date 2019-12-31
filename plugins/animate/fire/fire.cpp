@@ -40,17 +40,16 @@ class FireTransformer : public wf::view_transformer_t
 
     ~FireTransformer() { }
 
-    virtual wf::pointf_t local_to_transformed_point(wf::geometry_t view, wf::pointf_t point) { return point; }
-    virtual wf::pointf_t transformed_to_local_point(wf::geometry_t view, wf::pointf_t point) { return point; }
+    wf::pointf_t local_to_transformed_point(wf::geometry_t view, wf::pointf_t point) override { return point; }
+    wf::pointf_t transformed_to_local_point(wf::geometry_t view, wf::pointf_t point) override { return point; }
 
     static constexpr int left_border = 50;
     static constexpr int right_border = 50;
     static constexpr int top_border = 100;
     static constexpr int bottom_border = 50;
 
-    uint32_t get_z_order() { return wf::TRANSFORMER_HIGHLEVEL + 1; }
-
-    virtual wlr_box get_bounding_box(wf::geometry_t view, wlr_box region)
+    uint32_t get_z_order() override { return wf::TRANSFORMER_HIGHLEVEL + 1; }
+    wlr_box get_bounding_box(wf::geometry_t view, wlr_box region) override
     {
         last_boundingbox = view;
         ps.resize(particle_count_for_width(last_boundingbox.width));
@@ -89,8 +88,8 @@ class FireTransformer : public wf::view_transformer_t
         p.base_radius = p.radius = random(size * 0.8, size * 1.2);
     }
 
-    virtual void render_box(uint32_t src_tex, wlr_box src_box,
-        wlr_box scissor_box, const wf::framebuffer_t& target_fb)
+    void render_box(wf::texture_t src_tex, wlr_box src_box,
+        wlr_box scissor_box, const wf::framebuffer_t& target_fb) override
     {
         OpenGL::render_begin(target_fb);
         target_fb.scissor(scissor_box);
@@ -105,11 +104,11 @@ class FireTransformer : public wf::view_transformer_t
         };
 
         OpenGL::render_transformed_texture(src_tex, src_geometry, tex_geometry,
-                                           target_fb.get_orthographic_projection(),
-                                           glm::vec4(1.0), TEXTURE_USE_TEX_GEOMETRY);
+            target_fb.get_orthographic_projection(), glm::vec4(1.0),
+            TEXTURE_USE_TEX_GEOMETRY);
 
-        auto translate = glm::translate(glm::mat4(1.0),
-                                        {src_box.x, src_box.y, 0});
+        auto translate =
+            glm::translate(glm::mat4(1.0), {src_box.x, src_box.y, 0});
 
         ps.render(target_fb.get_orthographic_projection() * translate);
         OpenGL::render_end();
