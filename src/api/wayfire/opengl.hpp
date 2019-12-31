@@ -118,50 +118,185 @@ struct framebuffer_t : public framebuffer_base_t
 };
 }
 
+namespace wf
+{
+/** Represents the different types(formats) of textures in Wayfire. */
+enum texture_type_t
+{
+    /* Regular OpenGL texture with 4 channels */
+    TEXTURE_TYPE_RGBA = 0,
+    /* Regular OpenGL texture with 4 channels, but alpha channel should be
+     * discarded. */
+    TEXTURE_TYPE_RGBX = 1,
+    /** An EGLImage, it has been shared via dmabuf */
+    TEXTURE_TYPE_EXTERNAL = 2,
+    /* Invalid */
+    TEXTURE_TYPE_ALL = 3,
+};
+
+struct texture_t
+{
+    /* Texture type */
+    texture_type_t type = TEXTURE_TYPE_RGBA;
+    /* Texture target */
+    GLenum target = GL_TEXTURE_2D;
+    /* Invert Y? */
+    bool invert_y = false;
+
+    /* Actual texture ID */
+    GLuint tex_id;
+
+    /* tex_id will be initialized later */
+    texture_t();
+    texture_t(GLuint tex);
+};
+};
+
 namespace OpenGL
 {
-    /* "Begin" rendering to the given framebuffer and the given viewport.
-     * All rendering operations should happen between render_begin and render_end, because
-     * that's the only time we're guaranteed we have a valid GLES context
-     *
-     * The other functions below assume they are called between render_begin()
-     * and render_end() */
-    void render_begin(); // use if you just want to bind GL context but won't draw
-    void render_begin(const wf::framebuffer_base_t& fb);
-    void render_begin(int32_t viewport_width, int32_t viewport_height, uint32_t fb = 0);
+/* "Begin" rendering to the given framebuffer and the given viewport.
+ * All rendering operations should happen between render_begin and render_end, because
+ * that's the only time we're guaranteed we have a valid GLES context
+ *
+ * The other functions below assume they are called between render_begin()
+ * and render_end() */
+void render_begin(); // use if you just want to bind GL context but won't draw
+void render_begin(const wf::framebuffer_base_t& fb);
+void render_begin(int32_t viewport_width, int32_t viewport_height, uint32_t fb = 0);
 
-    /* Call this to indicate an end of the rendering.
-     * Resets bound framebuffer and scissor box.
-     * render_end() must be called for each render_begin() */
-    void render_end();
+/* Call this to indicate an end of the rendering.
+ * Resets bound framebuffer and scissor box.
+ * render_end() must be called for each render_begin() */
+void render_end();
 
-    /* Clear the currently bound framebuffer with the given color */
-    void clear(wf::color_t color, uint32_t mask = GL_COLOR_BUFFER_BIT);
+/* Clear the currently bound framebuffer with the given color */
+void clear(wf::color_t color, uint32_t mask = GL_COLOR_BUFFER_BIT);
 
-    /* texg arguments are used only when bits has USE_TEX_GEOMETRY
-     * if you don't wish to use them, simply pass {} as argument */
-    void render_transformed_texture(GLuint text,
-                                    const gl_geometry& g,
-                                    const gl_geometry& texg,
-                                    glm::mat4 transform = glm::mat4(1.0),
-                                    glm::vec4 color = glm::vec4(1.f),
-                                    uint32_t bits = 0);
+/* texg arguments are used only when bits has USE_TEX_GEOMETRY
+ * if you don't wish to use them, simply pass {} as argument */
+void render_transformed_texture(wf::texture_t texture,
+    const gl_geometry& g,
+    const gl_geometry& texg,
+    glm::mat4 transform = glm::mat4(1.0),
+    glm::vec4 color = glm::vec4(1.f),
+    uint32_t bits = 0);
 
-    /* Compiles the given shader source */
-    GLuint compile_shader(std::string source, GLuint type);
+/* Compiles the given shader source */
+GLuint compile_shader(std::string source, GLuint type);
 
-    /* Create a very simple gl program from the given shader sources */
-    GLuint compile_program(std::string vertex_source, std::string frag_source);
+/**
+ * Create an OpenGL program from the given shader sources.
+ *
+ * @param vertex_source The source code of the vertex shader.
+ * @param frag_source The source code of the fragment shader.
+ */
+GLuint compile_program(std::string vertex_source, std::string frag_source);
+
+/**
+ * Render a colored rectangle using OpenGL.
+ *
+ * @param box The rectangle geometry.
+ * @param color The color of the rectangle.
+ * @param matrix The matrix to transform the rectangle with.
+ */
+void render_rectangle(wf::geometry_t box, wf::color_t color, glm::mat4 matrix);
+
+/**
+ * An OpenGL program for rendering texture_t.
+ * It contains multiple programs for the different texture types.
+ *
+ * All of the program_t's functions should only be used inside a rendering
+ * block guarded by render_begin/end()
+ */
+class program_t : public noncopyable_t
+{
+  public:
+    program_t();
+
+    /* Does nothing */
+    ~program_t();
 
     /**
-     * Render a colored rectangle using OpenGL.
+     * Compile the program consisting of @vertex_source and @fragment_source.
      *
-     * @param box The rectangle geometry.
-     * @param color The color of the rectangle.
-     * @param matrix The matrix to transform the rectangle with.
+     * Fragment source should contain two special symbols`@builtin@` and
+     * `@builtin_ext@`.They will be replaced by the definitions needed for each
+     * texture type, and will also provide a function `get_pixel(vec2)` to get
+     * the texture pixel at the given position. `@builtin_ext@` has to be put
+     * directly after the OpenGL version declaration, but there are no
+     * restrictions about where to place `@builtin@`.
+     *
+     * The following identifiers should not be defined in the user source:
+     *   _wayfire_texture, _wayfire_y_mult, _wayfire_y_base, get_pixel
      */
-    void render_rectangle(wf::geometry_t box, wf::color_t color, glm::mat4 matrix);
+    void compile(const std::string& vertex_source,
+        const std::string& fragment_source);
 
+    /**
+     * Create a simple program
+     * It will support only the given type.
+     */
+    void set_simple(GLuint program_id,
+        wf::texture_type_t type = wf::TEXTURE_TYPE_RGBA);
+
+    /** Deletes the underlying OpenGL programs */
+    void free_resources();
+
+    /**
+     * Call glUseProgram with the appropriate program for the given texture type.
+     * Raises a runtime exception if the type is not supported by the
+     * view_program_t .
+     */
+    void use(wf::texture_type_t type);
+
+    /** @return The program ID for the given texture type, or 0 on failure */
+    int get_program_id(wf::texture_type_t type);
+
+    /** Set the given uniform for the currently used program. */
+    void uniform1i(const std::string& name, int value);
+    /** Set the given uniform for the currently used program. */
+    void uniform1f(const std::string& name, float value);
+    /** Set the given uniform for the currently used program. */
+    void uniform2f(const std::string& name, float x, float y);
+    /** Set the given uniform for the currently used program. */
+    void uniform4f(const std::string& name, const glm::vec4& value);
+    /** Set the given uniform for the currently used program. */
+    void uniformMatrix4f(const std::string& name, const glm::mat4& value);
+
+    /*
+     * Set the attribute pointer and active the attribute.
+     *
+     * @param attrib The name of the attrib array.
+     * @param size, stride, ptr, type The same as the corresponding arguments of
+     *   glVertexAttribPointer()
+     */
+    void attrib_pointer(const std::string& attrib,
+        int size, int stride, const void *ptr, GLenum type = GL_FLOAT);
+
+    /*
+     * Set the attrib divisor. Analoguous to glVertexAttribDivisor().
+     *
+     * @param attrib The name of the attribute.
+     * @param divisor The divisor value.
+     */
+    void attrib_divisor(const std::string& attrib, int divisor);
+
+    /**
+     * Set the active texture, and modify the builtin Y-inversion uniforms.
+     * Will not work with custom programs.
+     */
+    void set_active_texture(const wf::texture_t& texture);
+
+    /**
+     * Deactive the vertex attributes activated by attrib_pointer and
+     * attrib_divisor, and reset the active OpenGL program.
+     */
+    void deactivate();
+
+  private:
+    class impl;
+    std::unique_ptr<impl> priv;
+};
 }
 
 /* utils */
