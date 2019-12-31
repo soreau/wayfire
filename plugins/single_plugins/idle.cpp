@@ -30,6 +30,7 @@ class screensaver_animation_t : public duration_t
     using duration_t::duration_t;
     timed_transition_t rot{*this};
     timed_transition_t zoom{*this};
+    timed_transition_t ease{*this};
 };
 
 class wayfire_idle
@@ -160,6 +161,7 @@ class wayfire_idle
         cube_control_signal data;
         data.angle = 0.0;
         data.zoom = ZOOM_BASE;
+        data.ease = 0.0;
         data.last_frame = true;
         for (auto& output : wf::get_core().output_layout->get_outputs())
         {
@@ -205,6 +207,7 @@ class wayfire_idle
 
         data.angle = rotation;
         data.zoom = screensaver_animation.zoom;
+        data.ease = screensaver_animation.ease;
         data.last_frame = false;
 
         for (auto& output : wf::get_core().output_layout->get_outputs())
@@ -236,6 +239,7 @@ class wayfire_idle
         cube_control_signal data;
         data.angle = 0.0;
         data.zoom = ZOOM_BASE;
+        data.ease = 0.0;
         data.last_frame = false;
         bool all_outputs_active = true;
         bool hook_set = false;
@@ -274,6 +278,7 @@ class wayfire_idle
 
         rotation = 0.0;
         screensaver_animation.zoom.set(ZOOM_BASE, cube_max_zoom);
+        screensaver_animation.ease.set(0.0, 1.0);
         screensaver_animation.start();
         last_time = get_current_time();
     }
@@ -298,6 +303,7 @@ class wayfire_idle
         double end = rotation > M_PI ? M_PI * 2 : 0.0;
         screensaver_animation.rot.set(rotation, end);
         screensaver_animation.zoom.restart_with_end(ZOOM_BASE);
+        screensaver_animation.ease.restart_with_end(0.0);
         screensaver_animation.start();
     }
 
