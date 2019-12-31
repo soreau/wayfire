@@ -10,8 +10,9 @@
 struct cube_control_signal : public wf::signal_data_t
 {
     double angle; // cube rotation in radians
-    double zoom; // 1.0 means 100%, increase to zoom
-    bool last_frame; // disables cube if true
+    double zoom; // 1.0 means 100%; increase value to zoom
+    double ease; // for cube deformation; range 0.0-1.0
+    bool last_frame; // ends cube animation if true
     bool carried_out; // false if cube is disabled
 };
 

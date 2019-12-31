@@ -230,11 +230,11 @@ class wayfire_cube : public wf::plugin_interface_t
     wf::signal_callback_t on_cube_control = [=] (wf::signal_data_t *data)
     {
         cube_control_signal *d = dynamic_cast<cube_control_signal*>(data);
-        rotate_and_zoom_cube(d->angle, d->zoom, d->last_frame);
+        rotate_and_zoom_cube(d->angle, d->zoom, d->ease, d->last_frame);
         d->carried_out = true;
     };
 
-    void rotate_and_zoom_cube(double angle, double zoom, bool last_frame)
+    void rotate_and_zoom_cube(double angle, double zoom, double ease, bool last_frame)
     {
         if (last_frame)
         {
@@ -248,11 +248,11 @@ class wayfire_cube : public wf::plugin_interface_t
         float offset_z = identity_z_offset + Z_OFFSET_NEAR;
 
         animation.cube_animation.rotation.set(angle, angle);
+        animation.cube_animation.zoom.set(zoom, zoom);
+        animation.cube_animation.ease_deformation.set(ease, ease);
 
         animation.cube_animation.offset_y.set(0, 0);
         animation.cube_animation.offset_z.set(offset_z, offset_z);
-
-        animation.cube_animation.zoom.set(zoom, zoom);
 
         animation.cube_animation.start();
         update_view_matrix();
