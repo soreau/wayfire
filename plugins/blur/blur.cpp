@@ -21,13 +21,13 @@ class wf_blur_transformer : public wf::view_transformer_t
         this->output = output;
     }
 
-    wf::pointf_t local_to_transformed_point(wf::geometry_t view,
+    wf::pointf_t transform_point(wf::geometry_t view,
         wf::pointf_t point) override
     {
         return point;
     }
 
-    wf::pointf_t transformed_to_local_point(wf::geometry_t view,
+    wf::pointf_t untransform_point(wf::geometry_t view,
         wf::pointf_t point) override
     {
         return point;

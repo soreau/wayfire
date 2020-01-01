@@ -264,13 +264,15 @@ wf::pointf_t wf::view_interface_t::global_to_local_point(const wf::pointf_t& arg
     if (view_impl->transforms.size())
     {
         auto box = get_untransformed_bounding_box();
+        /* FIXME: bounding box is not computed properly!!! It should be
+         * reverse */
         view_impl->transforms.for_each_reverse([&] (auto& tr)
         {
             if (INVALID_COORDS(result))
                 return;
 
             auto& transform = tr->transform;
-            result = transform->transformed_to_local_point(box, result);
+            result = transform->untransform_point(box, result);
             box = transform->get_bounding_box(box, box);
         });
 
@@ -766,7 +768,7 @@ wf::pointf_t wf::view_interface_t::transform_point(const wf::pointf_t& point)
 
     view_impl->transforms.for_each([&] (auto& tr)
     {
-        result = tr->transform->local_to_transformed_point(view, result);
+        result = tr->transform->transform_point(view, result);
         view = tr->transform->get_bounding_box(view, view);
     });
 

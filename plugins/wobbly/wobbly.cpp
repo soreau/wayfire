@@ -553,9 +553,9 @@ class wf_wobbly : public wf::view_transformer_t
         update_wobbly_state(false, {0, 0}, false);
     }
 
-    uint32_t get_z_order() { return wf::TRANSFORMER_HIGHLEVEL; }
 
-    virtual wlr_box get_bounding_box(wf::geometry_t, wf::geometry_t)
+    uint32_t get_z_order() override { return wf::TRANSFORMER_HIGHLEVEL; }
+    wlr_box get_bounding_box(wf::geometry_t, wf::geometry_t) override
     {
         auto box = wobbly_boundingbox(model.get());
 
@@ -568,14 +568,14 @@ class wf_wobbly : public wf::view_transformer_t
         return result;
     }
 
-    virtual wf::pointf_t local_to_transformed_point(
-        wf::geometry_t view, wf::pointf_t point)
+    wf::pointf_t transform_point(
+        wf::geometry_t view, wf::pointf_t point) override
     {
         return point;
     }
 
-    virtual wf::pointf_t transformed_to_local_point(
-        wf::geometry_t view, wf::pointf_t point)
+    wf::pointf_t untransform_point(
+        wf::geometry_t view, wf::pointf_t point) override
     {
         return point;
     }
@@ -605,8 +605,8 @@ class wf_wobbly : public wf::view_transformer_t
             destroy_self();
     }
 
-    virtual void render_box(wf::texture_t src_tex, wlr_box src_box,
-        wlr_box scissor_box, const wf::framebuffer_t& target_fb)
+    void render_box(wf::texture_t src_tex, wlr_box src_box,
+        wlr_box scissor_box, const wf::framebuffer_t& target_fb) override
     {
         OpenGL::render_begin(target_fb);
         target_fb.scissor(scissor_box);
