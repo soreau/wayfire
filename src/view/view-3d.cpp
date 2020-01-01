@@ -25,6 +25,12 @@ wlr_box wf::view_transformer_t::get_bounding_box(wf::geometry_t view, wlr_box re
     return wlr_box{x1, y1, x2 - x1, y2 - y1};
 }
 
+wf::region_t wf::view_transformer_t::transform_opaque_region(
+    wf::geometry_t box, wf::region_t region)
+{
+    return {};
+}
+
 void wf::view_transformer_t::render_with_damage(wf::texture_t src_tex, wlr_box src_box,
             const wf::region_t& damage, const wf::framebuffer_t& target_fb)
 {

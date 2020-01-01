@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <map>
 #include <wayfire/debug.hpp>
+#include <wayfire/util/log.hpp>
 extern "C"
 {
 #include <wlr/types/wlr_surface.h>
@@ -153,6 +154,22 @@ bool wf::surface_interface_t::accepts_input(int32_t sx, int32_t sy)
     return wlr_surface_point_accepts_input(priv->wsurface, sx, sy);
 }
 
+void wf::surface_interface_t::impl::scale_opaque_region(
+    wf::region_t& region, int shrink)
+{
+    region *= output->handle->scale;
+    /* region scaling uses std::ceil/std::floor, so the resulting region
+     * encompasses the opaque region. However, in the case of opaque region, we
+     * don't want any pixels that aren't actually opaque. So in case of
+     * different scales, we just shrink by 1 to compensate for the ceil/floor
+     * discrepancy */
+    int ceil_factor = 0;
+    if (output->handle->scale != (float)wsurface->current.scale)
+        ceil_factor = 1;
+
+    region.expand_edges(-shrink - ceil_factor);
+}
+
 void wf::surface_interface_t::subtract_opaque(wf::region_t& region, int x, int y)
 {
     if (!priv->wsurface)
@@ -160,18 +177,7 @@ void wf::surface_interface_t::subtract_opaque(wf::region_t& region, int x, int y
 
     wf::region_t opaque{&priv->wsurface->opaque_region};
     opaque += wf::point_t{x, y};
-    opaque *= get_output()->handle->scale;
-
-    /* region scaling uses std::ceil/std::floor, so the resulting region
-     * encompasses the opaque region. However, in the case of opaque region, we
-     * don't want any pixels that aren't actually opaque. So in case of
-     * different scales, we just shrink by 1 to compensate for the ceil/floor
-     * discrepancy */
-    int ceil_factor = 0;
-    if (get_output()->handle->scale != (float)priv->wsurface->current.scale)
-        ceil_factor = 1;
-
-    opaque.expand_edges(-get_active_shrink_constraint() - ceil_factor);
+    priv->scale_opaque_region(opaque, get_active_shrink_constraint());
     region ^= opaque;
 }
 

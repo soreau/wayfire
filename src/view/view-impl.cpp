@@ -113,7 +113,7 @@ void wf::wlr_view_t::subtract_opaque(wf::region_t& region, int x, int y)
     if (this->fullscreen)
         maximal_shrink_constraint = 0;
 
-    wf::surface_interface_t::subtract_opaque(region, x, y);
+    wf::view_interface_t::subtract_opaque(region, x, y);
     maximal_shrink_constraint = saved_shrink_constraint;
 }
 

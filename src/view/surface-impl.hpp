@@ -31,6 +31,9 @@ class surface_interface_t::impl
      * subtract_opaque(), send_frame_done(), etc. work for the surface
      */
     wlr_surface *wsurface = nullptr;
+
+    /** Scale the region by the output's scale and then shrink it by @shrink. */
+    void scale_opaque_region(wf::region_t& region, int shrink);
 };
 
 /**

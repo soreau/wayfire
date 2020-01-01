@@ -38,6 +38,12 @@ class wf_blur_transformer : public wf::view_transformer_t
         return region;
     }
 
+    wf::region_t transform_opaque_region(
+        wf::geometry_t bbox, wf::region_t region) override
+    {
+        return region;
+    }
+
     uint32_t get_z_order() override { return wf::TRANSFORMER_BLUR; }
     void render_with_damage(wf::texture_t src_tex, wlr_box src_box,
         const wf::region_t& damage, const wf::framebuffer_t& target_fb) override

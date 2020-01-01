@@ -109,7 +109,7 @@ class wf_bokeh_blur : public wf_blur_base
 
     int calculate_blur_radius() override
     {
-        return 100 * wf_blur_base::offset_opt * wf_blur_base::degrade_opt;
+        return 5 * wf_blur_base::offset_opt * wf_blur_base::degrade_opt;
     }
 };
 

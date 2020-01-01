@@ -33,6 +33,20 @@ class view_transformer_t
     virtual uint32_t get_z_order() = 0;
 
     /**
+     * Transform the opaque region of the view.
+     *
+     * It must be guaranteed that the pixels part of the returned region are
+     * opaque. The default implementation simply returns an empty region.
+     *
+     * @param box The bounding box of the view up to this transformer.
+     * @param region The opaque region to transform.
+     *
+     * @return The transformed opaque region.
+     */
+    virtual wf::region_t transform_opaque_region(
+        wf::geometry_t box, wf::region_t region);
+
+    /**
      * Transform a single point.
      *
      * @param view The bounding box of the view, in output-local

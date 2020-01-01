@@ -662,7 +662,8 @@ class wf::render_manager::impl
         {
             ds->pos = view_delta;
             ds->view = view.get();
-
+            view->subtract_transformed_opaque(repaint.ws_damage,
+                view_delta.x, view_delta.y);
             repaint.to_render.push_back(std::move(ds));
         }
     }
