@@ -177,7 +177,7 @@ class output_viewport_manager_t
             g.y += (vp.y - current_vy) * g.height;
         }
 
-        if (view->has_transformer() & use_bbox) {
+        if (view->has_transformer() && use_bbox) {
             return view->intersects_region(g);
         } else {
             return g & view->get_wm_geometry();
@@ -230,8 +230,8 @@ class output_viewport_manager_t
         auto it = std::remove_if(views.begin(), views.end(), [&] (wayfire_view view) {
             return !view_visible_on(view, vp, !wm_only);
         });
-        views.erase(it, views.end());
 
+        views.erase(it, views.end());
         return views;
     }
 
@@ -293,14 +293,13 @@ class output_viewport_manager_t
             MIDDLE_LAYERS, true);
 
         for (auto& view : wf::reverse(views))
-        {
-            if (view->is_mapped())
-                output->workspace->bring_to_front(view);
-        }
+            output->workspace->bring_to_front(view);
 
         /* Focus last window */
-        if (!views.empty())
-            output->focus_view(views.front());
+        auto it = std::find_if(views.begin(), views.end(),
+            [] (wayfire_view view) { return view->is_mapped(); });
+        if (it != views.end())
+            output->focus_view(*it);
     }
 };
 
