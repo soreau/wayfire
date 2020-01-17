@@ -207,20 +207,19 @@ class vswipe : public wf::plugin_interface_t
         assert(direction != UNKNOWN);
         state.direction = direction;
 
-        wf::get_core().focus_output(output);
-
         bool was_active = output->is_plugin_active(grab_interface->name);
         if (!output->activate_plugin(grab_interface))
             return;
 
         grab_interface->grab();
+        wf::get_core().focus_output(output);
+
         output->render->set_renderer(renderer);
         if (!was_active)
             output->render->set_redraw_always();
 
         auto ws = output->workspace->get_current_workspace();
         auto grid = output->workspace->get_workspace_grid_size();
-
         if (direction == HORIZONTAL)
         {
             if (ws.x > 0)
@@ -300,8 +299,11 @@ class vswipe : public wf::plugin_interface_t
 
     wf::signal_callback_t on_swipe_end = [=] (wf::signal_data_t *data)
     {
-        if (!state.swiping)
+        if (!state.swiping || !output->is_plugin_active(grab_interface->name))
+        {
+            state.swiping = false;
             return;
+        }
 
         state.swiping = false;
         const double move_threshold = wf::clamp((double)threshold, 0.0, 1.0);
