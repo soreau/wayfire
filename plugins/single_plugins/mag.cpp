@@ -48,8 +48,6 @@ extern "C"
 
 class mag_view_t : public wf::color_rect_view_t
 {
-    wf::effect_hook_t pre_paint;
-
     /* Default colors */
     const wf::color_t base_color = {0.5, 0.5, 1, 0.5};
     const wf::color_t base_border = {0.25, 0.25, 0.5, 0.8};
@@ -70,13 +68,13 @@ class mag_view_t : public wf::color_rect_view_t
     {
         set_output(output);
 
-        get_output()->render->add_effect(&pre_paint, wf::OUTPUT_EFFECT_PRE);
+        set_geometry({100, 100, 640, 480});
 
         set_color(base_color);
         set_border_color(base_border);
         set_border(base_border_w);
 
-        this->role = wf::VIEW_ROLE_COMPOSITOR_VIEW;
+        this->role = wf::VIEW_ROLE_SHELL_VIEW;
         get_output()->workspace->add_view(self(), wf::LAYER_TOP);
     }
 
@@ -103,7 +101,6 @@ class mag_view_t : public wf::color_rect_view_t
 
     virtual ~mag_view_t()
     {
-        get_output()->render->rem_effect(&pre_paint);
     }
 };
 
