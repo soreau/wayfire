@@ -313,7 +313,10 @@ class wayfire_background_view : public wf::plugin_interface_t
     void fini() override
     {
         if (procs[output].view)
+        {
             procs[output].view->close();
+            kill(procs[output].pid, SIGINT);
+        }
 
         if (signal)
             wl_event_source_remove(signal);
