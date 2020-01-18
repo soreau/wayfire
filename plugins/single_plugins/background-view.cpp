@@ -42,6 +42,13 @@
 extern "C"
 {
 #include <wlr/config.h>
+#if WLR_HAS_XWAYLAND
+#define class class_t
+#define static
+#include <wlr/xwayland.h>
+#undef static
+#undef class
+#endif
 }
 
 struct process
@@ -86,11 +93,25 @@ class wayfire_background_view : public wf::plugin_interface_t
         view_mapped = [=] (wf::signal_data_t *data)
         {
             auto view = get_signaled_view(data);
+#if WLR_HAS_XWAYLAND
+            wlr_surface *wlr_surface = view->get_wlr_surface();
+            bool is_xwayland_surface = wlr_surface_is_xwayland_surface(wlr_surface);
+#endif
 
             for (auto& o : wf::get_core().output_layout->get_outputs())
             {
-                if (procs[o].client == view->get_client())
+                if (procs[o].client == view->get_client()
+#if WLR_HAS_XWAYLAND
+                    || (is_xwayland_surface &&
+                    procs[o].pid == wlr_xwayland_surface_from_wlr_surface(wlr_surface)->pid)
+#endif
+                    )
                 {
+#if WLR_HAS_XWAYLAND
+                    if (is_xwayland_surface)
+                        view->set_decoration(nullptr);
+#endif
+
                     // Move to the respective output
                     wf::get_core().move_view_to_output(view, o);
 
