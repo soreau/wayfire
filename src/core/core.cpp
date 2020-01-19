@@ -4,6 +4,7 @@ extern "C"
 #include <wlr/types/wlr_data_control_v1.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_virtual_keyboard_v1.h>
+#include <wlr/types/wlr_virtual_pointer_v1.h>
 #include <wlr/types/wlr_foreign_toplevel_management_v1.h>
 #include <wlr/types/wlr_idle.h>
 #include <wlr/types/wlr_idle_inhibit_v1.h>
@@ -158,6 +159,14 @@ void wf::compositor_core_impl_t::init()
         input->handle_new_input(&kbd->input_device);
     });
     vkbd_created.connect(&protocols.vkbd_manager->events.new_virtual_keyboard);
+
+    protocols.vptr_manager = wlr_virtual_pointer_manager_v1_create(display);
+    vptr_created.set_callback([&] (void *data) {
+        auto event = (wlr_virtual_pointer_v1_new_pointer_event*) data;
+        auto ptr = event->new_pointer;
+        input->handle_new_input(&ptr->input_device);
+    });
+    vptr_created.connect(&protocols.vptr_manager->events.new_virtual_pointer);
 
     protocols.idle = wlr_idle_create(display);
     protocols.idle_inhibit = wlr_idle_inhibit_v1_create(display);

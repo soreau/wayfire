@@ -81,6 +81,7 @@ class compositor_core_impl_t : public compositor_core_t
     wf::wl_listener_wrapper output_layout_changed;
     wf::wl_listener_wrapper decoration_created;
     wf::wl_listener_wrapper vkbd_created;
+    wf::wl_listener_wrapper vptr_created;
     wf::wl_listener_wrapper input_inhibit_activated;
     wf::wl_listener_wrapper input_inhibit_deactivated;
     wf::wl_listener_wrapper pointer_constraint_added;
