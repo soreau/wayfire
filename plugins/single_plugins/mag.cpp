@@ -166,7 +166,8 @@ class wayfire_magnifier : public wf::plugin_interface_t
         if (active) {
             return activate();
         } else {
-            return deactivate();
+            deactivate();
+            return true;
         }
     };
 
@@ -207,9 +208,6 @@ class wayfire_magnifier : public wf::plugin_interface_t
             hook_set = true;
         }
 
-        width = output->get_layout_geometry().width;
-        height = output->get_layout_geometry().height;
-
         ensure_preview();
 
         return true;
@@ -233,24 +231,28 @@ class wayfire_magnifier : public wf::plugin_interface_t
 
         wlr_gles2_texture_get_attribs(texture, &texture_attribs);
 
+        auto og = output->get_relative_geometry();
+        gl_geometry src_geometry = {(float) og.x, (float) og.y, (float) og.x + og.width, (float) og.y + og.height};
+
+        width = og.width;
+        height = og.height;
+
         /* Use texture */
         OpenGL::render_begin();
         mag_view->mag_tex.allocate(width, height);
         mag_view->mag_tex.bind();
 
-        GL_CALL(glBindFramebuffer(GL_READ_FRAMEBUFFER, texture_attribs.tex));
-        GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mag_view->mag_tex.fb));
-        GL_CALL(glBlitFramebuffer(
-                0, 0, width, height,
-                0, 0, width, height,
-                GL_COLOR_BUFFER_BIT, GL_LINEAR));
+        OpenGL::render_transformed_texture(texture_attribs.tex, src_geometry, {},
+            mag_view->mag_tex.get_orthographic_projection(), glm::vec4(1.0), 0);
         OpenGL::render_end();
 
         wlr_texture_destroy(texture);
         wlr_dmabuf_attributes_finish(&dmabuf_attribs);
+
+        mag_view->damage();
     };
 
-    bool deactivate()
+    void deactivate()
     {
         if (hook_set)
         {
@@ -258,13 +260,13 @@ class wayfire_magnifier : public wf::plugin_interface_t
             hook_set = false;
         }
 
+        output->render->damage_whole();
+
         if (!mag_view)
-            return true;
+            return;
 
         mag_view->close();
         mag_view = nullptr;
-
-        return true;
     }
 
     void fini() override
