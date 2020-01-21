@@ -102,8 +102,12 @@ class mag_view_t : public wf::color_rect_view_t
     {
         LOGI(__func__, ": ", sx, ", ", sy);
 
+        auto vg = get_wm_geometry();
         /* Allow move and resize */
-        return true;
+        if (0 < sx && sx < vg.width && 0 < sy && sy < vg.height)
+            return true;
+
+        return false;
     }
 
     void move(int x, int y) override
@@ -237,8 +241,7 @@ class wayfire_magnifier : public wf::plugin_interface_t
         GL_CALL(glBindFramebuffer(GL_READ_FRAMEBUFFER, texture_attribs.tex));
         GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mag_view->mag_tex.fb));
         GL_CALL(glBlitFramebuffer(
-                0, 0,
-                width, height,
+                0, 0, width, height,
                 0, 0, width, height,
                 GL_COLOR_BUFFER_BIT, GL_LINEAR));
         OpenGL::render_end();
