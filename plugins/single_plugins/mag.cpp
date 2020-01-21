@@ -73,7 +73,7 @@ class mag_view_t : public wf::color_rect_view_t
         set_color(base_color);
         set_border(0);
 
-        this->role = wf::VIEW_ROLE_COMPOSITOR_VIEW;
+        this->role = wf::VIEW_ROLE_TOPLEVEL;
         get_output()->workspace->add_view(self(), wf::LAYER_TOP);
     }
 
@@ -138,7 +138,7 @@ class mag_view_t : public wf::color_rect_view_t
         {
             auto sbox = fb.framebuffer_box_from_damage_box(wlr_box_from_pixman_box(box));
             wlr_renderer_scissor(wf::get_core().renderer, &sbox);
-            OpenGL::render_transformed_texture(mag_tex.fb, src_geometry, {},
+            OpenGL::render_transformed_texture(mag_tex.tex, src_geometry, {},
                                                fb.get_orthographic_projection(),
                                                glm::vec4(1.0), 0);
         }
@@ -213,10 +213,32 @@ class wayfire_magnifier : public wf::plugin_interface_t
         return true;
     }
 
+    wf::texture_t get_texture_from_surface(wlr_texture *texture)
+    {
+        assert(wlr_texture_is_gles2(texture));
+
+        wlr_gles2_texture_attribs attribs;
+        wlr_gles2_texture_get_attribs(texture, &attribs);
+
+        wf::texture_t tex;
+        /* Wayfire Y-inverts by default */
+        tex.invert_y = !attribs.inverted_y;
+        tex.target = attribs.target;
+        tex.tex_id = attribs.tex;
+
+        if (tex.target == GL_TEXTURE_2D) {
+            tex.type = attribs.has_alpha ?
+                wf::TEXTURE_TYPE_RGBA : wf::TEXTURE_TYPE_RGBX;
+        } else {
+            tex.type = wf::TEXTURE_TYPE_EXTERNAL;
+        }
+
+        return tex;
+    }
+
     wf::effect_hook_t post_hook = [=]()
     {
         wlr_dmabuf_attributes dmabuf_attribs;
-        struct wlr_gles2_texture_attribs texture_attribs;
 
         if (!wlr_output_export_dmabuf(output->handle, &dmabuf_attribs))
         {
@@ -226,10 +248,10 @@ class wayfire_magnifier : public wf::plugin_interface_t
         
         //auto cursor_position = output->get_cursor_position();
 
-        auto texture = wlr_texture_from_dmabuf(
+        auto wlr_texture = wlr_texture_from_dmabuf(
             wf::get_core().renderer, &dmabuf_attribs);
 
-        wlr_gles2_texture_get_attribs(texture, &texture_attribs);
+        auto texture = get_texture_from_surface(wlr_texture);
 
         auto og = output->get_relative_geometry();
         gl_geometry src_geometry = {(float) og.x, (float) og.y, (float) og.x + og.width, (float) og.y + og.height};
@@ -240,13 +262,14 @@ class wayfire_magnifier : public wf::plugin_interface_t
         /* Use texture */
         OpenGL::render_begin();
         mag_view->mag_tex.allocate(width, height);
+        mag_view->mag_tex.geometry = og;
         mag_view->mag_tex.bind();
 
-        OpenGL::render_transformed_texture(texture_attribs.tex, src_geometry, {},
+        OpenGL::render_transformed_texture(texture, src_geometry, {},
             mag_view->mag_tex.get_orthographic_projection(), glm::vec4(1.0), 0);
         OpenGL::render_end();
 
-        wlr_texture_destroy(texture);
+        wlr_texture_destroy(wlr_texture);
         wlr_dmabuf_attributes_finish(&dmabuf_attribs);
 
         mag_view->damage();
