@@ -38,6 +38,7 @@ extern "C"
 {
 #define static
 #include <wlr/config.h>
+#include <wlr/render/gles2.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_matrix.h>
 #undef static
@@ -54,6 +55,7 @@ class mag_view_t : public wf::color_rect_view_t
     bool should_close = false;
 
   public:
+    wf::framebuffer_t mag_tex;
 
     /**
      * Create a new indication preview on the indicated output.
@@ -104,6 +106,15 @@ class mag_view_t : public wf::color_rect_view_t
         return true;
     }
 
+    void move(int x, int y) override
+    {
+        LOGI(__func__, ": ", x, ", ", y);
+
+        wf::color_rect_view_t::move(x, y);
+
+        /* Handle move */
+    }
+
     void resize(int w, int h) override
     {
         LOGI(__func__, ": ", w, "x", h);
@@ -116,7 +127,18 @@ class mag_view_t : public wf::color_rect_view_t
     void simple_render(const wf::framebuffer_t& fb, int x, int y,
         const wf::region_t& damage) override
     {
-        wf::color_rect_view_t::simple_render(fb, x, y, damage);
+        OpenGL::render_begin(fb);
+        auto vg = get_wm_geometry();
+        gl_geometry src_geometry = {(float) vg.x, (float) vg.y, (float) vg.x + vg.width, (float) vg.y + vg.height};
+        for (const auto& box : damage)
+        {
+            auto sbox = fb.framebuffer_box_from_damage_box(wlr_box_from_pixman_box(box));
+            wlr_renderer_scissor(wf::get_core().renderer, &sbox);
+            OpenGL::render_transformed_texture(mag_tex.fb, src_geometry, {},
+                                               fb.get_orthographic_projection(),
+                                               glm::vec4(1.0), 0);
+        }
+        OpenGL::render_end();
     }
 
     virtual ~mag_view_t()
@@ -132,6 +154,7 @@ class wayfire_magnifier : public wf::plugin_interface_t
     wf::option_wrapper_t<wf::activatorbinding_t> toggle_binding{"mag/toggle"};
     nonstd::observer_ptr<mag_view_t> mag_view;
     bool active, hook_set;
+    int width, height;
 
     wf::activator_callback toggle_cb = [=] (wf::activator_source_t, uint32_t)
     {
@@ -156,49 +179,72 @@ class wayfire_magnifier : public wf::plugin_interface_t
         hook_set = active = false;
     }
 
-    bool ensure_preview()
+    void ensure_preview()
     {
         if (mag_view)
-            return false;
-    
+            return;
+
         auto view = std::make_unique<mag_view_t>(output);
-    
+
         mag_view = {view};
+
         wf::get_core().add_view(std::move(view));
-        return true;
     }
 
     bool activate()
     {
         if (!output->activate_plugin(grab_interface))
             return false;
-        if (!ensure_preview())
-            return false;
-        mag_view->set_target_geometry({100, 100}, 1.0, false);
+
         if (!hook_set)
         {
             output->render->add_effect(&post_hook, wf::OUTPUT_EFFECT_POST);
+            output->render->set_redraw_always();
             hook_set = true;
         }
+
+        width = output->get_layout_geometry().width;
+        height = output->get_layout_geometry().height;
+
+        ensure_preview();
+
         return true;
     }
 
     wf::effect_hook_t post_hook = [=]()
     {
-        wlr_dmabuf_attributes attributes;
-        if (!wlr_output_export_dmabuf(output->handle, &attributes))
+        wlr_dmabuf_attributes dmabuf_attribs;
+        struct wlr_gles2_texture_attribs texture_attribs;
+
+        if (!wlr_output_export_dmabuf(output->handle, &dmabuf_attribs))
         {
             LOGE("Failed reading output contents");
             return;
         }
+        
+        //auto cursor_position = output->get_cursor_position();
 
         auto texture = wlr_texture_from_dmabuf(
-            wf::get_core().renderer, &attributes);
+            wf::get_core().renderer, &dmabuf_attribs);
+
+        wlr_gles2_texture_get_attribs(texture, &texture_attribs);
 
         /* Use texture */
+        OpenGL::render_begin();
+        mag_view->mag_tex.allocate(width, height);
+        mag_view->mag_tex.bind();
+
+        GL_CALL(glBindFramebuffer(GL_READ_FRAMEBUFFER, texture_attribs.tex));
+        GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mag_view->mag_tex.fb));
+        GL_CALL(glBlitFramebuffer(
+                0, 0,
+                width, height,
+                0, 0, width, height,
+                GL_COLOR_BUFFER_BIT, GL_LINEAR));
+        OpenGL::render_end();
 
         wlr_texture_destroy(texture);
-        wlr_dmabuf_attributes_finish(&attributes);
+        wlr_dmabuf_attributes_finish(&dmabuf_attribs);
     };
 
     bool deactivate()
@@ -208,11 +254,13 @@ class wayfire_magnifier : public wf::plugin_interface_t
             output->render->rem_effect(&post_hook);
             hook_set = false;
         }
+
         if (!mag_view)
             return true;
-        LOGI("Calling mag_view->close()!");
+
         mag_view->close();
         mag_view = nullptr;
+
         return true;
     }
 
