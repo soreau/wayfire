@@ -50,8 +50,6 @@ class mag_view_t : public wf::color_rect_view_t
 {
     /* Default colors */
     const wf::color_t base_color = {0.5, 0.5, 1, 0.5};
-    const wf::color_t base_border = {0.25, 0.25, 0.5, 0.8};
-    const int base_border_w = 3;
 
     bool should_close = false;
 
@@ -71,8 +69,7 @@ class mag_view_t : public wf::color_rect_view_t
         set_geometry({100, 100, 640, 480});
 
         set_color(base_color);
-        set_border_color(base_border);
-        set_border(base_border_w);
+        set_border(0);
 
         this->role = wf::VIEW_ROLE_COMPOSITOR_VIEW;
         get_output()->workspace->add_view(self(), wf::LAYER_TOP);
@@ -99,6 +96,29 @@ class mag_view_t : public wf::color_rect_view_t
             alpha, should_close);
     }
 
+    bool accepts_input(int32_t sx, int32_t sy) override
+    {
+        LOGI(__func__, ": ", sx, ", ", sy);
+
+        /* Allow move and resize */
+        return true;
+    }
+
+    void resize(int w, int h) override
+    {
+        LOGI(__func__, ": ", w, "x", h);
+
+        wf::color_rect_view_t::resize(w, h);
+
+        /* Handle size change */
+    }
+
+    void simple_render(const wf::framebuffer_t& fb, int x, int y,
+        const wf::region_t& damage) override
+    {
+        wf::color_rect_view_t::simple_render(fb, x, y, damage);
+    }
+
     virtual ~mag_view_t()
     {
     }
@@ -111,7 +131,7 @@ class wayfire_magnifier : public wf::plugin_interface_t
     wf::config::option_base_t::updated_callback_t option_changed;
     wf::option_wrapper_t<wf::activatorbinding_t> toggle_binding{"mag/toggle"};
     nonstd::observer_ptr<mag_view_t> mag_view;
-    bool active;
+    bool active, hook_set;
 
     wf::activator_callback toggle_cb = [=] (wf::activator_source_t, uint32_t)
     {
@@ -133,32 +153,66 @@ class wayfire_magnifier : public wf::plugin_interface_t
         {
         };
         output->add_activator(toggle_binding, &toggle_cb);
-        active = false;
+        hook_set = active = false;
     }
 
-    void ensure_preview()
+    bool ensure_preview()
     {
         if (mag_view)
-            return;
+            return false;
     
         auto view = std::make_unique<mag_view_t>(output);
     
         mag_view = {view};
         wf::get_core().add_view(std::move(view));
+        return true;
     }
 
     bool activate()
     {
         if (!output->activate_plugin(grab_interface))
             return false;
-        ensure_preview();
+        if (!ensure_preview())
+            return false;
         mag_view->set_target_geometry({100, 100}, 1.0, false);
+        if (!hook_set)
+        {
+            output->render->add_effect(&post_hook, wf::OUTPUT_EFFECT_POST);
+            hook_set = true;
+        }
         return true;
     }
 
+    wf::effect_hook_t post_hook = [=]()
+    {
+        wlr_dmabuf_attributes attributes;
+        if (!wlr_output_export_dmabuf(output->handle, &attributes))
+        {
+            LOGE("Failed reading output contents");
+            return;
+        }
+
+        auto texture = wlr_texture_from_dmabuf(
+            wf::get_core().renderer, &attributes);
+
+        /* Use texture */
+
+        wlr_texture_destroy(texture);
+        wlr_dmabuf_attributes_finish(&attributes);
+    };
+
     bool deactivate()
     {
-        mag_view->set_target_geometry({100, 100}, 1.0, true);
+        if (hook_set)
+        {
+            output->render->rem_effect(&post_hook);
+            hook_set = false;
+        }
+        if (!mag_view)
+            return true;
+        LOGI("Calling mag_view->close()!");
+        mag_view->close();
+        mag_view = nullptr;
         return true;
     }
 
