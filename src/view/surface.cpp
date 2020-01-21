@@ -164,7 +164,7 @@ void wf::surface_interface_t::impl::scale_opaque_region(
      * different scales, we just shrink by 1 to compensate for the ceil/floor
      * discrepancy */
     int ceil_factor = 0;
-    if (output->handle->scale != (float)wsurface->current.scale)
+    if (wsurface && output->handle->scale != (float)wsurface->current.scale)
         ceil_factor = 1;
 
     region.expand_edges(-shrink - ceil_factor);
