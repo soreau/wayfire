@@ -205,7 +205,6 @@ class wayfire_magnifier : public wf::plugin_interface_t
         if (!hook_set)
         {
             output->render->add_effect(&post_hook, wf::OUTPUT_EFFECT_POST);
-            output->render->set_redraw_always();
             hook_set = true;
         }
 
