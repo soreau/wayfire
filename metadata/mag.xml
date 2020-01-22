@@ -11,7 +11,7 @@
 		<_short>Zoom Level</_short>
 		<min>0</min>
 		<max>100</max>
-		<default>50</default>
+		<default>75</default>
 	</option>
 	<option name="default_height" type="int">
 		<_short>Default View Height</_short>
