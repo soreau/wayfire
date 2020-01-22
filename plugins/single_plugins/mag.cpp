@@ -199,6 +199,8 @@ class wayfire_magnifier : public wf::plugin_interface_t
         if (!wlr_output_export_dmabuf(output->handle, &dmabuf_attribs))
         {
             LOGE("Failed reading output contents");
+            deactivate();
+            active = false;
             return;
         }
         
