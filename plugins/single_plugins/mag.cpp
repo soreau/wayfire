@@ -55,12 +55,6 @@ class mag_view_t : public wf::color_rect_view_t
   public:
     wf::framebuffer_t mag_tex;
 
-    /**
-     * Create a new indication preview on the indicated output.
-     *
-     * @param start_geometry The geometry the preview should have, relative to
-     *                       the output
-     */
     mag_view_t(wf::output_t *output, float aspect)
         : wf::color_rect_view_t()
     {
