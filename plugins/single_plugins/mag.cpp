@@ -63,12 +63,12 @@ class mag_view_t : public wf::color_rect_view_t
      * @param start_geometry The geometry the preview should have, relative to
      *                       the output
      */
-    mag_view_t(wf::output_t *output)
+    mag_view_t(wf::output_t *output, float aspect)
         : wf::color_rect_view_t()
     {
         set_output(output);
 
-        set_geometry({100, 100, 640, 480});
+        set_geometry({100, 100, (int) (500 * aspect), 500});
 
         set_color(base_color);
         set_border(0);
@@ -190,7 +190,8 @@ class wayfire_magnifier : public wf::plugin_interface_t
         if (mag_view)
             return;
 
-        auto view = std::make_unique<mag_view_t>(output);
+        auto og = output->get_relative_geometry();
+        auto view = std::make_unique<mag_view_t>(output, (float) og.width / og.height);
 
         mag_view = {view};
 
