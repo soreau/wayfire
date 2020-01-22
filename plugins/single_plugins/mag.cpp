@@ -67,61 +67,20 @@ class mag_view_t : public wf::color_rect_view_t
         set_output(output);
 
         set_geometry({100, 100, (int) (default_height * aspect), default_height});
-        set_border(0);
 
         this->role = wf::VIEW_ROLE_TOPLEVEL;
         get_output()->workspace->add_view(self(), wf::LAYER_TOP);
     }
 
-    /**
-     * Animate the preview to the given target geometry and alpha.
-     *
-     * @param close Whether the view should be closed when the target is
-     *              reached.
-     */
-    void set_target_geometry(wf::geometry_t target, float alpha, bool close = false)
-    {
-        this->should_close = close;
-    }
-
-    /**
-     * A wrapper around set_target_geometry(wf::geometry_t, double, bool)
-     */
-    void set_target_geometry(wf::point_t point, double alpha,
-        bool should_close = false)
-    {
-        return set_target_geometry({point.x, point.y, 1, 1},
-            alpha, should_close);
-    }
-
     bool accepts_input(int32_t sx, int32_t sy) override
     {
-        LOGI(__func__, ": ", sx, ", ", sy);
-
         auto vg = get_wm_geometry();
+
         /* Allow move and resize */
         if (0 < sx && sx < vg.width && 0 < sy && sy < vg.height)
             return true;
 
         return false;
-    }
-
-    void move(int x, int y) override
-    {
-        LOGI(__func__, ": ", x, ", ", y);
-
-        wf::color_rect_view_t::move(x, y);
-
-        /* Handle move */
-    }
-
-    void resize(int w, int h) override
-    {
-        LOGI(__func__, ": ", w, "x", h);
-
-        wf::color_rect_view_t::resize(w, h);
-
-        /* Handle size change */
     }
 
     void simple_render(const wf::framebuffer_t& fb, int x, int y,
@@ -245,11 +204,6 @@ class wayfire_magnifier : public wf::plugin_interface_t
         
         auto cursor_position = output->get_cursor_position();
 
-        auto wlr_texture = wlr_texture_from_dmabuf(
-            wf::get_core().renderer, &dmabuf_attribs);
-
-        auto texture = get_texture_from_surface(wlr_texture);
-
         auto og = output->get_relative_geometry();
         gl_geometry src_geometry = {(float) og.x, (float) og.y, (float) og.x + og.width, (float) og.y + og.height};
 
@@ -292,7 +246,11 @@ class wayfire_magnifier : public wf::plugin_interface_t
             zoom_box.y2 = 1.0;
         }
 
-        /* Use texture */
+        auto wlr_texture = wlr_texture_from_dmabuf(
+            wf::get_core().renderer, &dmabuf_attribs);
+
+        auto texture = get_texture_from_surface(wlr_texture);
+
         OpenGL::render_begin();
         mag_view->mag_tex.allocate(width, height);
         mag_view->mag_tex.geometry = og;
