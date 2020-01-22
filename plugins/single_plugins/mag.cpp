@@ -154,6 +154,7 @@ class wayfire_magnifier : public wf::plugin_interface_t
         if (!hook_set)
         {
             output->render->add_effect(&post_hook, wf::OUTPUT_EFFECT_POST);
+            wlr_output_lock_software_cursors(output->handle, true);
             hook_set = true;
         }
 
@@ -267,6 +268,7 @@ class wayfire_magnifier : public wf::plugin_interface_t
         if (hook_set)
         {
             output->render->rem_effect(&post_hook);
+            wlr_output_lock_software_cursors(output->handle, false);
             hook_set = false;
         }
 
@@ -281,6 +283,7 @@ class wayfire_magnifier : public wf::plugin_interface_t
 
     void fini() override
     {
+        output->rem_binding(&toggle_cb);
     }
 };
 
