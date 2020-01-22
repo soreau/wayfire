@@ -103,7 +103,6 @@ class mag_view_t : public wf::color_rect_view_t
 class wayfire_magnifier : public wf::plugin_interface_t
 {
     const std::string transformer_name = "mag";
-    wf::config::option_base_t::updated_callback_t option_changed;
     wf::option_wrapper_t<wf::activatorbinding_t> toggle_binding{"mag/toggle"};
     wf::option_wrapper_t<int> zoom_level{"mag/zoom_level"};
     nonstd::observer_ptr<mag_view_t> mag_view;
@@ -113,9 +112,12 @@ class wayfire_magnifier : public wf::plugin_interface_t
     wf::activator_callback toggle_cb = [=] (wf::activator_source_t, uint32_t)
     {
         active = !active;
-        if (active) {
+        if (active)
+        {
             return activate();
-        } else {
+        }
+        else
+        {
             deactivate();
             return true;
         }
@@ -127,9 +129,6 @@ class wayfire_magnifier : public wf::plugin_interface_t
         grab_interface->name = transformer_name;
         grab_interface->capabilities = 0;
 
-        option_changed = [=] ()
-        {
-        };
         output->add_activator(toggle_binding, &toggle_cb);
         hook_set = active = false;
     }
