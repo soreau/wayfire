@@ -261,7 +261,10 @@ class wayfire_magnifier : public wf::plugin_interface_t
         height = og.height;
         float x = cursor_position.x / width;
         float y = cursor_position.y / height;
-        auto level = 1.0 / (zoom_level + 2);
+        float min = 0.5;
+        float max = 0.01;
+        float range = min - max;
+        auto level = (1.0 - (zoom_level / 100.0)) * range + max;
 
         gl_geometry zoom_box;
 
