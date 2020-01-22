@@ -49,9 +49,7 @@ extern "C"
 
 class mag_view_t : public wf::color_rect_view_t
 {
-    /* Default colors */
-    const wf::color_t base_color = {0.5, 0.5, 1, 0.5};
-
+    wf::option_wrapper_t<int> default_height{"mag/default_height"};
     bool should_close = false;
 
   public:
@@ -68,9 +66,7 @@ class mag_view_t : public wf::color_rect_view_t
     {
         set_output(output);
 
-        set_geometry({100, 100, (int) (500 * aspect), 500});
-
-        set_color(base_color);
+        set_geometry({100, 100, (int) (default_height * aspect), default_height});
         set_border(0);
 
         this->role = wf::VIEW_ROLE_TOPLEVEL;

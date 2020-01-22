@@ -13,5 +13,10 @@
 		<max>100</max>
 		<default>50</default>
 	</option>
+	<option name="default_height" type="int">
+		<_short>Default View Height</_short>
+		<min>100</min>
+		<default>500</default>
+	</option>
 	</plugin>
 </wayfire>
