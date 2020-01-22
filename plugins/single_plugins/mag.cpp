@@ -156,6 +156,7 @@ class wayfire_magnifier : public wf::plugin_interface_t
     const std::string transformer_name = "mag";
     wf::config::option_base_t::updated_callback_t option_changed;
     wf::option_wrapper_t<wf::activatorbinding_t> toggle_binding{"mag/toggle"};
+    wf::option_wrapper_t<int> zoom_level{"mag/zoom_level"};
     nonstd::observer_ptr<mag_view_t> mag_view;
     bool active, hook_set;
     int width, height;
@@ -246,7 +247,7 @@ class wayfire_magnifier : public wf::plugin_interface_t
             return;
         }
         
-        //auto cursor_position = output->get_cursor_position();
+        auto cursor_position = output->get_cursor_position();
 
         auto wlr_texture = wlr_texture_from_dmabuf(
             wf::get_core().renderer, &dmabuf_attribs);
@@ -258,6 +259,39 @@ class wayfire_magnifier : public wf::plugin_interface_t
 
         width = og.width;
         height = og.height;
+        float x = cursor_position.x / width;
+        float y = cursor_position.y / height;
+        auto level = 1.0 / (zoom_level + 2);
+
+        gl_geometry zoom_box;
+
+        y = 1.0 - y;
+
+        zoom_box.x1 = x - level;
+        zoom_box.y1 = y - level;
+        zoom_box.x2 = x + level;
+        zoom_box.y2 = y + level;
+
+        if (zoom_box.x1 < 0.0)
+        {
+            zoom_box.x2 -= zoom_box.x1;
+            zoom_box.x1 = 0.0;
+        }
+        if (zoom_box.y1 < 0.0)
+        {
+            zoom_box.y2 -= zoom_box.y1;
+            zoom_box.y1 = 0.0;
+        }
+        if (zoom_box.x2 > 1.0)
+        {
+            zoom_box.x1 += 1.0 - zoom_box.x2;
+            zoom_box.x2 = 1.0;
+        }
+        if (zoom_box.y2 > 1.0)
+        {
+            zoom_box.y1 += 1.0 - zoom_box.y2;
+            zoom_box.y2 = 1.0;
+        }
 
         /* Use texture */
         OpenGL::render_begin();
@@ -265,8 +299,9 @@ class wayfire_magnifier : public wf::plugin_interface_t
         mag_view->mag_tex.geometry = og;
         mag_view->mag_tex.bind();
 
-        OpenGL::render_transformed_texture(texture, src_geometry, {},
-            mag_view->mag_tex.get_orthographic_projection(), glm::vec4(1.0), 0);
+        OpenGL::render_transformed_texture(texture, src_geometry, zoom_box,
+            mag_view->mag_tex.get_orthographic_projection(), glm::vec4(1.0),
+            TEXTURE_USE_TEX_GEOMETRY | TEXTURE_TRANSFORM_INVERT_Y);
         OpenGL::render_end();
 
         wlr_texture_destroy(wlr_texture);
