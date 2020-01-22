@@ -207,7 +207,7 @@ class wayfire_magnifier : public wf::plugin_interface_t
         auto cursor_position = output->get_cursor_position();
 
         auto og = output->get_relative_geometry();
-        gl_geometry src_geometry = {(float) og.x, (float) og.y, (float) og.x + og.width, (float) og.y + og.height};
+        gl_geometry src_geometry = {0, 0, (float) og.width, (float) og.height};
 
         width = og.width;
         height = og.height;
