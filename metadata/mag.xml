@@ -11,7 +11,7 @@
 		<_short>Zoom Level</_short>
 		<min>0</min>
 		<max>100</max>
-		<default>25</default>
+		<default>50</default>
 	</option>
 	</plugin>
 </wayfire>
