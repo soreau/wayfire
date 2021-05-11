@@ -81,7 +81,7 @@ conf_data.set('SYSCONFDIR', sysconfdir)
 pkgdatadir = join_paths(get_option('prefix'), 'share', 'wayfire', 'protocols')
 
 if get_option('default_config_backend') == 'default'
-  conf_data.set('DEFAULT_CONFIG_BACKEND', 'libdefault-config-backend.so')
+  conf_data.set('DEFAULT_CONFIG_BACKEND', 'default-config-backend')
 else
   conf_data.set('DEFAULT_CONFIG_BACKEND', get_option('default_config_backend'))
 endif

@@ -81,8 +81,45 @@ void plugin_manager::destroy_plugin(wayfire_plugin& p)
     }
 }
 
-std::pair<void*, void*> wf::get_new_instance_handle(const std::string& path)
+std::pair<void*, void*> wf::get_new_instance_handle(const std::string& plugin_name)
 {
+    if (!plugin_name.size())
+    {
+        LOGE("!plugin_name.size()");
+        return {nullptr, nullptr};
+    }
+
+    std::string path;
+    std::vector<std::string> plugin_prefixes;
+    if (char *plugin_path = getenv("WAYFIRE_PLUGIN_PATH"))
+    {
+        std::stringstream ss(plugin_path);
+        std::string entry;
+        while (std::getline(ss, entry, ':'))
+        {
+            plugin_prefixes.push_back(entry);
+        }
+    }
+
+    plugin_prefixes.push_back(PLUGIN_PATH);
+
+    if (plugin_name.at(0) == '/')
+    {
+        path = plugin_name;
+    }
+    else
+    {
+        std::string plugin_prefix;
+        auto plugin_path = std::string("lib" + plugin_name + ".so");
+        path = plugin_path;
+    }
+
+    if (path.empty())
+    {
+        LOGE("path.empty()");
+        return {nullptr, nullptr};
+    }
+
     // RTLD_GLOBAL is required for RTTI/dynamic_cast across plugins
     void *handle = dlopen(path.c_str(), RTLD_NOW | RTLD_GLOBAL);
     if (handle == NULL)
@@ -129,18 +166,18 @@ wayfire_plugin plugin_manager::load_plugin_from_file(std::string path)
 {
     auto [handle, new_instance_func_ptr] = wf::get_new_instance_handle(path);
 
-    if (new_instance_func_ptr)
+    if (!new_instance_func_ptr)
     {
-        auto new_instance_func =
-            wf::union_cast<void*, wayfire_plugin_load_func>(new_instance_func_ptr);
-
-        auto ptr = wayfire_plugin(new_instance_func());
-        ptr->handle = handle;
-
-        return ptr;
+        return nullptr;
     }
 
-    return nullptr;
+    auto new_instance_func =
+        wf::union_cast<void*, wayfire_plugin_load_func>(new_instance_func_ptr);
+
+    auto ptr = wayfire_plugin(new_instance_func());
+    ptr->handle = handle;
+
+    return ptr;
 }
 
 void plugin_manager::reload_dynamic_plugins()
@@ -154,71 +191,10 @@ void plugin_manager::reload_dynamic_plugins()
     }
 
     std::stringstream stream(plugin_list);
-    std::vector<std::string> next_plugins;
-
-    auto plugin_prefix = std::string(PLUGIN_PATH "/");
-    std::vector<std::string> plugin_prefixes;
-    if (char *plugin_path = getenv("WAYFIRE_PLUGIN_PATH"))
-    {
-        std::stringstream ss(plugin_path);
-        std::string entry;
-        while (std::getline(ss, entry, ':'))
-        {
-            plugin_prefixes.push_back(entry);
-        }
-    }
-
-    plugin_prefixes.push_back(PLUGIN_PATH);
-
-    std::string plugin_name;
-    while (stream >> plugin_name)
-    {
-        if (plugin_name.size())
-        {
-            if (plugin_name.at(0) == '/')
-            {
-                next_plugins.push_back(plugin_name);
-                continue;
-            }
-
-            for (std::filesystem::path plugin_prefix : plugin_prefixes)
-            {
-                auto plugin_path = plugin_prefix / ("lib" + plugin_name + ".so");
-                if (std::filesystem::exists(plugin_path))
-                {
-                    next_plugins.push_back(plugin_path);
-                    break;
-                }
-            }
-        }
-    }
-
-    /* erase plugins that have been removed from the config */
-    auto it = loaded_plugins.begin();
-    while (it != loaded_plugins.end())
-    {
-        /* skip built-in(static) plugins */
-        if (it->first.size() && (it->first[0] == '_'))
-        {
-            ++it;
-            continue;
-        }
-
-        if ((std::find(next_plugins.begin(), next_plugins.end(),
-            it->first) == next_plugins.end()) &&
-            it->second->is_unloadable())
-        {
-            LOGD("unload plugin ", it->first.c_str());
-            destroy_plugin(it->second);
-            it = loaded_plugins.erase(it);
-        } else
-        {
-            ++it;
-        }
-    }
 
     /* load new plugins */
-    for (auto plugin : next_plugins)
+    std::string plugin;
+    while (stream >> plugin)
     {
         if (loaded_plugins.count(plugin))
         {
@@ -228,6 +204,27 @@ void plugin_manager::reload_dynamic_plugins()
         auto ptr = load_plugin_from_file(plugin);
         if (ptr)
         {
+            /* erase plugins that have been removed from the config */
+            auto it = loaded_plugins.begin();
+            while (it != loaded_plugins.end())
+            {
+                /* skip built-in(static) plugins */
+                if (it->first.size() && (it->first[0] == '_'))
+                {
+                    ++it;
+                    continue;
+                }
+            
+                if (ptr->is_unloadable())
+                {
+                    LOGD("unload plugin ", it->first.c_str());
+                    destroy_plugin(it->second);
+                    it = loaded_plugins.erase(it);
+                } else
+                {
+                    ++it;
+                }
+            }
             init_plugin(ptr);
             loaded_plugins[plugin] = std::move(ptr);
         }
