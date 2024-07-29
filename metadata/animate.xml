@@ -33,6 +33,10 @@
 				<value>spin</value>
 				<_name>Spin</_name>
 			</desc>
+			<desc>
+				<value>helix</value>
+				<_name>Helix</_name>
+			</desc>
 		</option>
 		<option name="close_animation" type="string">
 			<_short>Close animation</_short>
@@ -61,6 +65,10 @@
 			<desc>
 				<value>spin</value>
 				<_name>Spin</_name>
+			</desc>
+			<desc>
+				<value>helix</value>
+				<_name>Helix</_name>
 			</desc>
 		</option>
 		<option name="minimize_animation" type="string">
@@ -153,6 +161,10 @@
 			<_short>Squeezimize duration</_short>
 			<_long>Sets the duration of the squeezimize animation in milliseconds.</_long>
 			<default>1000ms linear</default>
+		<option name="helix_duration" type="animation">
+			<_short>Helix duration</_short>
+			<_long>Sets the duration for the helix animation in milliseconds.</_long>
+			<default>700ms linear</default>
 		</option>
 	</plugin>
 </wayfire>
