@@ -161,6 +161,7 @@
 			<_short>Squeezimize duration</_short>
 			<_long>Sets the duration of the squeezimize animation in milliseconds.</_long>
 			<default>1000ms linear</default>
+		</option>
 		<option name="helix_duration" type="animation">
 			<_short>Helix duration</_short>
 			<_long>Sets the duration for the helix animation in milliseconds.</_long>
