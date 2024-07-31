@@ -37,6 +37,10 @@
 				<value>helix</value>
 				<_name>Helix</_name>
 			</desc>
+			<desc>
+				<value>blinds</value>
+				<_name>Blinds</_name>
+			</desc>
 		</option>
 		<option name="close_animation" type="string">
 			<_short>Close animation</_short>
@@ -69,6 +73,10 @@
 			<desc>
 				<value>helix</value>
 				<_name>Helix</_name>
+			</desc>
+			<desc>
+				<value>blinds</value>
+				<_name>Blinds</_name>
 			</desc>
 		</option>
 		<option name="minimize_animation" type="string">
@@ -165,6 +173,11 @@
 		<option name="helix_duration" type="animation">
 			<_short>Helix duration</_short>
 			<_long>Sets the duration for the helix animation in milliseconds.</_long>
+			<default>700ms linear</default>
+		</option>
+		<option name="blinds_duration" type="animation">
+			<_short>Blinds duration</_short>
+			<_long>Sets the duration for the blinds animation in milliseconds.</_long>
 			<default>700ms linear</default>
 		</option>
 	</plugin>
