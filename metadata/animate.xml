@@ -185,7 +185,57 @@
 				</option>
 			</subgroup>
 			<subgroup>
+			<_short>Zap Settings</_short>
+				<option name="zap_enabled_for" type="string">
+					<_short>Zap animation enabled for specified window types</_short>
+					<_long>Specifies the window types to be animated with the zap effect.</_long>
+					<default>none</default>
+				</option>
+				<option name="zap_duration" type="animation">
+					<_short>Zap duration</_short>
+					<_long>Sets the duration for the zap animation in milliseconds.</_long>
+					<default>700ms linear</default>
+				</option>
+			</subgroup>
+			<subgroup>
+			<_short>Spin Settings</_short>
+				<option name="spin_enabled_for" type="string">
+					<_short>Spin animation enabled for specified window types</_short>
+					<_long>Specifies the window types to be animated with the spin effect.</_long>
+					<default>none</default>
+				</option>
+				<option name="spin_duration" type="animation">
+					<_short>Spin duration</_short>
+					<_long>Sets the duration for the spin animation in milliseconds.</_long>
+					<default>700ms linear</default>
+				</option>
+				<option name="spin_direction" type="string">
+					<_short>Spin direction</_short>
+					<_long>Forward spin direction.</_long>
+					<default>clockwise</default>
+					<desc>
+						<value>clockwise</value>
+						<_name>Clockwise</_name>
+					</desc>
+					<desc>
+						<value>counterclockwise</value>
+						<_name>Counter Clockwise</_name>
+					</desc>
+				</option>
+				<option name="spin_rotations" type="int">
+					<_short>Spin rotations</_short>
+					<_long>Number of rotations for the spin animation.</_long>
+					<default>2</default>
+					<min>1</min>
+				</option>
+			</subgroup>
+			<subgroup>
 			<_short>Helix Settings</_short>
+				<option name="helix_enabled_for" type="string">
+					<_short>Helix animation enabled for specified window types</_short>
+					<_long>Specifies the window types to be animated with the helix effect.</_long>
+					<default>none</default>
+				</option>
 				<option name="helix_duration" type="animation">
 					<_short>Helix duration</_short>
 					<_long>Sets the duration for the helix animation in milliseconds.</_long>
@@ -206,6 +256,11 @@
 			</subgroup>
 			<subgroup>
 			<_short>Blinds Settings</_short>
+				<option name="blinds_enabled_for" type="string">
+					<_short>Blinds animation enabled for specified window types</_short>
+					<_long>Specifies the window types to be animated with the blinds effect.</_long>
+					<default>none</default>
+				</option>
 				<option name="blinds_duration" type="animation">
 					<_short>Blinds duration</_short>
 					<_long>Sets the duration for the blinds animation in milliseconds.</_long>
