@@ -147,8 +147,10 @@ class blinds_transformer : public wf::scene::view_2d_transformer_t
             auto src_tex = wf::scene::transformer_render_instance_t<transformer_base_node_t>::get_texture(
                 1.0);
             auto progress = self->progression.progress();
-            auto og = self->output->get_relative_geometry();
-            self->animation_geometry = og;
+            self->animation_geometry =
+                wf::geometry_t{src_box.x - int(blinds_strip_height), src_box.y,
+                (src_box.x - int(blinds_strip_height)) + src_box.width + int(blinds_strip_height) * 2,
+                src_box.y + src_box.height};
 
             int line_height = int(blinds_strip_height);
             for (int i = 0; i < src_box.height; i += line_height)
@@ -243,7 +245,10 @@ class blinds_transformer : public wf::scene::view_2d_transformer_t
             output->render->add_effect(&pre_hook, wf::OUTPUT_EFFECT_PRE);
         }
 
-        animation_geometry = output->get_relative_geometry();
+        animation_geometry =
+            wf::geometry_t{bbox.x - int(blinds_strip_height), bbox.y,
+            (bbox.x - int(blinds_strip_height)) + bbox.width + int(blinds_strip_height) * 2,
+            bbox.y + bbox.height};
         OpenGL::render_begin();
         program.compile(blinds_vert_source, blinds_frag_source);
         OpenGL::render_end();
