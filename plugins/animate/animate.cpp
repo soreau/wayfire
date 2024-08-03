@@ -285,6 +285,10 @@ class wayfire_animation : public wf::plugin_interface_t, private wf::per_output_
     wf::view_matcher_t fade_enabled_for{"animate/fade_enabled_for"};
     wf::view_matcher_t zoom_enabled_for{"animate/zoom_enabled_for"};
     wf::view_matcher_t fire_enabled_for{"animate/fire_enabled_for"};
+    wf::view_matcher_t zap_enabled_for{"animate/zap_enabled_for"};
+    wf::view_matcher_t spin_enabled_for{"animate/spin_enabled_for"};
+    wf::view_matcher_t helix_enabled_for{"animate/helix_enabled_for"};
+    wf::view_matcher_t blinds_enabled_for{"animate/blinds_enabled_for"};
 
   public:
     void init() override
@@ -384,6 +388,26 @@ class wayfire_animation : public wf::plugin_interface_t, private wf::per_output_
         if (fire_enabled_for.matches(view))
         {
             return {"fire", fire_duration};
+        }
+
+        if (zap_enabled_for.matches(view))
+        {
+            return {"zap", default_duration};
+        }
+
+        if (spin_enabled_for.matches(view))
+        {
+            return {"spin", default_duration};
+        }
+
+        if (helix_enabled_for.matches(view))
+        {
+            return {"helix", default_duration};
+        }
+
+        if (blinds_enabled_for.matches(view))
+        {
+            return {"blinds", default_duration};
         }
 
         if (animation_enabled_for.matches(view))
