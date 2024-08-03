@@ -156,18 +156,14 @@ class blinds_transformer : public wf::scene::view_2d_transformer_t
                 std::vector<float> vertices;
                 auto y     = src_box.height - i;
                 auto inv_h = 1.0 / src_box.height;
-                uv.push_back(0.0);
-                uv.push_back(std::max(0, y - line_height) * inv_h);
                 uv.push_back(1.0);
                 uv.push_back(std::max(0, y - line_height) * inv_h);
                 uv.push_back(0.0);
-                uv.push_back(y * inv_h);
-                uv.push_back(1.0);
-                uv.push_back(y * inv_h);
+                uv.push_back(std::max(0, y - line_height) * inv_h);
                 uv.push_back(0.0);
                 uv.push_back(y * inv_h);
                 uv.push_back(1.0);
-                uv.push_back(std::max(0, y - line_height) * inv_h);
+                uv.push_back(y * inv_h);
                 auto x1 = src_box.width / 2.0;
                 auto x2 = -(src_box.width / 2.0);
                 auto y1 = -(std::min(src_box.height - i, line_height) / 2.0);
@@ -181,12 +177,12 @@ class blinds_transformer : public wf::scene::view_2d_transformer_t
                                 (M_PI * (1.0 - progress)) - M_PI / 2.0 * (float(i) / src_box.height)) +
                             M_PI / 2.0)), glm::vec3(1.0, 0.0, 0.0));
                 m = glm::scale(m, glm::vec3(2.0f / (src_box.width + line_height * 2), 2.0f / (y2 - y1), 1.0));
-                v = glm::vec4(x2, y2, 0.0, 1.0);
+                v = glm::vec4(x1, y2, 0.0, 1.0);
                 r = m * v;
                 vertices.push_back(r.x);
                 vertices.push_back(r.y);
                 vertices.push_back(r.z);
-                v = glm::vec4(x1, y2, 0.0, 1.0);
+                v = glm::vec4(x2, y2, 0.0, 1.0);
                 r = m * v;
                 vertices.push_back(r.x);
                 vertices.push_back(r.y);
@@ -197,16 +193,6 @@ class blinds_transformer : public wf::scene::view_2d_transformer_t
                 vertices.push_back(r.y);
                 vertices.push_back(r.z);
                 v = glm::vec4(x1, y1, 0.0, 1.0);
-                r = m * v;
-                vertices.push_back(r.x);
-                vertices.push_back(r.y);
-                vertices.push_back(r.z);
-                v = glm::vec4(x2, y1, 0.0, 1.0);
-                r = m * v;
-                vertices.push_back(r.x);
-                vertices.push_back(r.y);
-                vertices.push_back(r.z);
-                v = glm::vec4(x1, y2, 0.0, 1.0);
                 r = m * v;
                 vertices.push_back(r.x);
                 vertices.push_back(r.y);
@@ -228,7 +214,7 @@ class blinds_transformer : public wf::scene::view_2d_transformer_t
                 self->program.attrib_pointer("position", 3, 0, vertices.data());
                 self->program.attrib_pointer("uv_in", 2, 0, uv.data());
                 self->program.set_active_texture(src_tex);
-                GL_CALL(glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3));
+                GL_CALL(glDrawArrays(GL_TRIANGLE_FAN, 0, vertices.size() / 3));
                 OpenGL::render_end();
                 OpenGL::render_begin(target);
                 for (auto box : region)
