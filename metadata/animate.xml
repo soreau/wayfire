@@ -206,6 +206,12 @@
 					<_long>Sets the duration for the blinds animation in milliseconds.</_long>
 					<default>700ms linear</default>
 				</option>
+				<option name="blinds_strip_height" type="int">
+					<_short>Blinds strip height</_short>
+					<_long>Height of each blinds strip in pixels.</_long>
+					<default>20</default>
+					<min>10</min>
+				</option>
 			</subgroup>
 			<subgroup>
 			<_short>Squeezimize Settings</_short>
