@@ -114,6 +114,11 @@
 				<_long>Sets the duration of fading (in milliseconds) when Wayfire starts.</_long>
 				<default>600ms linear</default>
 			</option>
+			<option name="random_animations" type="bool">
+				<_short>Randomize animations</_short>
+				<_long>Randomize animations for all events.</_long>
+				<default>false</default>
+			</option>
 		</group>
 		<group>
 		<_short>Effect Settings</_short>
