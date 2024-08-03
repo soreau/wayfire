@@ -279,6 +279,7 @@ class wayfire_animation : public wf::plugin_interface_t, private wf::per_output_
     wf::option_wrapper_t<wf::animation_description_t> fire_duration{"animate/fire_duration"};
 
     wf::option_wrapper_t<wf::animation_description_t> startup_duration{"animate/startup_duration"};
+    wf::option_wrapper_t<bool> random_animations{"animate/random_animations"};
 
     wf::view_matcher_t animation_enabled_for{"animate/enabled_for"};
     wf::view_matcher_t fade_enabled_for{"animate/fade_enabled_for"};
@@ -315,9 +316,58 @@ class wayfire_animation : public wf::plugin_interface_t, private wf::per_output_
         wf::animation_description_t duration;
     };
 
+    std::vector<std::string> open_close_animations = {
+        "fade",
+        "zoom",
+        "fire",
+        "zap",
+        "spin",
+        "helix",
+        "blinds"
+    };
+
+    wf::animation_description_t get_duration_for_animation(std::string animation_name)
+    {
+        int i = 0;
+        if (animation_name == open_close_animations[i++])
+        {
+            return fade_duration;
+        } else if (animation_name == open_close_animations[i++])
+        {
+            return zoom_duration;
+        } else if (animation_name == open_close_animations[i++])
+        {
+            return fire_duration;
+        } else if (animation_name == open_close_animations[i++])
+        {
+            return zap_duration;
+        } else if (animation_name == open_close_animations[i++])
+        {
+            return spin_duration;
+        } else if (animation_name == open_close_animations[i++])
+        {
+            return helix_duration;
+        } else if (animation_name == open_close_animations[i++])
+        {
+            return blinds_duration;
+        }
+
+        return default_duration;
+    }
+
     view_animation_t get_animation_for_view(
         wf::option_wrapper_t<std::string>& anim_type, wayfire_view view)
     {
+        /* Random animation if randomize option set */
+        if (bool(random_animations))
+        {
+            auto a = std::rand() % open_close_animations.size();
+            if (animation_enabled_for.matches(view))
+            {
+                return {open_close_animations[a], get_duration_for_animation(open_close_animations[a])};
+            }
+        }
+
         /* Determine the animation for the given view.
          * Note that the matcher plugin might not have been loaded, so
          * we need to have a fallback algorithm */
@@ -477,9 +527,35 @@ class wayfire_animation : public wf::plugin_interface_t, private wf::per_output_
         }
     };
 
+    std::vector<std::string> minimize_animations = {
+        "zoom",
+        "squeezimize",
+    };
+
     wf::signal::connection_t<wf::view_minimize_request_signal> on_minimize_request =
         [=] (wf::view_minimize_request_signal *ev)
     {
+        /* Random animation if randomize option set */
+        if (bool(random_animations))
+        {
+            int i  = 0;
+            auto a = std::rand() % minimize_animations.size();
+            if (minimize_animations[a] == minimize_animations[i++])
+            {
+                set_animation<squeezimize_animation>(ev->view,
+                    ev->state ? ANIMATION_TYPE_MINIMIZE : ANIMATION_TYPE_RESTORE, default_duration,
+                    "minimize");
+            } else if (minimize_animations[a] == minimize_animations[i++])
+            {
+                set_animation<zoom_animation>(ev->view,
+                    ev->state ? ANIMATION_TYPE_MINIMIZE : ANIMATION_TYPE_RESTORE,
+                    default_duration,
+                    "minimize");
+            }
+
+            return;
+        }
+
         if (ev->state)
         {
             if (std::string(minimize_animation) == "squeezimize")
