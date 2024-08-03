@@ -188,6 +188,14 @@
 				</option>
 			</subgroup>
 			<subgroup>
+			<_short>Spin Settings</_short>
+				<option name="spin_duration" type="animation">
+					<_short>Spin duration</_short>
+					<_long>Sets the duration for the spin animation in milliseconds.</_long>
+					<default>700ms linear</default>
+				</option>
+			</subgroup>
+			<subgroup>
 			<_short>Helix Settings</_short>
 				<option name="helix_duration" type="animation">
 					<_short>Helix duration</_short>
