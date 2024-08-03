@@ -33,6 +33,7 @@
 static const std::string spin_transformer_name = "spin-transformer";
 
 wf::option_wrapper_t<wf::animation_description_t> spin_duration{"animate/spin_duration"};
+wf::option_wrapper_t<std::string> spin_direction{"animate/spin_direction"};
 wf::option_wrapper_t<int> spin_rotations{"animate/spin_rotations"};
 
 namespace wf
@@ -77,8 +78,9 @@ class spin_animation : public animation_base
         auto transform = view->get_transformed_node()
             ->get_transformer<wf::scene::view_2d_transformer_t>(spin_transformer_name);
         auto progress = this->progression.progress();
-        transform->alpha   = progress;
-        transform->angle   = progress * M_PI * 2.0 * int(spin_rotations);
+        transform->alpha = progress;
+        transform->angle = progress * M_PI * 2.0 * int(spin_rotations) *
+            (std::string(spin_direction) == "clockwise" ? -1.0 : 1.0);
         transform->scale_x = 0.01 + progress * 0.99;
         transform->scale_y = 0.01 + progress * 0.99;
 

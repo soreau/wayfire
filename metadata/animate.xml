@@ -194,6 +194,19 @@
 					<_long>Sets the duration for the spin animation in milliseconds.</_long>
 					<default>700ms linear</default>
 				</option>
+				<option name="spin_direction" type="string">
+					<_short>Spin direction</_short>
+					<_long>Forward spin direction.</_long>
+					<default>clockwise</default>
+					<desc>
+						<value>clockwise</value>
+						<_name>Clockwise</_name>
+					</desc>
+					<desc>
+						<value>counterclockwise</value>
+						<_name>Counter Clockwise</_name>
+					</desc>
+				</option>
 				<option name="spin_rotations" type="int">
 					<_short>Spin rotations</_short>
 					<_long>Number of rotations for the spin animation.</_long>
