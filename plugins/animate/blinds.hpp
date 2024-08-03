@@ -42,6 +42,7 @@
 static std::string blinds_transformer_name = "animation-blinds";
 
 wf::option_wrapper_t<wf::animation_description_t> blinds_duration{"animate/blinds_duration"};
+wf::option_wrapper_t<int> blinds_strip_height{"animate/blinds_strip_height"};
 
 static const char *blinds_vert_source =
     R"(
@@ -149,7 +150,7 @@ class blinds_transformer : public wf::scene::view_2d_transformer_t
             auto og = self->output->get_relative_geometry();
             self->animation_geometry = og;
 
-            int line_height = 20;
+            int line_height = int(blinds_strip_height);
             for (int i = 0; i < src_box.height; i += line_height)
             {
                 std::vector<float> uv;
