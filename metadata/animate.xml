@@ -208,6 +208,12 @@
 					<_long>Sets the duration for the helix animation in milliseconds.</_long>
 					<default>700ms linear</default>
 				</option>
+				<option name="helix_rotations" type="int">
+					<_short>Helix rotations</_short>
+					<_long>Number of rotations for the helix animation.</_long>
+					<default>2</default>
+					<min>1</min>
+				</option>
 			</subgroup>
 			<subgroup>
 			<_short>Blinds Settings</_short>

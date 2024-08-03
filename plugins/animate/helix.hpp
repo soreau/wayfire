@@ -42,6 +42,7 @@
 static std::string helix_transformer_name = "animation-helix";
 
 wf::option_wrapper_t<wf::animation_description_t> helix_duration{"animate/helix_duration"};
+wf::option_wrapper_t<int> helix_rotations{"animate/helix_rotations"};
 
 static const char *helix_vert_source =
     R"(
@@ -178,10 +179,11 @@ class helix_transformer : public wf::scene::view_2d_transformer_t
                 m = glm::rotate(m, float(M_PI), glm::vec3(1.0, 0.0, 0.0));
                 m =
                     glm::rotate(m,
-                        float(std::min(M_PI * 2.0,
+                        float(std::min(M_PI * int(helix_rotations),
                             std::max(0.0,
-                                (M_PI * 3.5 * (1.0 - progress)) - M_PI * 2.0 * (float(i) / src_box.height)) +
-                            M_PI / 2.0)), glm::vec3(0.0, 1.0, 0.0));
+                                ((M_PI * 1.5 + int(helix_rotations) * M_PI) * (1.0 - progress)) - M_PI * 2.0 *
+                                (float(i) / src_box.height)) +
+                            M_PI / 2.0) - int(helix_rotations) * M_PI), glm::vec3(0.0, 1.0, 0.0));
                 m = glm::scale(m, glm::vec3(2.0f / og.width, 2.0f / og.height, 1.0));
                 auto x1 = src_box.width / 2.0;
                 auto x2 = -(src_box.width / 2.0);
