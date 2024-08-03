@@ -180,6 +180,14 @@
 				</option>
 			</subgroup>
 			<subgroup>
+			<_short>Zap Settings</_short>
+				<option name="zap_duration" type="animation">
+					<_short>Zap duration</_short>
+					<_long>Sets the duration for the zap animation in milliseconds.</_long>
+					<default>700ms linear</default>
+				</option>
+			</subgroup>
+			<subgroup>
 			<_short>Helix Settings</_short>
 				<option name="helix_duration" type="animation">
 					<_short>Helix duration</_short>
