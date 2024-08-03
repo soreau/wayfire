@@ -194,6 +194,12 @@
 					<_long>Sets the duration for the spin animation in milliseconds.</_long>
 					<default>700ms linear</default>
 				</option>
+				<option name="spin_rotations" type="int">
+					<_short>Spin rotations</_short>
+					<_long>Number of rotations for the spin animation.</_long>
+					<default>2</default>
+					<min>1</min>
+				</option>
 			</subgroup>
 			<subgroup>
 			<_short>Helix Settings</_short>
