@@ -192,6 +192,12 @@
 					<default>2</default>
 					<min>1</min>
 				</option>
+				<option name="helix_strip_height" type="int">
+					<_short>Helix strip height</_short>
+					<_long>Height of each helix strip in pixels.</_long>
+					<default>20</default>
+					<min>10</min>
+				</option>
 			</subgroup>
 			<subgroup>
 			<_short>Blinds Settings</_short>

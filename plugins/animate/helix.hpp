@@ -42,6 +42,7 @@
 static std::string transformer_name = "animation-helix";
 
 wf::option_wrapper_t<wf::animation_description_t> helix_duration{"animate/helix_duration"};
+wf::option_wrapper_t<int> helix_strip_height{"animate/helix_strip_height"};
 wf::option_wrapper_t<int> helix_rotations{"animate/helix_rotations"};
 
 static const char *helix_vert_source =
@@ -150,7 +151,7 @@ class helix_transformer : public wf::scene::view_2d_transformer_t
             auto og = self->output->get_relative_geometry();
             self->animation_geometry = og;
 
-            int line_height = 20;
+            int line_height = int(helix_strip_height);
             std::vector<float> uv;
             std::vector<float> vertices;
             glm::mat4 l = glm::lookAt(
