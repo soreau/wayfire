@@ -47,6 +47,10 @@
 					<value>shatter</value>
 					<_name>Shatter</_name>
 				</desc>
+				<desc>
+					<value>vortex</value>
+					<_name>Vortex</_name>
+				</desc>
 			</option>
 			<option name="close_animation" type="string">
 				<_short>Close animation</_short>
@@ -87,6 +91,10 @@
 				<desc>
 					<value>shatter</value>
 					<_name>Shatter</_name>
+				</desc>
+				<desc>
+					<value>vortex</value>
+					<_name>Vortex</_name>
 				</desc>
 			</option>
 			<option name="minimize_animation" type="string">
@@ -286,6 +294,14 @@
 				<option name="shatter_duration" type="animation">
 					<_short>Shatter duration</_short>
 					<_long>Sets the duration for the shatter animation in milliseconds.</_long>
+					<default>1000ms linear</default>
+				</option>
+			</subgroup>
+			<subgroup>
+			<_short>Vortex Settings</_short>
+				<option name="vortex_duration" type="animation">
+					<_short>Vortex duration</_short>
+					<_long>Sets the duration for the vortex animation in milliseconds.</_long>
 					<default>1000ms linear</default>
 				</option>
 			</subgroup>
