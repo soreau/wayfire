@@ -258,6 +258,7 @@ static const char *get_format_name(uint32_t format)
 struct output_layout_output_t
 {
     wlr_output *handle;
+    wlr_output_state state;
     output_state_t current_state{};
     bool is_externally_managed = false;
     bool is_nested_compositor  = false;
@@ -294,6 +295,7 @@ struct output_layout_output_t
     output_layout_output_t(wlr_output *handle)
     {
         this->handle = handle;
+        wlr_output_state_init(&this->state);
         on_destroy.connect(&handle->events.destroy);
         initialize_config_options();
 
@@ -618,7 +620,7 @@ struct output_layout_output_t
                 (current_bit_depth == current_state.depth))
             {
                 /* Commit the enabling of the output */
-                wlr_output_commit(handle);
+                wlr_output_commit_state(handle, &state);
 
                 return;
             }
@@ -628,7 +630,7 @@ struct output_layout_output_t
         auto built_in = find_matching_mode(handle, mode, custom_mode);
         if (built_in)
         {
-            wlr_output_set_mode(handle, built_in);
+            wlr_output_state_set_mode(&state, built_in);
         } else
         {
             LOGI("Couldn't find matching mode ",
@@ -636,24 +638,24 @@ struct output_layout_output_t
                 " for output ", handle->name, ". Trying to use custom mode",
                 "(might not work)");
 
-            wlr_output_set_custom_mode(handle, mode.width, mode.height, mode.refresh);
+            wlr_output_state_set_custom_mode(&state, mode.width, mode.height, mode.refresh);
         }
 
-        wlr_output_commit(handle);
+        wlr_output_commit_state(handle, &state);
 
         const bool adaptive_sync_enabled = (handle->adaptive_sync_status == WLR_OUTPUT_ADAPTIVE_SYNC_ENABLED);
 
         if (adaptive_sync_enabled != current_state.vrr)
         {
-            wlr_output_enable_adaptive_sync(handle, current_state.vrr);
-            if (wlr_output_test(handle))
+            wlr_output_state_set_adaptive_sync_enabled(&state, current_state.vrr);
+            if (wlr_output_test_state(handle, &state))
             {
-                wlr_output_commit(handle);
+                wlr_output_commit_state(handle, &state);
                 LOGD("Changed adaptive sync on output: ", handle->name, " to ", current_state.vrr);
             } else
             {
                 LOGE("Failed to change adaptive sync on output: ", handle->name);
-                wlr_output_rollback(handle);
+                // wlr_output_rollback(handle);
             }
         }
 
@@ -661,10 +663,10 @@ struct output_layout_output_t
         {
             for (auto fmt : formats_for_depth[current_state.depth])
             {
-                wlr_output_set_render_format(handle, fmt);
-                if (wlr_output_test(handle))
+                wlr_output_state_set_render_format(&state, fmt);
+                if (wlr_output_test_state(handle, &state))
                 {
-                    wlr_output_commit(handle);
+                    wlr_output_commit_state(handle, &state);
                     current_bit_depth = current_state.depth;
                     LOGD("Set output format to ", get_format_name(fmt), " on output ", handle->name);
                     break;
@@ -683,15 +685,18 @@ struct output_layout_output_t
     /** Render the output using texture as source */
     void render_output(wlr_texture *texture)
     {
-        auto renderer = get_core().renderer;
-        wlr_output_attach_render(handle, NULL);
-        wlr_renderer_begin(renderer, handle->width, handle->height);
+        int buffer_age;
+        struct wlr_render_pass *pass = wlr_output_begin_render_pass(handle, &state, &buffer_age, NULL);
+        if (pass == NULL)
+        {
+            return;
+        }
 
         wf::texture_t tex{texture};
         OpenGL::render_transformed_texture(tex, {-1, -1, 2, 2});
 
-        wlr_renderer_end(renderer);
-        wlr_output_commit(handle);
+        wlr_render_pass_submit(pass);
+        wlr_output_commit_state(handle, &state);
     }
 
     /* Load output contents and render them */
@@ -728,10 +733,10 @@ struct output_layout_output_t
 
     void set_enabled(bool enabled)
     {
-        wlr_output_enable(handle, enabled);
+        wlr_output_state_set_enabled(&state, enabled);
         if (!enabled)
         {
-            wlr_output_commit(handle);
+            wlr_output_commit_state(handle, &state);
         }
     }
 
@@ -903,15 +908,15 @@ struct output_layout_output_t
         {
             if (handle->transform != state.transform)
             {
-                wlr_output_set_transform(handle, state.transform);
+                wlr_output_state_set_transform(&this->state, state.transform);
             }
 
             if (handle->scale != state.scale)
             {
-                wlr_output_set_scale(handle, state.scale);
+                wlr_output_state_set_scale(&this->state, state.scale);
             }
 
-            wlr_output_commit(handle);
+            wlr_output_commit_state(handle, &this->state);
 
             ensure_wayfire_output(get_effective_size());
             output->render->damage_whole();
@@ -995,10 +1000,10 @@ class output_layout_t::impl
         on_backend_destroy.set_callback([=] (auto) { deinit_noop(); });
         on_backend_destroy.connect(&wf::get_core().renderer->events.destroy);
 
-        output_layout = wlr_output_layout_create();
+        output_layout = wlr_output_layout_create(get_core().display);
         get_core().connect(&on_config_reload);
 
-        noop_backend = wlr_headless_backend_create(get_core().display);
+        noop_backend = wlr_headless_backend_create(get_core().ev_loop);
         wlr_backend_start(noop_backend);
 
         get_core().connect(&on_backend_started);
@@ -1086,8 +1091,8 @@ class output_layout_t::impl
             state.scale     = head->state.scale;
             state.transform = head->state.transform;
             state.vrr = head->state.adaptive_sync_enabled;
-            if ((handle->pending.render_format == DRM_FORMAT_XRGB2101010) ||
-                (handle->pending.render_format == DRM_FORMAT_XBGR2101010))
+            if ((handle->render_format == DRM_FORMAT_XRGB2101010) ||
+                (handle->render_format == DRM_FORMAT_XBGR2101010))
             {
                 state.depth = 10;
             } else

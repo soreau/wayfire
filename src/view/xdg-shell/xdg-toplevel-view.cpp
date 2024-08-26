@@ -556,7 +556,7 @@ class xdg_toplevel_controller_t
     xdg_toplevel_controller_t(wlr_xdg_toplevel *toplevel)
     {
         on_destroy.set_callback([=] (auto) { delete this; });
-        on_destroy.connect(&toplevel->base->events.destroy);
+        on_destroy.connect(&toplevel->events.destroy);
         view = wf::xdg_toplevel_view_t::create(toplevel);
 
         on_map.set_callback([=] (void*)
