@@ -408,7 +408,7 @@ class xdg_popup_controller_t
             view->destroy();
             delete this;
         });
-        on_destroy.connect(&popup->base->events.destroy);
+        on_destroy.connect(&popup->events.destroy);
         view = wayfire_xdg_popup::create(popup);
     }
 
