@@ -71,7 +71,6 @@ void wf::xdg_toplevel_t::commit()
         wait_for_client = true;
         const int configure_width  = std::max(1, desired_size.width);
         const int configure_height = std::max(1, desired_size.height);
-        LOGI("setting size: ", configure_width, "x", configure_height);
         this->target_configure = wlr_xdg_toplevel_set_size(this->toplevel, configure_width, configure_height);
     } else
     {
