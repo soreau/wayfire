@@ -35,7 +35,7 @@ class ipc_rules_input_methods_t
           case WLR_INPUT_DEVICE_TOUCH:
             return "touch";
 
-          case WLR_INPUT_DEVICE_TABLET_TOOL:
+          case WLR_INPUT_DEVICE_TABLET:
             return "tablet_tool";
 
           case WLR_INPUT_DEVICE_TABLET_PAD:
@@ -55,10 +55,14 @@ class ipc_rules_input_methods_t
         for (auto& device : wf::get_core().get_input_devices())
         {
             nlohmann::json d;
-            d["id"]     = (intptr_t)device->get_wlr_handle();
-            d["name"]   = nonull(device->get_wlr_handle()->name);
-            d["vendor"] = device->get_wlr_handle()->vendor;
-            d["product"] = device->get_wlr_handle()->product;
+            d["id"]   = (intptr_t)device->get_wlr_handle();
+            d["name"] = nonull(device->get_wlr_handle()->name);
+            if (auto touch_device = wlr_tablet_from_input_device(device->get_wlr_handle()))
+            {
+                d["vendor"]  = touch_device->usb_vendor_id;
+                d["product"] = touch_device->usb_product_id;
+            }
+
             d["type"]    = wlr_input_device_type_to_string(device->get_wlr_handle()->type);
             d["enabled"] = device->is_enabled();
             response.push_back(d);
