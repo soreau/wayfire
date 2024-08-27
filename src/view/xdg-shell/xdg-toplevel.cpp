@@ -72,9 +72,6 @@ void wf::xdg_toplevel_t::commit()
         const int configure_width  = std::max(1, desired_size.width);
         const int configure_height = std::max(1, desired_size.height);
         this->target_configure = wlr_xdg_toplevel_set_size(this->toplevel, configure_width, configure_height);
-    } else
-    {
-        wlr_xdg_toplevel_set_size(this->toplevel, current_size.width, current_size.height);
     }
 
     if (_current.tiled_edges != _pending.tiled_edges)
