@@ -655,7 +655,6 @@ struct output_layout_output_t
             } else
             {
                 LOGE("Failed to change adaptive sync on output: ", handle->name);
-                // wlr_output_rollback(handle);
             }
         }
 
