@@ -57,13 +57,7 @@ class ipc_rules_input_methods_t
             nlohmann::json d;
             d["id"]   = (intptr_t)device->get_wlr_handle();
             d["name"] = nonull(device->get_wlr_handle()->name);
-            if (auto tablet_device = wlr_tablet_from_input_device(device->get_wlr_handle()))
-            {
-                d["vendor"]  = tablet_device->usb_vendor_id;
-                d["product"] = tablet_device->usb_product_id;
-            }
-
-            d["type"]    = wlr_input_device_type_to_string(device->get_wlr_handle()->type);
+            d["type"] = wlr_input_device_type_to_string(device->get_wlr_handle()->type);
             d["enabled"] = device->is_enabled();
             response.push_back(d);
         }
