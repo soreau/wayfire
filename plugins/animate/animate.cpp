@@ -592,7 +592,7 @@ class wayfire_animation : public wf::plugin_interface_t, private wf::per_output_
             auto a = std::rand() % minimize_animations.size();
             if (minimize_animations[a] == minimize_animations[i++])
             {
-                set_animation<squeezimize_animation>(ev->view,
+                set_animation<wf::squeezimize::squeezimize_animation>(ev->view,
                     ev->state ? ANIMATION_TYPE_MINIMIZE : ANIMATION_TYPE_RESTORE, default_duration,
                     "minimize");
             } else if (minimize_animations[a] == minimize_animations[i++])
