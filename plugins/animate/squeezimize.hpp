@@ -128,7 +128,8 @@ class squeezimize_animation_t : public duration_t
 class squeezimize_transformer : public wf::scene::view_2d_transformer_t
 {
   public:
-    wf::output_t *output;
+    wayfire_view view;
+    wf::output_t *wo;
     OpenGL::program_t program;
     wf::geometry_t minimize_target;
     wf::geometry_t animation_geometry;
@@ -182,7 +183,7 @@ class squeezimize_transformer : public wf::scene::view_2d_transformer_t
             auto progress = self->progression.progress();
             int upward    = ((src_box.y > self->minimize_target.y) ||
                 ((src_box.y < 0) &&
-                    (self->minimize_target.y < self->output->get_relative_geometry().height / 2)));
+                    (self->minimize_target.y < self->wo->get_relative_geometry().height / 2)));
             static const float vertex_data_uv[] = {
                 0.0f, 0.0f,
                 1.0f, 0.0f,
@@ -254,13 +255,15 @@ class squeezimize_transformer : public wf::scene::view_2d_transformer_t
     squeezimize_transformer(wayfire_view view,
         wf::geometry_t minimize_target, wf::geometry_t bbox) : wf::scene::view_2d_transformer_t(view)
     {
+        this->view = view;
+        this->wo   = view->get_output();
         this->minimize_target = minimize_target;
         /* If there is no minimize target set, minimize to the bottom center of the output */
         if ((this->minimize_target.width <= 0) || (this->minimize_target.height <= 0))
         {
-            if (auto output = view->get_output())
+            if (this->wo)
             {
-                auto og = output->get_relative_geometry();
+                auto og = this->wo->get_relative_geometry();
                 this->minimize_target.x     = og.width / 2 - 50;
                 this->minimize_target.y     = og.height;
                 this->minimize_target.width = 100;
@@ -293,8 +296,14 @@ class squeezimize_transformer : public wf::scene::view_2d_transformer_t
     void gen_render_instances(std::vector<render_instance_uptr>& instances,
         damage_callback push_damage, wf::output_t *shown_on) override
     {
+        this->wo = view->get_output();
+        if (!this->wo)
+        {
+            return;
+        }
+
         instances.push_back(std::make_unique<simple_node_render_instance_t>(
-            this, push_damage, shown_on));
+            this, push_damage, this->wo));
     }
 
     void init_animation(bool squeeze)
