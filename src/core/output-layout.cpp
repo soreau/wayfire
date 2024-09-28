@@ -621,6 +621,8 @@ struct output_layout_output_t
             {
                 /* Commit the enabling of the output */
                 wlr_output_commit_state(handle, &state);
+                wlr_output_state_finish(&state);
+                wlr_output_state_init(&state);
 
                 return;
             }
@@ -642,6 +644,8 @@ struct output_layout_output_t
         }
 
         wlr_output_commit_state(handle, &state);
+        wlr_output_state_finish(&state);
+        wlr_output_state_init(&state);
 
         const bool adaptive_sync_enabled = (handle->adaptive_sync_status == WLR_OUTPUT_ADAPTIVE_SYNC_ENABLED);
 
@@ -655,9 +659,11 @@ struct output_layout_output_t
             } else
             {
                 LOGE("Failed to change adaptive sync on output: ", handle->name);
-                wlr_output_state_set_adaptive_sync_enabled(&state, adaptive_sync_enabled);
             }
         }
+
+        wlr_output_state_finish(&state);
+        wlr_output_state_init(&state);
 
         if (current_state.depth != current_bit_depth)
         {
@@ -666,6 +672,7 @@ struct output_layout_output_t
                 wlr_output_state_set_render_format(&state, fmt);
                 if (wlr_output_test_state(handle, &state))
                 {
+                    wlr_output_state_set_render_format(&state, fmt);
                     wlr_output_commit_state(handle, &state);
                     current_bit_depth = current_state.depth;
                     LOGD("Set output format to ", get_format_name(fmt), " on output ", handle->name);
@@ -675,6 +682,9 @@ struct output_layout_output_t
                 LOGD("Failed to set output format ", get_format_name(fmt), " on output ", handle->name);
             }
         }
+
+        wlr_output_state_finish(&state);
+        wlr_output_state_init(&state);
     }
 
     /* Mirroring implementation */
@@ -697,6 +707,8 @@ struct output_layout_output_t
 
         wlr_render_pass_submit(pass);
         wlr_output_commit_state(handle, &state);
+        wlr_output_state_finish(&state);
+        wlr_output_state_init(&state);
     }
 
     /* Load output contents and render them */
@@ -737,6 +749,8 @@ struct output_layout_output_t
         if (!enabled)
         {
             wlr_output_commit_state(handle, &state);
+            wlr_output_state_finish(&state);
+            wlr_output_state_init(&state);
         }
     }
 
@@ -917,6 +931,8 @@ struct output_layout_output_t
             }
 
             wlr_output_commit_state(handle, &this->state);
+            wlr_output_state_finish(&this->state);
+            wlr_output_state_init(&this->state);
 
             ensure_wayfire_output(get_effective_size());
             output->render->damage_whole();
