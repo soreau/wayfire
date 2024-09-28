@@ -433,7 +433,7 @@ static wf::wl_listener_wrapper on_xdg_created;
 
 void wf::init_xdg_shell()
 {
-    xdg_handle = wlr_xdg_shell_create(wf::get_core().display, 6);
+    xdg_handle = wlr_xdg_shell_create(wf::get_core().display, XDG_TOPLEVEL_STATE_SUSPENDED_SINCE_VERSION);
     if (xdg_handle)
     {
         on_xdg_created.set_callback([&] (void *data)
