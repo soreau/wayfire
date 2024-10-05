@@ -37,6 +37,7 @@ static void print_help()
         " -D,  --damage-debug      enable additional debug for damaged regions" <<
         std::endl;
     std::cout << " -R,  --damage-rerender   rerender damaged regions" << std::endl;
+    std::cout << " -l,  --legacy-wl-drm     use legacy drm for wayland clients" << std::endl;
     std::cout << " -v,  --version           print version and exit" << std::endl;
     exit(0);
 }
