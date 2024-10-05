@@ -96,7 +96,7 @@ void wf::compositor_core_impl_t::init()
 
     /* Legacy DRM */
     if (runtime_config.legacy_wl_drm &&
-        wlr_renderer_get_dmabuf_texture_formats(renderer))
+        wlr_renderer_get_texture_formats(renderer, WLR_BUFFER_CAP_DMABUF))
     {
         wlr_drm_create(display, renderer);
     }
