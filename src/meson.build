@@ -164,3 +164,5 @@ pkgconfig.generate(
                    'icondir=${prefix}/share/wayfire/icons',
                    'pkgdatadir='+pkgdatadir]
     )
+
+subdir('joysticks')

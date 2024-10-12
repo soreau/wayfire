@@ -9,6 +9,11 @@
 #include <wayfire/debug.hpp>
 #include "main.hpp"
 
+#include "joysticks/gp-glue.h"
+#include <wayfire/seat.hpp>
+#include <../plugins/cube/cube-control-signal.hpp>
+#include <wayfire/render-manager.hpp>
+
 #include <wayland-server.h>
 
 #include "wayfire/config-backend.hpp"
@@ -241,6 +246,213 @@ void parse_extended_debugging(const std::vector<std::string>& categories)
     }
 }
 
+static int gp_write_fd = -1;
+
+static void start_cube_rotate()
+{
+    auto output = wf::get_core().seat->get_active_output();
+    if (!output)
+    {
+        return;
+    }
+
+    cube_control_signal data;
+    data.angle = 0.0;
+    data.zoom  = 1.0;
+    data.ease  = 0.0;
+    data.last_frame  = false;
+    data.carried_out = false;
+
+    output->emit(&data);
+}
+
+static double axis_value    = 0.0;
+static double cube_rotation = 0.0;
+
+wf::effect_hook_t cube_frame = [] ()
+{
+    auto output = wf::get_core().seat->get_active_output();
+    if (!output)
+    {
+        return;
+    }
+
+    cube_control_signal data;
+
+    cube_rotation += axis_value;
+
+    if (cube_rotation > M_PI * 2)
+    {
+        cube_rotation -= M_PI * 2;
+    }
+
+    if (cube_rotation < -M_PI * 2)
+    {
+        cube_rotation += M_PI * 2;
+    }
+
+    LOGI("cube_rotation: ", cube_rotation);
+
+    data.angle = cube_rotation;
+    data.zoom  = 1.0;
+    data.ease  = 0.0;
+    data.last_frame  = false;
+    data.carried_out = false;
+
+    output->emit(&data);
+};
+
+static void end_cube_rotate()
+{
+    auto output = wf::get_core().seat->get_active_output();
+    if (!output)
+    {
+        return;
+    }
+
+    cube_control_signal data;
+    data.angle = 0.0;
+    data.zoom  = 1.0;
+    data.ease  = 0.0;
+    data.last_frame  = true;
+    data.carried_out = false;
+
+    output->emit(&data);
+    axis_value    = 0.0;
+    cube_rotation = 0.0;
+}
+
+static int gamepad_consumer_state = 1;
+
+static int handle_gp_event(int fd, uint32_t mask, void *data)
+{
+    if ((mask & WL_EVENT_READABLE) == 0)
+    {
+        return 0;
+    }
+
+    struct gp_event gp_ev;
+    memset(&gp_ev, 0, sizeof(gp_ev));
+    if (read(fd, &gp_ev, sizeof(gp_ev)) != sizeof(gp_ev))
+    {
+        LOGE("read failed");
+        return 0;
+    }
+
+    switch (gp_ev.code)
+    {
+      case GP_HOTPLUG_EVENT:
+        LOGI("GP_HOTPLUG_EVENT");
+        LOGI("code: ", gp_ev.code);
+        LOGI("js: ", gp_ev.js);
+        LOGI("connected: ", gp_ev.hotplug.connected);
+        break;
+
+      case GP_BUTTON_EVENT:
+        // LOGI("GP_BUTTON_EVENT");
+        // LOGI("code: ", gp_ev.code);
+        LOGI("js: ", gp_ev.js);
+        LOGI("button: ", gp_ev.button.button);
+        LOGI("value: ", gp_ev.button.value);
+        if ((gp_ev.js == 0) && (gp_ev.button.button == 315) && gp_ev.button.value)
+        {
+            struct gp_request gp_rq;
+            memset(&gp_rq, 0, sizeof(gp_rq));
+            gp_rq.code = GP_CONSUMER_STATE;
+            gamepad_consumer_state     = !gamepad_consumer_state;
+            gp_rq.consumer_state.state = gamepad_consumer_state;
+            write(gp_write_fd, (const void*)&gp_rq, sizeof(gp_rq));
+        } else if (!gamepad_consumer_state && (gp_ev.js == 0) && (gp_ev.button.button == 305))
+        {
+            auto output = wf::get_core().seat->get_active_output();
+            if (!output)
+            {
+                return 0;
+            }
+
+            if (gp_ev.button.value)
+            {
+                output->render->add_effect(&cube_frame, wf::OUTPUT_EFFECT_PRE);
+                start_cube_rotate();
+            } else
+            {
+                output->render->rem_effect(&cube_frame);
+                end_cube_rotate();
+            }
+        }
+
+        break;
+
+      case GP_AXIS_EVENT:
+        // LOGI("GP_AXIS_EVENT");
+        // LOGI("code: ", gp_ev.code);
+        LOGI("js: ", gp_ev.js);
+        LOGI("axis: ", gp_ev.axis.axis);
+        LOGI("value: ", gp_ev.axis.value);
+        if ((gp_ev.js == 0) && (gp_ev.axis.axis == 0))
+        {
+            axis_value = gp_ev.axis.value * 0.000005;
+        }
+
+        break;
+
+      default:
+        break;
+    }
+
+    return 0;
+}
+
+void fork_joysticks(struct wl_event_loop *ev_loop)
+{
+    int pipe_fds[2][2];
+
+    if (pipe(pipe_fds[0]) == -1)
+    {
+        LOGE("pipe failed");
+        return;
+    }
+
+    if (pipe(pipe_fds[1]) == -1)
+    {
+        LOGE("pipe failed");
+        return;
+    }
+
+    pid_t p = fork();
+    if (p < 0)
+    {
+        LOGE("fork failed");
+        return;
+    } else if (p > 0)
+    {
+        // parent
+        close(pipe_fds[0][1]);
+        close(pipe_fds[1][0]);
+        wl_event_loop_add_fd(ev_loop,
+            pipe_fds[0][0], WL_EVENT_READABLE, handle_gp_event, NULL);
+        gp_write_fd = pipe_fds[1][1];
+    } else if (p == 0)
+    {
+        // child
+        close(pipe_fds[0][0]);
+        close(pipe_fds[1][1]);
+        char read_fd[8];
+        char write_fd[8];
+        snprintf(read_fd, 8, "%i", pipe_fds[1][0]);
+        snprintf(write_fd, 8, "%i", pipe_fds[0][1]);
+        char *prog_name = strdup("dup-joysticks");
+        char *args[]    = {prog_name, read_fd, write_fd, (char*)NULL};
+        if (execvp("dup-joysticks", args) == -1)
+        {
+            LOGE("execvp failed");
+        }
+
+        free(prog_name);
+        exit(0);
+    }
+}
+
 // Override assert() handler to be more useful and print a trace.
 // extern "C" {
 // void __assert_fail(const char* expr, const char *filename, unsigned int line, const char *assert_func)
@@ -450,6 +662,9 @@ int main(int argc, char *argv[])
     }
 
     setenv("WAYLAND_DISPLAY", core.wayland_display.c_str(), 1);
+
+    fork_joysticks(core.ev_loop);
+
     core.post_init();
 
     wl_display_run(core.display);
