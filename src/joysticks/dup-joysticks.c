@@ -96,7 +96,7 @@ static void emit(int fd, int type, int code, int val)
 	write(fd, &ie, sizeof(ie));
 }
 
-static void add_joystick(struct udev_device *dev)
+static void add_joystick(struct udev_device *dev, int hotplug)
 {
 	if (num_josyticks >= MAX_JOYSTICKS) {
 		printf("10 joysticks maximum\n");
@@ -220,10 +220,12 @@ static void add_joystick(struct udev_device *dev)
 		printf("uevent_path: %s\n", js_dev->uevent_path);
 
 		stat(js_dev->uevent_path, &st);
-
-		js_dev->uevent_orig_mode = st.st_mode & 0xFFF;
-
-		remove_rw_perms = js_dev->uevent_orig_mode & ~(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+		if (hotplug) {
+			remove_rw_perms = (st.st_mode & 0xFFF) & ~(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+		} else {
+			js_dev->uevent_orig_mode = st.st_mode & 0xFFF;
+			remove_rw_perms = js_dev->uevent_orig_mode & ~(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+		}
 
 		chmod(js_dev->uevent_path, remove_rw_perms);
 	}
@@ -427,7 +429,7 @@ int main(int argc, char *argv[])
 		path = udev_list_entry_get_name(dev_list_entry);
 		printf("path: %s\n", path);
 		dev = udev_device_new_from_syspath(udev, path);
-		add_joystick(dev);
+		add_joystick(dev, 0);
 		udev_device_unref(dev);
 	}
 
@@ -516,7 +518,7 @@ int main(int argc, char *argv[])
 						} else if (!strcmp(action, "add") &&
 							(!strncmp(node_name, "/dev/input/js", strlen("/dev/input/js")) ||
 							!strncmp(node_name, "/dev/input/event", strlen("/dev/input/event")))) {
-							add_joystick(dev);
+							add_joystick(dev, 1);
 						}
 					}
 					udev_device_unref(dev);
@@ -528,7 +530,7 @@ int main(int argc, char *argv[])
 			}
 			struct joystick *js_dev = NULL;
 			struct joystick *ev_dev = NULL;
-			for (int i = 0; i < num_josyticks; i++) {
+			for (int i = 0; i < MAX_JOYSTICKS; i++) {
 				if (events[n].data.fd == joysticks[i].fd) {
 					js_dev = &joysticks[i];
 					break;
