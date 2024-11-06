@@ -28,8 +28,23 @@ std::shared_ptr<config::section_t> wf::config_backend_t::get_output_section(
     return config.get_section(name);
 }
 
+static struct property_and_desc
+{
+    char const *property_name;
+    char const *description;
+} properties_and_descs[] =
+{
+    {"ID_PATH", "stable physical connection path"},
+    {"ID_SERIAL", "stable vendor+pn+sn info"},
+    {"LIBINPUT_DEVICE_GROUP", "stable libinput info"},
+    // sometimes it contains info "by path", sometimes "by id"
+    {"DEVPATH", "unstable devpath"},
+    // used for debugging, to find DEVPATH and match the right
+    // device in `udevadm info --tree`
+};
+
 std::shared_ptr<config::section_t> wf::config_backend_t::get_input_device_section(
-    wlr_input_device *device)
+    std::string const & prefix, wlr_input_device *device)
 {
     auto& config = wf::get_core().config;
     std::shared_ptr<wf::config::section_t> section;
@@ -43,21 +58,6 @@ std::shared_ptr<config::section_t> wf::config_backend_t::get_input_device_sectio
             udev_device *udev_dev = libinput_device_get_udev_device(libinput_dev);
             if (udev_dev)
             {
-                struct property_and_desc
-                {
-                    char const *property_name;
-                    char const *description;
-                } properties_and_descs[] =
-                {
-                    {"ID_PATH", "stable physical connection path"},
-                    {"ID_SERIAL", "stable vendor+pn+sn info"},
-                    {"LIBINPUT_DEVICE_GROUP", "stable libinput info"},
-                    // sometimes it contains info "by path", sometimes "by id"
-                    {"DEVPATH", "unstable devpath"},
-                    // used for debugging, to find DEVPATH and match the right
-                    // device in `udevadm info --tree`
-                };
-
                 for (struct property_and_desc const & pd : properties_and_descs)
                 {
                     if (!print_devpath && !strncmp(pd.property_name, "DEVPATH", strlen("DEVPATH")))
@@ -71,7 +71,7 @@ std::shared_ptr<config::section_t> wf::config_backend_t::get_input_device_sectio
                         continue;
                     }
 
-                    std::string name = std::string("input-device:") + nonull(value);
+                    std::string name = prefix + ":" + nonull(value);
                     LOGD("Checking for config section [", name, "] ",
                         pd.property_name, " (", pd.description, ")");
                     section = config.get_section(name);
@@ -86,7 +86,7 @@ std::shared_ptr<config::section_t> wf::config_backend_t::get_input_device_sectio
     }
 
     std::string name = nonull(device->name);
-    name = "input-device:" + name;
+    name = prefix + ":" + name;
     LOGD("Checking for config section [", name, "]");
     section = config.get_section(name);
     if (section)
@@ -96,7 +96,7 @@ std::shared_ptr<config::section_t> wf::config_backend_t::get_input_device_sectio
     }
 
     config.merge_section(
-        config.get_section("input-device")->clone_with_name(name));
+        config.get_section(prefix)->clone_with_name(name));
 
     return config.get_section(name);
 }
