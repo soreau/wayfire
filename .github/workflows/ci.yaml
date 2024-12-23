@@ -3,20 +3,42 @@ name: CI
 on: [push, pull_request]
 jobs:
   test_musl_gcc:
-    name: "Test with GCC/musl/libstdc++/BFD on Alpine Linux"
-    runs-on: ubuntu-latest
-    container: alpine:latest
+    name: "Test with GCC/musl/libstdc++/BFD on Ubuntu 22.04 jammy"
+    runs-on: ubuntu-22.04
+    container:
+      image: ubuntu:jammy
+      options: --privileged
     steps:
-    - run: apk --no-cache add git gcc g++ binutils pkgconf meson ninja musl-dev wayland-protocols libinput-dev libevdev-dev libxkbcommon-dev pixman-dev glm-dev mesa-dev cairo-dev pango-dev eudev-dev libxml2-dev libseat-dev libxcb-dev xcb-util-wm-dev xwayland doctest doctest-dev cmake libdisplay-info-dev hwdata-dev nlohmann-json
+    - run: apt update && apt install -y software-properties-common
+    - run: add-apt-repository -y ppa:kisak/kisak-mesa
+    - run: apt update && apt install -y git build-essential binutils pkg-config musl-dev libwayland-dev libinput-dev libevdev-dev libxkbcommon-dev libglm-dev libgl1-mesa-dev libcairo2-dev libpango1.0-dev libudev-dev libxml2-dev libseat-dev libxcb1-dev libxcb-util-dev xwayland doctest-dev cmake hwdata nlohmann-json3-dev python3-pip curl libgbm-dev liblcms2-dev gcc-12 g++-12 libgtk-3-dev libgtkmm-3.0-dev libgtk-layer-shell-dev libpulse-dev libdbusmenu-gtk3-dev libasound2-dev psmisc imagemagick libgraphicsmagick1-dev linux-headers-$(uname -r) linux-image-$(uname -r)
+    - run: git clone https://github.com/emersion/hello-wayland && cd hello-wayland && make && cp hello-wayland /usr/bin/hello-wayland && cd .. && rm -rf hello-wayland
+    - run: git clone https://github.com/ikwzm/udmabuf && cd udmabuf && make all && insmod u-dma-buf.ko && cd .. && rm -rf udmabuf && ls -l /dev/udmabuf
+    - run: git clone https://github.com/vcrhonek/hwdata && cd hwdata && ./configure --prefix=/usr && make && make install && cd .. && rm -rf hwdata
+    - run: pip3 install meson ninja
+    - run: git clone https://git.sr.ht/~kennylevinsen/seatd && cd seatd && meson setup build --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf seatd
     - run: git clone https://gitlab.freedesktop.org/wayland/wayland && cd wayland && git checkout 1.23.0 && meson setup build -Ddocumentation=false -Dtests=false --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf wayland
+    - run: git clone https://gitlab.freedesktop.org/wayland/wayland-protocols && cd wayland-protocols && git checkout 1.36 && meson setup build --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf wayland-protocols
+    - run: git clone https://gitlab.freedesktop.org/pixman/pixman && cd pixman && meson setup build --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf pixman
     - run: git clone https://gitlab.freedesktop.org/mesa/drm && cd drm && meson setup build --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf drm
+    - run: git clone https://gitlab.freedesktop.org/emersion/libdisplay-info && cd libdisplay-info && meson setup build --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf libdisplay-info
+    - run: git clone https://github.com/nlohmann/json && cd json && meson setup build --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf json
+    - run: git clone https://git.sr.ht/~emersion/grim && cd grim && meson setup build --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf grim
     - uses: actions/checkout@v1
     - run: git config --global --add safe.directory /__w/wayfire/wayfire
+    - run: git config --global --add safe.directory /__w/wayfire/wayfire/subprojects/wf-config
+    - run: git config --global --add safe.directory /__w/wayfire/wayfire/subprojects/wf-touch
+    - run: git config --global --add safe.directory /__w/wayfire/wayfire/subprojects/wf-utils
+    - run: git config --global --add safe.directory /__w/wayfire/wayfire/subprojects/wlroots
     - run: git submodule sync --recursive && git submodule update --init --force --recursive
-    - run: (cd subprojects/wlroots && meson build --prefix=/usr && ninja -C build install)
-    - run: meson build -Dtests=enabled -Db_pch=true -Duse_system_wlroots=enabled
+    - run: (cd subprojects/wlroots && meson setup build --prefix=/usr && ninja -C build install)
+    - run: CC=gcc-12 CXX=g++-12 meson setup build -Dtests=enabled -Db_pch=true -Duse_system_wlroots=enabled --prefix=/usr
     - run: ninja -v -Cbuild
     - run: ninja -v -Cbuild test
+    - run: ninja -v -Cbuild install
+    - run: git clone https://github.com/WayfireWM/wf-shell && cd wf-shell && meson setup build --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf wf-shell
+    - run: mkdir ~/.config && curl https://pastebin.com/raw/f7ssx7TM > ~/.config/wf-shell.ini
+    - run: XDG_RUNTIME_DIR=/tmp LP_NUM_THREADS=0 WLR_RENDERER_FORCE_SOFTWARE=1 WLR_BACKENDS=headless wayfire -r -d wlroots & sleep 7; WAYLAND_DISPLAY=/tmp/wayland-1 hello-wayland & sleep 3; WAYLAND_DISPLAY=/tmp/wayland-1 grim screenshot.png && curl -F "file=@screenshot.png" https://oshi.at && killall wayfire
   test_glibc_llvm:
     name: "Test with clang/glibc/libc++/lld on Arch Linux"
     runs-on: ubuntu-latest
