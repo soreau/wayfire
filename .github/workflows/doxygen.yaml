@@ -8,7 +8,7 @@ jobs:
     container:
       image: ubuntu:noble
     steps:
-    - run: apt update && apt install -y doxygen
+    - run: apt update && apt install -y doxygen git
     - uses: actions/checkout@v4
     - run: git config --global --add safe.directory /__w/wayfire/wayfire
     - run: git config --global --add safe.directory /__w/wayfire/wayfire/src/api/wayfire
