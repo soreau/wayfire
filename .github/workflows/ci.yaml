@@ -1,46 +1,121 @@
+#name: Manual Wayfire Tests for Branch and PR CI
+#on:
+#  workflow_dispatch:
+#    inputs:
+#      branch:
+#        description: 'Branch name for wayfire-A'
+#        required: true
+#        type: string
+#      pr_number:
+#        description: 'Pull Request number for wayfire-B'
+#        required: true
+#        type: string
 name: CI
-
-on: [push, pull_request]
+#on: [push, pull_request]
+on: [push]
 jobs:
-  test_musl_gcc:
-    name: "Test with GCC/musl/libstdc++/BFD on Alpine Linux"
-    runs-on: ubuntu-latest
-    container: alpine:latest
-    steps:
-    - run: apk --no-cache add git gcc g++ binutils pkgconf meson ninja musl-dev wayland-protocols libinput-dev libevdev-dev libxkbcommon-dev pixman-dev glm-dev mesa-dev cairo-dev pango-dev eudev-dev libxml2-dev libseat-dev libxcb-dev xcb-util-wm-dev xwayland doctest doctest-dev cmake libdisplay-info-dev hwdata-dev libdrm-dev yyjson-dev wayland-dev
-    - uses: actions/checkout@v1
-    - run: git config --global --add safe.directory /__w/wayfire/wayfire
-    - run: git submodule sync --recursive && git submodule update --init --force --recursive
-    - run: (cd subprojects/wlroots && meson build --prefix=/usr && ninja -C build install)
-    - run: meson build -Dtests=enabled -Db_pch=true -Duse_system_wlroots=enabled
-    - run: ninja -v -Cbuild
-    - run: ninja -v -Cbuild test
-  test_glibc_llvm:
-    name: "Test with clang/glibc/libc++/lld on Arch Linux"
-    runs-on: ubuntu-latest
+  wayfire_tests:
+    name: "Test Wayfire on Ubuntu 24.04 Noble"
+    runs-on: ubuntu-24.04
     container:
-        image: archlinux:latest
+      image: ubuntu:noble
+      options: --privileged
     steps:
-    - run: pacman --noconfirm --noprogressbar -Syyu
-    - run: pacman --noconfirm --noprogressbar -Sy git clang lld libc++ pkgconf cmake meson ninja wayland wayland-protocols libinput libxkbcommon pixman glm libdrm libglvnd cairo pango systemd scdoc base-devel seatd hwdata libdisplay-info openmp doctest yyjson
-
-      # Build Wayfire
-    - uses: actions/checkout@v1
+    - run: apt update && apt install -y software-properties-common
+    - run: apt update && apt install -y git build-essential binutils pkg-config meson ninja-build musl-dev libwayland-dev libinput-dev libevdev-dev libxkbcommon-dev libglm-dev libgl1-mesa-dev libcairo2-dev libpango1.0-dev libudev-dev libxml2-dev libseat-dev libxcb1-dev libxcb-util-dev xwayland doctest-dev cmake hwdata python3-pip curl libgbm-dev liblcms2-dev gcc g++ libgtk-3-dev libgtkmm-3.0-dev gobject-introspection libdbusmenu-gtk3-dev psmisc imagemagick libgraphicsmagick1-dev weston python3-pip gedit eog terminator swaylock openarena xterm xwayland libxcb1-dev libxcb-composite0-dev libxcb-ewmh-dev libxcb-icccm4-dev libxcb-render0-dev libxcb-res0-dev libxcb-xfixes0-dev
+    - run: pip install wayfire termcolor imageio psutil PyQt5 Xlib --break-system-packages
+    - run: git clone https://gitlab.freedesktop.org/oreaus/hello-wayland -b set-title && cd hello-wayland && make && cp hello-wayland /usr/bin/hello-wayland && cd .. && rm -rf hello-wayland
+    - run: git clone https://gitlab.freedesktop.org/wayland/wayland -b 1.24 && cd wayland && meson setup build -Ddocumentation=false -Dtests=false --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf wayland
+    - run: git clone https://gitlab.freedesktop.org/wayland/wayland-protocols -b 1.47 && cd wayland-protocols && meson setup build --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf wayland-protocols
+    - run: git clone https://gitlab.freedesktop.org/pixman/pixman && cd pixman && meson setup build --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf pixman
+    - run: git clone https://gitlab.freedesktop.org/mesa/drm && cd drm && meson setup build --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf drm
+    - run: git clone https://gitlab.freedesktop.org/emersion/libdisplay-info && cd libdisplay-info && meson setup build --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf libdisplay-info
+    - run: git clone https://git.sr.ht/~emersion/grim && cd grim && meson setup build --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf grim
+    - run: git clone https://github.com/wmww/gtk-layer-shell -b release-0.10 && cd gtk-layer-shell && meson setup build -Dvapi=false --prefix=/usr && ninja -C build && ninja -C build install && cd .. && rm -rf gtk-layer-shell
+    - run: git clone https://github.com/wayfirewm/wayfire
+#    - run: git clone https://github.com/wayfirewm/wayfire -b ${{ github.event.inputs.branch }}
+    - run: git config --global --add safe.directory ./wayfire
+    - run: git config --global --add safe.directory ./wayfire/subprojects/wf-config
+    - run: git config --global --add safe.directory ./wayfire/subprojects/wf-touch
+    - run: git config --global --add safe.directory ./wayfire/subprojects/wf-utils
+    - run: git config --global --add safe.directory ./wayfire/subprojects/wlroots
+    - run: cd ./wayfire && ls && git submodule sync --recursive && git submodule update --init --force --recursive && meson setup build -Dwlroots:c_std=c17 -Dtests=disabled -Duse_system_wlroots=disabled --prefix=/tmp/wayfire-A && ninja -C build install
+    - run: ls /tmp/wayfire-A/lib/x86_64-linux-gnu
+    - run: git clone https://github.com/wayfirewm/wf-shell -b gtk3 && cd wf-shell && PKG_CONFIG_PATH=/tmp/wayfire-A/lib/x86_64-linux-gnu/pkgconfig meson setup -Dpulse=disabled --prefix=/tmp/wayfire-A build && ninja -C build install
+    - run: mv /tmp/wayfire-A/bin/wf-panel /tmp/wayfire-A/bin/wf-panel.real
+    - run: echo "#!/bin/bash" >> /tmp/wayfire-A/bin/wf-panel
+    - run: echo "wf-panel.real -c /tmp/wayfire-A/share/wf-shell.ini" >> /tmp/wayfire-A/bin/wf-panel
+    - run: chmod +x /tmp/wayfire-A/bin/wf-panel
+    - run: echo "#!/bin/bash" >> /tmp/wayfire-A/bin/wayfire-A
+    - run: echo "export PATH=/tmp/wayfire-A/bin:\$PATH" >> /tmp/wayfire-A/bin/wayfire-A
+    - run: echo "export LD_LIBRARY_PATH=/tmp/wayfire-A/lib/x86_64-linux-gnu" >> /tmp/wayfire-A/bin/wayfire-A
+    - run: echo "export XDG_DATA_DIRS=/tmp/wayfire-A/share:/usr/local/share:/usr/share:\$XDG_DATA_DIRS" >> /tmp/wayfire-A/bin/wayfire-A
+    - run: echo "export XDG_RUNTIME_DIR=/tmp" >> /tmp/wayfire-A/bin/wayfire-A
+    - run: echo "export LP_NUM_THREADS=0" >> /tmp/wayfire-A/bin/wayfire-A
+    - run: echo "export WLR_RENDERER_FORCE_SOFTWARE=1" >> /tmp/wayfire-A/bin/wayfire-A
+    - run: echo "export WLR_BACKENDS=wayland" >> /tmp/wayfire-A/bin/wayfire-A
+    - run: echo "/tmp/wayfire-A/bin/wayfire -r -d -d wlroots \"\$@\"" >> /tmp/wayfire-A/bin/wayfire-A
+    - run: echo "#!/bin/bash" >> /tmp/wayfire-A/bin/wayfire-parent
+    - run: echo "export PATH=/tmp/wayfire-A/bin:\$PATH" >> /tmp/wayfire-A/bin/wayfire-parent
+    - run: echo "export LD_LIBRARY_PATH=/tmp/wayfire-A/lib/x86_64-linux-gnu" >> /tmp/wayfire-A/bin/wayfire-parent
+    - run: echo "export XDG_DATA_DIRS=/tmp/wayfire-A/share:/usr/local/share:/usr/share:\$XDG_DATA_DIRS" >> /tmp/wayfire-A/bin/wayfire-parent
+    - run: echo "export XDG_RUNTIME_DIR=/tmp" >> /tmp/wayfire-A/bin/wayfire-parent
+    - run: echo "export LP_NUM_THREADS=0" >> /tmp/wayfire-A/bin/wayfire-parent
+    - run: echo "export WLR_RENDERER_FORCE_SOFTWARE=1" >> /tmp/wayfire-A/bin/wayfire-parent
+    - run: echo "export WLR_BACKENDS=headless" >> /tmp/wayfire-A/bin/wayfire-parent
+    - run: echo "/tmp/wayfire-A/bin/wayfire -r -d -d wlroots \"\$@\"" >> /tmp/wayfire-A/bin/wayfire-parent
+    - run: echo "[panel]" >> /tmp/wayfire-A/share/wf-shell.ini
+    - run: echo "widgets_left = menu spacing4 window-list" >> /tmp/wayfire-A/share/wf-shell.ini
+    - run: echo "widgets_center = none" >> /tmp/wayfire-A/share/wf-shell.ini
+    - run: echo "widgets_right = clock" >> /tmp/wayfire-A/share/wf-shell.ini
+    - run: chmod +x /tmp/wayfire-A/bin/wayfire-parent
+    - run: chmod +x /tmp/wayfire-A/bin/wayfire-A
+    - uses: actions/checkout@v4
+#      with:
+#        ref: ${{ github.event.inputs.pr_number }}
     - run: git config --global --add safe.directory /__w/wayfire/wayfire
+    - run: git config --global --add safe.directory /__w/wayfire/wayfire/subprojects/wf-config
+    - run: git config --global --add safe.directory /__w/wayfire/wayfire/subprojects/wf-touch
+    - run: git config --global --add safe.directory /__w/wayfire/wayfire/subprojects/wf-utils
+    - run: git config --global --add safe.directory /__w/wayfire/wayfire/subprojects/wlroots
     - run: git submodule sync --recursive && git submodule update --init --force --recursive
-    - run: (cd subprojects/wlroots && env CC=clang CXX=clang++ CXXFLAGS="-stdlib=libc++" LDFLAGS="-fuse-ld=lld -stdlib=libc++" meson build --prefix=/usr && ninja -C build install)
-    - run: env CC=clang CXX=clang++ CXXFLAGS="-stdlib=libc++" LDFLAGS="-fuse-ld=lld -stdlib=libc++" meson build -Db_pch=true -Dcustom_pch=true -Duse_system_wlroots=enabled --unity on
-    - run: ninja -v -Cbuild
-    - run: ninja -v -Cbuild test
-  test_code_style:
-    name: "Check code style with uncrustify"
-    runs-on: ubuntu-latest
-    steps:
-        - run: sudo apt-get update
-        - run: sudo apt-get install -y git cmake gcc make
-        - uses: actions/checkout@v1
-        - run: git clone http://github.com/ammen99/uncrustify
-        - run: cd uncrustify && mkdir build && cd build && cmake ../ && make && cd ../../
-        - run: git ls-files | grep "hpp$\|cpp$" | xargs ./uncrustify/build/uncrustify -c uncrustify.ini --no-backup --replace
-        - run: git diff
-        - run: git diff | diff - /dev/null &> /dev/null
+    - run: meson setup build -Dwlroots:c_std=c17 -Dtests=disabled -Duse_system_wlroots=disabled --prefix=/tmp/wayfire-B && ninja -C build install
+    - run: git clone https://github.com/wayfirewm/wf-shell -b gtk3 && cd wf-shell && PKG_CONFIG_PATH=/tmp/wayfire-B/lib/x86_64-linux-gnu/pkgconfig meson setup -Dpulse=disabled --prefix=/tmp/wayfire-B build && ninja -C build install
+    - run: mv /tmp/wayfire-B/bin/wf-panel /tmp/wayfire-B/bin/wf-panel.real
+    - run: echo "#!/bin/bash" >> /tmp/wayfire-B/bin/wf-panel
+    - run: echo "wf-panel.real -c /tmp/wayfire-B/share/wf-shell.ini" >> /tmp/wayfire-B/bin/wf-panel
+    - run: chmod +x /tmp/wayfire-B/bin/wf-panel
+    - run: echo "#!/bin/bash" >> /tmp/wayfire-B/bin/wayfire-B
+    - run: echo "export PATH=/tmp/wayfire-B/bin:\$PATH" >> /tmp/wayfire-B/bin/wayfire-B
+    - run: echo "export LD_LIBRARY_PATH=/tmp/wayfire-B/lib/x86_64-linux-gnu" >> /tmp/wayfire-B/bin/wayfire-B
+    - run: echo "export XDG_DATA_DIRS=/tmp/wayfire-B/share:/usr/local/share:/usr/share:\$XDG_DATA_DIRS" >> /tmp/wayfire-B/bin/wayfire-B
+    - run: echo "export XDG_RUNTIME_DIR=/tmp" >> /tmp/wayfire-B/bin/wayfire-B
+    - run: echo "export LP_NUM_THREADS=0" >> /tmp/wayfire-B/bin/wayfire-B
+    - run: echo "export WLR_RENDERER_FORCE_SOFTWARE=1" >> /tmp/wayfire-B/bin/wayfire-B
+    - run: echo "export WLR_BACKENDS=wayland" >> /tmp/wayfire-B/bin/wayfire-B
+    - run: echo "/tmp/wayfire-B/bin/wayfire -r -d -d wlroots \"\$@\"" >> /tmp/wayfire-B/bin/wayfire-B
+    - run: echo "[panel]" >> /tmp/wayfire-B/share/wf-shell.ini
+    - run: echo "widgets_left = menu spacing4 window-list" >> /tmp/wayfire-B/share/wf-shell.ini
+    - run: echo "widgets_center = none" >> /tmp/wayfire-B/share/wf-shell.ini
+    - run: echo "widgets_right = clock" >> /tmp/wayfire-B/share/wf-shell.ini
+    - run: chmod +x /tmp/wayfire-B/bin/wayfire-B
+    - run: mkdir -p /tmp/artifacts
+#    - run: /tmp/wayfire-A/bin/wayfire-A & sleep 7; WAYLAND_DISPLAY=/tmp/wayland-1 hello-wayland & sleep 3; WAYLAND_DISPLAY=/tmp/wayland-1 grim /tmp/artifacts/screenshot-A.png && killall wayfire
+#    - run: /tmp/wayfire-B/bin/wayfire-B & sleep 7; WAYLAND_DISPLAY=/tmp/wayland-1 hello-wayland & sleep 3; WAYLAND_DISPLAY=/tmp/wayland-1 grim /tmp/artifacts/screenshot-B.png && killall wayfire
+    - run: cd /tmp && git clone https://github.com/ammen99/wayfire-tests && cd wayfire-tests && git submodule sync --recursive && git submodule update --init --force --recursive && cd clients && meson setup build && ninja -C build && cd ../wleird && meson setup --prefix=/usr build && ninja -C build install
+#    - run: echo "[autostart]" >> /tmp/wayfire-A/share/wayfire.ini
+#    - run: echo "tests = sleep 5; cd /tmp/wayfire-tests; ./run_tests.sh tests/basic/ /tmp/wayfire-A/bin/wayfire-A; killall wayfire" >> /tmp/wayfire-A/share/wayfire.ini
+#    - run: echo "[core]" >> /tmp/wayfire-A/share/wayfire.ini
+#    - run: echo "plugins = autostart move resize" >> /tmp/wayfire-A/share/wayfire.ini
+#    - run: echo "[output:HEADLESS-1]" >> /tmp/wayfire-A/share/wayfire.ini
+#    - run: echo "mode = 1920x1080" >> /tmp/wayfire-A/share/wayfire.ini
+#    - run: cat /tmp/wayfire-A/share/wayfire.ini
+#    - run: /tmp/wayfire-A/bin/wayfire-parent -c /tmp/wayfire-A/share/wayfire.ini
+#    - run: sleep 5; cd /tmp/wayfire-tests; WAYLAND_DISPLAY=/tmp/wayland-1 ./run_tests.sh tests /tmp/wayfire-A/bin/wayfire-A --compare-with /tmp/wayfire-B/bin/wayfire-B
+    - run: cd /tmp/wayfire-tests; PYTHONUNBUFFERED=1 WAYFIRE_BIN=/tmp/wayfire-A/bin/wayfire-parent OUTER_LOG=/tmp/wayfire-tests/tests/output.log ./run_nested.sh tests/ /tmp/wayfire-A/bin/wayfire-A --compare-with /tmp/wayfire-B/bin/wayfire-B
+#    - run: cd /tmp/wayfire-tests && ls -l && PATH=./clients/build:$PATH ./run_tests.sh tests/ /tmp/wayfire-A/bin/wayfire-A --compare-with /tmp/wayfire-B/bin/wayfire-B
+    - uses: actions/upload-artifact@v4
+      with:
+        name: wayfire-tests-artifacts
+        path: /tmp/wayfire-tests/tests
+        retention-days: 1
